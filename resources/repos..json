@@ -1,0 +1,12 @@
+[
+    {
+        "name": "repo-manager", 
+        "link": "https://github.com/ajambor91/repo-manager",
+        "ssh": "git@github.com:ajambor91/repo-manager.git"
+    },
+    {
+        "name": "repo-manifests", 
+        "link": "https://github.com/ajambor91/repo-manifests",
+        "ssh": "git@github.com:ajambor91/repo-manifests.git"
+    }
+]

@@ -1,0 +1,1 @@
+wyświetla dane aktualnego zapisanego użytkownika jego katalog domowy, nazwę, grupę, jeśli dac flagi -h --home wyświetli tylko katalog domowy, analogicznie -n --name poda nazwę, a -g --group grupę

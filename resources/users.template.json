@@ -1,0 +1,10 @@
+[
+    {
+        "username": "{name}",
+        "homedir": "{homedir}",
+        "createdat": "{date}",
+        "deletedat": "{date} albo brak",
+        "repositories" : [] 
+    
+    }
+]

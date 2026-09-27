@@ -1,0 +1,1 @@
+skrypt ma tworzyć użytkownika, który będzie właścicielem repozytoriów, nowego usera można zrobić tylko z flagą --yes, jak brak flagi ma być komunikat, że stworzony użytkownk dostanie nowy katalog i repozytoria itditp

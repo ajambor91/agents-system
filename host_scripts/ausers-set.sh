@@ -1,0 +1,1 @@
+ustawienie usera jako domyślny,przymuje flagi --yes, która jest wymagana oraz -u --user username
