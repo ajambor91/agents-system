@@ -15,9 +15,10 @@ done
 [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { printf 'Błąd: push wymaga taga semver przez --tag X.Y.Z\n' >&2; exit 2; }
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
-[[ -z "$(git status --porcelain)" ]] || { printf 'Błąd: najpierw zatwierdź lokalne zmiany.\n' >&2; exit 1; }
-git rev-parse "$TAG" >/dev/null 2>&1 && { printf 'Błąd: tag już istnieje: %s\n' "$TAG" >&2; exit 1; }
-git tag -a "$TAG" -m "Release $TAG"
-git push "$REMOTE" HEAD
- git push "$REMOTE" "$TAG"
+GIT=(git -c "safe.directory=$ROOT_DIR")
+[[ -z "$("${GIT[@]}" status --porcelain)" ]] || { printf 'Błąd: najpierw zatwierdź lokalne zmiany.\n' >&2; exit 1; }
+"${GIT[@]}" rev-parse "$TAG" >/dev/null 2>&1 && { printf 'Błąd: tag już istnieje: %s\n' "$TAG" >&2; exit 1; }
+"${GIT[@]}" tag -a "$TAG" -m "Release $TAG"
+"${GIT[@]}" push "$REMOTE" HEAD
+"${GIT[@]}" push "$REMOTE" "$TAG"
 printf 'Wypchnięto commit i tag %s.\n' "$TAG"
