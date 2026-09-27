@@ -1,1 +1,5 @@
-skrypt ma tworzyć użytkownika, który będzie właścicielem repozytoriów, nowego usera można zrobić tylko z flagą --yes, jak brak flagi ma być komunikat, że stworzony użytkownk dostanie nowy katalog i repozytoria itditp
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")/.." && pwd)"
+exec python3 "$ROOT_DIR/src/agents-system/main.py" user-create "$@"

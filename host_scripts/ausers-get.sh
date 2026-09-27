@@ -1,1 +1,5 @@
-wyświetla dane aktualnego zapisanego użytkownika jego katalog domowy, nazwę, grupę, jeśli dac flagi -h --home wyświetli tylko katalog domowy, analogicznie -n --name poda nazwę, a -g --group grupę
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")/.." && pwd)"
+exec python3 "$ROOT_DIR/src/agents-system/main.py" user-get "$@"
