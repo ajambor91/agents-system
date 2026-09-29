@@ -120,6 +120,13 @@ Kontrakt załadowanej aplikacji to jedno z poniższych:
 - moduł eksportuje `handle(payload)`;
 - moduł eksportuje `Application` z metodą `handle(payload)`.
 
-Runtime ładuje moduł raz i trzyma handler w pamięci. Jeśli repozytorium ma
-tylko klasyczne wrappery CLI, nie zmieniaj ich w ramach tej integracji:
-pozostają działające normalnie, ale nie są automatycznie usługą RAM.
+Runtime ładuje moduł leniwie i trzyma handler w pamięci do zmiany entrypointu.
+Do payloadu wstawia własne `_runtime` z poświadczeniami `SO_PEERCRED`; wartość
+klienta nie może być zaufana. Handler zwraca wartość serializowalną do JSON.
+Runtime zachowuje także przechwycone `stdout` i `stderr` dla starszych
+adapterów.
+
+Wrapper może działać runtime-first, ale fallback do lokalnego CLI jest
+dozwolony wyłącznie przy braku socketu/modułu albo jawnej odpowiedzi
+`handled: false` sprzed wykonania. Po wysłaniu żądania błąd transportu nie może
+powodować ponownego wykonania operacji mutującej.

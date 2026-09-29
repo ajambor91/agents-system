@@ -1,0 +1,94 @@
+{
+    "system":
+        [
+        {
+            "name":"USER_SYSTEM",
+            "value": "user-system"
+        },
+        {
+            "name":"USER_SYSTEM_HOME",
+            "value": "/home/user-system"
+        },
+        {
+            "name":"APP_DATA_DIR",
+            "value": ".agents-system/"
+        },
+        {
+            "name":"APP_DATA_DIR_FULL",
+            "value": "/home/user-system/.agents-system/"
+        },
+        {
+            "name":"REPOSITORIES_DIR",
+            "value": "repositories/"
+        },
+        {
+            "name":"REPOSITORIES_DIR_FULL",
+            "value": "/home/user-system/repositories/"
+        },
+        {
+            "name":"REPOSITORIES_METADATA",
+            "value": ".repos/"
+        },
+        {
+            "name":"GENERAL_ENV_FILE",
+            "value": "envs.json"
+        },
+        {
+            "name":"REPOSITORIES_METADATA_FULL",
+            "value": "/home/user-system/.repos/"
+        },
+        {
+            "name":"AGENT_METADATA",
+            "value": ".agents"
+        },
+        {
+            "name":"AGENT_METADATA_FULL",
+            "value": "/home/user-system/.agents/"
+        },
+        {
+            "name":"REPOSITORIES_GENERAL_HISTORY",
+            "value": "/home/user-system/.repos/repos"
+        },
+        {
+            "name":"REPOSITORIES_GENERAL_FILE",
+            "value": "repos"
+        },
+        {
+            "name":"AGENTS_SYSTEM_MODULES_FILE",
+            "value": "modules.json"
+        },
+        {
+            "name":"AGENTS_SYSTEM_MODULES_PATH",
+            "value": "/home/user-system/.repos/modules.json"
+        },
+        {
+            "name":"REPOSITORY_DATA_FILE",
+            "value": "data.json"
+        },
+        {
+            "name":"REPOSITORY_HISTORY_DIR",
+            "value": "history"
+        },
+        {
+            "name":"REPOSITORY_HISTORY_PATH",
+            "value": "/home/user-system/.repos/repositories/{{repository_name}}",
+            "example": "/home/user-system/.repos/repositories/repo-manager/data.json"
+        },
+        {
+            "name":"SYSTEM_AGENT_RUNTIME_SOCKET",
+            "value": "agents_runtime.sock"
+        },
+        {
+            "name":"SYSTEM_AGENT_RUNTIME_PID",
+            "value": "agents_runtime.pid"
+        },
+        {
+            "name":"COMMUNICATION_AGENT_RUNTIME_PID",
+            "value": "communication_runtime.pid"
+        },
+        {
+            "name":"COMMUNICATION_AGENT_RUNTIME_SOCKET",
+            "value": "communication_runtime.sock"
+        }
+    ]
+}

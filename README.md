@@ -163,7 +163,9 @@ Do czasu zakończenia migracji obowiązuje istniejący schemat `repo-manifests`,
 ## 10. Rezydentne moduły aplikacji
 
 `agents-system` może ładować aplikacje Python zainstalowanych repozytoriów do
-jednego procesu runtime. Rejestracja nie zmienia wrapperów repozytorium:
+jednego procesu runtime. Repozytorium może pozostawić klasyczne wrappery bez
+zmian albo wyposażyć swój entrypoint w klienta runtime-first z lokalnym
+fallbackiem:
 
 ```bash
 asystem_app_add \
@@ -173,19 +175,29 @@ asystem_runtime_status
 asystem_app_call --name ai-module --payload '{"action":"health"}'
 ```
 
-Runtime przechowuje rejestr w `/home/user-system/.agents/modules.json`, ładuje
-każdy entrypoint tylko raz i udostępnia go przez Unix socket. Moduł powinien
-eksportować `create_service()` zwracające callable albo funkcję `handle(payload)`.
-Alternatywnie może udostępnić klasę `Application` z metodą `handle`.
+Runtime przechowuje rejestr w `/home/user-system/.repos/modules.json`, ładuje
+entrypoint leniwie i przeładowuje go po zmianie pliku. Udostępnia go przez Unix
+socket. Moduł powinien eksportować `create_service()` zwracające callable albo
+funkcję `handle(payload)`. Alternatywnie może udostępnić klasę `Application`
+z metodą `handle`.
 
-Zwykłe skrypty `host_scripts/*.sh` repozytorium dziecka pozostają bez zmian i
-dalej działają przez dotychczasowy proces CLI. Jeśli entrypoint nie udostępnia
-kontraktu handlera, runtime rejestruje błąd modułu i nie uruchamia jego
-wrapperów shellowych w tle.
+Runtime pobiera UID/GID klienta z `SO_PEERCRED`, nadpisuje zastrzeżone pole
+`_runtime` i przechwytuje tekst wypisany przez starsze handlery. Nowe handlery
+powinny zwracać JSON z wynikiem oraz strumieniami bez bezpośredniego drukowania.
+Brak rejestracji zwraca `error_code: module_unavailable`, co pozwala klientowi
+bezpiecznie uruchomić lokalny fallback przed rozpoczęciem operacji. Pozostałe
+błędy nie zezwalają na automatyczne powtórzenie komendy.
+
+Przy pierwszym odczycie po aktualizacji dotychczasowy plik
+`/home/user-system/.agents/modules.json` jest automatycznie przenoszony do
+nowej lokalizacji. Socket i PID runtime nadal pozostają w katalogu `.agents`.
 
 Operacje: `asystem_app_add`, `asystem_app_list`, `asystem_app_remove`,
 `asystem_runtime_start`, `asystem_runtime_stop`, `asystem_runtime_status` oraz
 `asystem_app_call`.
+
+Błędy operatorskie, na przykład próba usunięcia niezarejestrowanej nazwy,
+zwracają kod `1` i krótki komunikat na `stderr` bez tracebacka Pythona.
 
 ## 11. Status i użytkownicy
 

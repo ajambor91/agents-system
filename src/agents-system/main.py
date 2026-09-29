@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import importlib.util
 import json
 import os
@@ -13,6 +15,7 @@ import pwd
 import re
 import signal
 import socket
+import struct
 import subprocess
 import sys
 import time
@@ -22,29 +25,51 @@ from types import ModuleType
 from typing import Any
 
 DEFAULT_ROOT = Path(os.environ.get("AGENTS_SYSTEM_HOME", "/home/user-system/.agents"))
-REGISTRY_PATH = DEFAULT_ROOT / "modules.json"
-SOCKET_PATH = DEFAULT_ROOT / "runtime.sock"
-PID_PATH = DEFAULT_ROOT / "runtime.pid"
+MODULE_REGISTRY_ROOT = Path(
+    os.environ.get("AGENTS_REPOSITORY_STATE_HOME", str(DEFAULT_ROOT.parent / ".repos"))
+)
+REGISTRY_PATH = MODULE_REGISTRY_ROOT / "modules.json"
+LEGACY_REGISTRY_PATH = DEFAULT_ROOT / "modules.json"
+SOCKET_PATH = DEFAULT_ROOT / "agents_runtime.sock"
+PID_PATH = DEFAULT_ROOT / "agents_runtime.pid"
 
 
 class RuntimeErrorMessage(Exception):
     """Expected runtime or module configuration error."""
 
 
+class ModuleUnavailableError(RuntimeErrorMessage):
+    """Signal that no handler ran and a caller may safely use its local fallback."""
+
+
 def read_registry() -> dict[str, Any]:
-    if not REGISTRY_PATH.is_file():
+    registry_path = REGISTRY_PATH
+    migrate_legacy = (
+        registry_path != LEGACY_REGISTRY_PATH
+        and not registry_path.is_file()
+        and LEGACY_REGISTRY_PATH.is_file()
+    )
+    if migrate_legacy:
+        registry_path = LEGACY_REGISTRY_PATH
+    if not registry_path.is_file():
         return {"schema_version": 1, "modules": {}}
     try:
-        value = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+        value = json.loads(registry_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise RuntimeErrorMessage(f"Nieprawidłowy rejestr modułów: {exc}") from exc
     if not isinstance(value, dict) or not isinstance(value.get("modules", {}), dict):
         raise RuntimeErrorMessage("Rejestr modułów musi zawierać obiekt modules")
+    if migrate_legacy:
+        write_registry(value)
+        try:
+            LEGACY_REGISTRY_PATH.unlink()
+        except OSError:
+            pass
     return value
 
 
 def write_registry(value: dict[str, Any]) -> None:
-    DEFAULT_ROOT.mkdir(parents=True, exist_ok=True)
+    REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
     temporary = REGISTRY_PATH.with_suffix(".tmp")
     temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     temporary.replace(REGISTRY_PATH)
@@ -118,6 +143,96 @@ def call_handler(handler: Any, payload: dict[str, Any]) -> Any:
     if callable(handler):
         return handler(payload)
     raise RuntimeErrorMessage("Załadowany moduł nie ma wywoływalnego handlera")
+
+
+def peer_credentials(connection: socket.socket) -> dict[str, int]:
+    """Return kernel-authenticated Unix peer identity plus the runtime identity."""
+    if not hasattr(socket, "SO_PEERCRED"):
+        raise RuntimeErrorMessage("System nie udostępnia SO_PEERCRED dla Unix socket")
+    raw = connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i"))
+    peer_pid, peer_uid, peer_gid = struct.unpack("3i", raw)
+    return {
+        "peer_pid": peer_pid,
+        "peer_uid": peer_uid,
+        "peer_gid": peer_gid,
+        "server_uid": os.geteuid(),
+        "server_gid": os.getegid(),
+    }
+
+
+def registered_handler(
+    name: str,
+    loaded: dict[str, Any],
+    errors: dict[str, str],
+) -> Any:
+    """Return a loaded handler, lazily loading new registry entries while runtime is alive."""
+    registry = read_registry()
+    modules = registry.get("modules", {})
+    if name not in modules:
+        loaded.pop(name, None)
+        errors.pop(name, None)
+        raise ModuleUnavailableError(f"Moduł nie jest zarejestrowany: {name}")
+    record = modules[name]
+    try:
+        stamp = (
+            Path(str(record["entrypoint"])).stat().st_mtime_ns,
+            str(record.get("registered_at", "")),
+        )
+    except (KeyError, OSError) as exc:
+        raise ModuleUnavailableError(f"Nie można odczytać entrypointu modułu {name}: {exc}") from exc
+    cached = loaded.get(name)
+    if isinstance(cached, tuple) and len(cached) == 2 and cached[0] == stamp:
+        return cached[1]
+    try:
+        _, handler = load_module(record)
+    except Exception as exc:
+        record["status"] = "error"
+        record["error"] = str(exc)
+        errors[name] = str(exc)
+        write_registry(registry)
+        raise ModuleUnavailableError(str(exc)) from exc
+    record["status"] = "loaded"
+    record.pop("error", None)
+    errors.pop(name, None)
+    loaded[name] = (stamp, handler)
+    write_registry(registry)
+    return handler
+
+
+def handle_runtime_request(
+    request: Any,
+    loaded: dict[str, Any],
+    errors: dict[str, str],
+    peer: dict[str, int],
+) -> dict[str, Any]:
+    """Dispatch one authenticated request and classify whether local fallback is safe."""
+    try:
+        if not isinstance(request, dict):
+            raise RuntimeErrorMessage("Żądanie runtime musi być obiektem JSON")
+        if request.get("action") == "status":
+            return {"ok": True, "status": runtime_status(), "load_errors": errors}
+        name = str(request.get("module", ""))
+        handler = registered_handler(name, loaded, errors)
+        payload = request.get("payload", {})
+        if not isinstance(payload, dict):
+            raise RuntimeErrorMessage("payload modułu musi być obiektem JSON")
+        verified_payload = dict(payload)
+        verified_payload["_runtime"] = dict(peer)
+        captured_stdout = io.StringIO()
+        captured_stderr = io.StringIO()
+        with contextlib.redirect_stdout(captured_stdout), contextlib.redirect_stderr(captured_stderr):
+            result = call_handler(handler, verified_payload)
+        json.dumps(result, ensure_ascii=False)
+        return {
+            "ok": True,
+            "result": result,
+            "stdout": captured_stdout.getvalue(),
+            "stderr": captured_stderr.getvalue(),
+        }
+    except ModuleUnavailableError as exc:
+        return {"ok": False, "error_code": "module_unavailable", "error": str(exc)}
+    except Exception as exc:
+        return {"ok": False, "error_code": "request_failed", "error": str(exc)}
 
 
 def runtime_status() -> dict[str, Any]:
@@ -281,6 +396,16 @@ def set_user(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def send_runtime_response(connection: socket.socket, response: dict[str, Any]) -> bool:
+    """Send one response and keep the daemon alive when the client has disconnected."""
+    encoded = (json.dumps(response, ensure_ascii=False) + "\n").encode("utf-8")
+    try:
+        connection.sendall(encoded)
+    except OSError:
+        return False
+    return True
+
+
 def serve() -> int:
     DEFAULT_ROOT.mkdir(parents=True, exist_ok=True)
     if SOCKET_PATH.exists():
@@ -291,9 +416,13 @@ def serve() -> int:
     for name, record in registry.get("modules", {}).items():
         try:
             _, handler = load_module(record)
-            loaded[name] = handler
+            stamp = (
+                Path(str(record["entrypoint"])).stat().st_mtime_ns,
+                str(record.get("registered_at", "")),
+            )
+            loaded[name] = (stamp, handler)
             record["status"] = "loaded"
-        except RuntimeErrorMessage as exc:
+        except Exception as exc:
             errors[name] = str(exc)
             record["status"] = "error"
             record["error"] = str(exc)
@@ -319,19 +448,13 @@ def serve() -> int:
             except socket.timeout:
                 continue
             with connection:
-                raw = connection.makefile("r", encoding="utf-8").readline()
                 try:
-                    request = json.loads(raw)
-                    if request.get("action") == "status":
-                        response = {"ok": True, "status": runtime_status(), "load_errors": errors}
-                    else:
-                        name = str(request.get("module", ""))
-                        if name not in loaded:
-                            raise RuntimeErrorMessage(errors.get(name, f"Moduł nie jest załadowany: {name}"))
-                        response = {"ok": True, "result": call_handler(loaded[name], request.get("payload", {}))}
-                except (RuntimeErrorMessage, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-                    response = {"ok": False, "error": str(exc)}
-                connection.sendall((json.dumps(response, ensure_ascii=False) + "\n").encode("utf-8"))
+                    peer = peer_credentials(connection)
+                    raw = connection.makefile("r", encoding="utf-8").readline()
+                    response = handle_runtime_request(json.loads(raw), loaded, errors, peer)
+                except (RuntimeErrorMessage, OSError, ValueError, json.JSONDecodeError) as exc:
+                    response = {"ok": False, "error_code": "request_failed", "error": str(exc)}
+                send_runtime_response(connection, response)
     finally:
         server.close()
         SOCKET_PATH.unlink(missing_ok=True)
@@ -465,5 +588,14 @@ def main(argv: list[str] | None = None) -> int:
     return call_module(arguments)
 
 
+def cli_main(argv: list[str] | None = None) -> int:
+    """Render expected operator errors without exposing a Python traceback."""
+    try:
+        return main(argv)
+    except RuntimeErrorMessage as exc:
+        print(f"Błąd: {exc}", file=sys.stderr)
+        return 1
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(cli_main())
