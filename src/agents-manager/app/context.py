@@ -1,0 +1,140 @@
+from __future__ import annotations
+
+import os
+import pwd
+import shutil
+
+from dataclasses import dataclass
+from pathlib import Path
+from shared.configuration import ApplicationEnvironment
+
+
+@dataclass(frozen=True)
+class ApplicationContext:
+    repo_root: Path
+    agents_root: Path
+
+    state_root: Path
+    state_owner: str
+    state_owner_home: Path
+
+    gateway_user: str
+    gateway_home: Path
+
+    openclaw_bin: Path
+
+    @classmethod
+    def create(
+        cls,
+        repo_root: Path,
+        *,
+        gateway_user: str | None = None,
+        configuration: ApplicationEnvironment | None = None,
+    ) -> "ApplicationContext":
+
+        repo_root = repo_root.expanduser().resolve()
+
+        gateway_user = (
+            gateway_user
+            or cls._detect_gateway_user()
+        )
+        gateway_entry = pwd.getpwnam(
+            gateway_user
+        )
+
+        state_owner = str(
+            configuration.select("USER_SYSTEM") if configuration else "user-system"
+        )
+
+        try:
+            state_entry = pwd.getpwnam(
+                state_owner
+            )
+        except KeyError as exc:
+            raise RuntimeError(
+                f"State owner Linux user does not exist: "
+                f"{state_owner}"
+            ) from exc
+
+        state_root = Path(
+            configuration.select("APP_DATA_DIR")
+            if configuration else Path(state_entry.pw_dir) / ".agents"
+        ).expanduser()
+
+        gateway_home = Path(
+            gateway_entry.pw_dir
+        )
+
+        return cls(
+            repo_root=repo_root,
+            agents_root=repo_root / "agents",
+
+            state_root=state_root,
+            state_owner=state_owner,
+            state_owner_home=Path(
+                state_entry.pw_dir
+            ),
+
+            gateway_user=gateway_user,
+            gateway_home=gateway_home,
+
+            openclaw_bin=cls._find_openclaw(
+                gateway_home
+            ),
+        )
+
+    @staticmethod
+    def _detect_gateway_user() -> str:
+
+        sudo_user = os.environ.get(
+            "SUDO_USER"
+        )
+
+        if (
+            os.geteuid() == 0
+            and sudo_user
+            and sudo_user != "root"
+        ):
+            return sudo_user
+
+        return pwd.getpwuid(
+            os.geteuid()
+        ).pw_name
+
+    @staticmethod
+    def _find_openclaw(
+        gateway_home: Path,
+    ) -> Path:
+
+        candidates: list[Path] = []
+
+        candidates.append(
+            gateway_home
+            / ".openclaw"
+            / "bin"
+            / "openclaw"
+        )
+
+        path_binary = shutil.which(
+            "openclaw"
+        )
+
+        if path_binary:
+            candidates.append(
+                Path(path_binary)
+            )
+
+        for candidate in candidates:
+
+            if (
+                candidate.is_file()
+                and os.access(
+                    candidate,
+                    os.X_OK,
+                )
+            ):
+                return candidate.resolve()
+
+        raise RuntimeError(
+            "OpenClaw CLI not found."
+        )

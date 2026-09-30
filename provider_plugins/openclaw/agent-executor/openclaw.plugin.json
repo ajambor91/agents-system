@@ -1,0 +1,22 @@
+{
+  "id": "agent-executor",
+  "name": "Agent Executor",
+  "description": "Routes host shell commands through Agents Manager.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": ["agent_exec"]
+  },
+  "toolMetadata": {
+    "agent_exec": {
+      "optional": true
+    }
+  }
+}

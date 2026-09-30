@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "command": "install",
+  "mode": "write",
+  "host_script": "host_scripts/asystem-install.sh",
+  "description": "Instaluje konto, checkout, konfigurację i publiczne wrappery Agents System.",
+  "usage": "sudo asystem_install [--user NAME] --yes",
+  "target": {
+    "application": "Application",
+    "command_class": "Install",
+    "method": "execute"
+  },
+  "flags": [
+    {
+      "short": "-u",
+      "long": "--user",
+      "required": false,
+      "takes_value": true,
+      "type": "string",
+      "description": "Docelowy użytkownik systemowy.",
+      "env": "USER_SYSTEM",
+      "var": "USER_SYSTEM"
+    },
+    {
+      "short": null,
+      "long": "--yes",
+      "required": false,
+      "takes_value": false,
+      "type": "boolean",
+      "default": false,
+      "description": "Jawne potwierdzenie operacji."
+    },
+    {
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false,
+      "type": "boolean",
+      "default": false,
+      "description": "Wyświetl pomoc bez skutków ubocznych."
+    }
+  ],
+  "steps": [
+    "require-confirmation",
+    "ensure-system-user",
+    "prepare-directories",
+    "copy-checkout",
+    "publish-wrappers",
+    "initialize-environment"
+  ],
+  "outputs": [
+    "installation-json"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1, "command": "runtime-start", "mode": "write", "host_script": "host_scripts/asystem-runtime-start.sh",
+  "description": "Uruchamia rezydentny runtime modułów.", "usage": "asystem_runtime_start",
+  "target": {"application": "Application", "command_class": "RuntimeStart", "method": "execute"},
+  "flags": [{"short": "-h", "long": "--help", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Wyświetl pomoc."}],
+  "steps": ["validate-state", "fork-runtime", "bind-socket"], "outputs": ["runtime-start-json"]
+}

@@ -1,0 +1,52 @@
+# Managed by agents-system installer. Do not edit the installed unit directly.
+[Unit]
+Description=Agents System shared runtime
+Documentation=file://{{APP_DIR}}/src/README.md
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists={{APP_DIR}}/src/runtime/main.py
+
+[Service]
+Type=simple
+User={{USER_SYSTEM}}
+Group={{USER_GROUP}}
+WorkingDirectory={{APP_DIR}}
+UMask=0027
+Environment="INSTALL_MODE={{INSTALL_MODE}}"
+Environment="APP_NAME={{APP_NAME}}"
+Environment="APP_DIR={{APP_DIR}}"
+Environment="USER_SYSTEM={{USER_SYSTEM}}"
+Environment="USER_SYSTEM_HOME={{USER_SYSTEM_HOME}}"
+Environment="APP_CONFIG_DIR={{APP_CONFIG_DIR}}"
+Environment="APP_DATA_DIR={{APP_DATA_DIR}}"
+Environment="APP_RUNTIME_DIR={{APP_RUNTIME_DIR}}"
+Environment="APP_RUNTIME_PATH={{APP_RUNTIME_PATH}}"
+Environment="APP_ENV_PATH={{APP_ENV_PATH}}"
+Environment="MODULES_MANIFEST_PATH={{MODULES_MANIFEST_PATH}}"
+Environment="PYTHONUNBUFFERED=1"
+Environment="PYTHONDONTWRITEBYTECODE=1"
+ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/runtime/main.py
+Restart=on-failure
+RestartSec=2s
+TimeoutStartSec=30s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{APP_NAME}}
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths={{APP_DIR}} {{APP_CONFIG_DIR}}
+ReadWritePaths={{APP_DATA_DIR}} {{APP_RUNTIME_DIR}}
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

@@ -5,3 +5,6 @@ __pycache__/
 .pytest_cache/
 .coverage
 repo_data/
+resources/app_env.json
+resources/default_install.json
+resources/agents-system.module.json

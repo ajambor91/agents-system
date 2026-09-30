@@ -1,0 +1,11 @@
+{
+  "schema_version": 1, "command": "app-remove", "mode": "write",
+  "host_script": "host_scripts/asystem-app-remove.sh",
+  "description": "Usuwa wpis modułu z rejestru runtime.", "usage": "asystem_app_remove --name NAME",
+  "target": {"application": "Application", "command_class": "AppRemove", "method": "execute"},
+  "flags": [
+    {"short": "-n", "long": "--name", "required": true, "takes_value": true, "type": "string", "description": "Nazwa modułu."},
+    {"short": "-h", "long": "--help", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Wyświetl pomoc."}
+  ],
+  "steps": ["read-registry", "remove-existing-entry", "atomic-write"], "outputs": ["removed-module-json"]
+}

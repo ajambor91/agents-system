@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "command": "reinstall",
+  "mode": "write",
+  "host_script": "host_scripts/asystem-reinstall.sh",
+  "description": "Odtwarza instalację i wrappery, zachowując lokalny app_env.json.",
+  "usage": "sudo asystem_reinstall [--user NAME] --yes",
+  "target": {
+    "application": "Application",
+    "command_class": "Reinstall",
+    "method": "execute"
+  },
+  "flags": [
+    {
+      "short": "-u",
+      "long": "--user",
+      "required": false,
+      "takes_value": true,
+      "type": "string",
+      "description": "Docelowy użytkownik systemowy.",
+      "env": "USER_SYSTEM",
+      "var": "USER_SYSTEM"
+    },
+    {
+      "short": null,
+      "long": "--yes",
+      "required": false,
+      "takes_value": false,
+      "type": "boolean",
+      "default": false,
+      "description": "Jawne potwierdzenie operacji."
+    },
+    {
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false,
+      "type": "boolean",
+      "default": false,
+      "description": "Wyświetl pomoc bez skutków ubocznych."
+    }
+  ],
+  "steps": [
+    "require-confirmation",
+    "ensure-system-user",
+    "prepare-directories",
+    "refresh-checkout",
+    "publish-wrappers",
+    "republish-existing-environment"
+  ],
+  "outputs": [
+    "installation-json"
+  ]
+}

@@ -1,0 +1,10 @@
+[
+  {"name": "APP_NAME", "value": "agents-system"},
+  {"name": "USER_SYSTEM", "value": "user-system"},
+  {"name": "USER_GROUP", "value": "user-system"},
+  {"name": "USER_HOME", "value": "/home/user-system"},
+  {"name": "SYSTEM_INSTALL_ROOT", "value": "/opt"},
+  {"name": "CONFIG_ROOT", "value": "/etc/agents-system"},
+  {"name": "COMMANDS_DIR", "value": "/usr/local/bin"},
+  {"name": "MANIFEST_PATH", "value": "/etc/agents-system"}
+]

@@ -1,0 +1,3 @@
+"""Shared resident runtime application."""
+
+

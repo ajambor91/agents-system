@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "kind": "internal-script-api",
+  "name": "render-modules-manifest",
+  "description": "Renders and validates the installed Agents System modules manifest.",
+  "contract": "internal_scripts/render-modules-manifest.json",
+  "executable": "internal_scripts/render-modules-manifest.sh",
+  "python_target": "src/internal_scripts/render_modules_manifest.py",
+  "flag_names": [
+    "-a",
+    "--app-dir",
+    "-d",
+    "--modules-dir",
+    "-m",
+    "--manifest-path",
+    "-o",
+    "--output",
+    "-f",
+    "--force",
+    "-v",
+    "--verbose",
+    "-h",
+    "--help"
+  ],
+  "flags": [
+    {
+      "name": "app_dir",
+      "short": "-a",
+      "long": "--app-dir",
+      "required": true,
+      "takes_value": true
+    },
+    {
+      "name": "modules_dir",
+      "short": "-d",
+      "long": "--modules-dir",
+      "required": true,
+      "takes_value": true
+    },
+    {
+      "name": "manifest_path",
+      "short": "-m",
+      "long": "--manifest-path",
+      "required": true,
+      "takes_value": true
+    },
+    {
+      "name": "output",
+      "short": "-o",
+      "long": "--output",
+      "required": false,
+      "takes_value": true
+    },
+    {
+      "name": "force",
+      "short": "-f",
+      "long": "--force",
+      "required": false,
+      "takes_value": false
+    },
+    {
+      "name": "verbose",
+      "short": "-v",
+      "long": "--verbose",
+      "required": false,
+      "takes_value": false
+    },
+    {
+      "name": "help",
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false
+    }
+  ]
+}

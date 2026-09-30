@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "version": "0.0.2",
+  "kind": "repository-manifest",
+  "absolute_repo_dir": "/home/user-system/repositories/agents-system",
+  "repository": {
+    "name": "agents-system",
+    "purpose": "Define and run shared local infrastructure for repositories and AI agents.",
+    "status": "implemented"
+  },
+  "application": {
+    "language": "python",
+    "entrypoint": "src/agents-system/main.py",
+    "resident_handler": "create_service",
+    "one_command_per_class": true
+  },
+  "applications": [
+    {
+      "id": "agents-system",
+      "entrypoint": "src/agents-system/main.py",
+      "status": "implemented",
+      "role": "control-plane"
+    },
+    {
+      "id": "runtime",
+      "entrypoint": "src/runtime/main.py",
+      "status": "implemented",
+      "role": "resident-runtime"
+    },
+    {
+      "id": "agents-data-runtime",
+      "entrypoint": "src/agents-data-runtime/main.py",
+      "status": "migrated",
+      "role": "agent-communication-runtime"
+    },
+    {
+      "id": "app_api",
+      "entrypoint": "src/app_api/main.py",
+      "status": "implemented",
+      "role": "console-api"
+    },
+    {
+      "id": "agents-manager",
+      "entrypoint": "src/agents-manager/main.py",
+      "status": "migrated",
+      "role": "desktop"
+    },
+    {
+      "id": "agents-data",
+      "entrypoint": "src/agents-data/main.py",
+      "status": "migrated",
+      "role": "local-data-client"
+    },
+    {
+      "id": "agents-data-backend",
+      "entrypoint": "src/agents-data-backend/main.py",
+      "status": "scaffold",
+      "role": "data-backend"
+    }
+  ],
+  "architecture": {
+    "document": "ARCHITECTURE.md",
+    "merge_plans": [
+      "AGENT_MANAGER_MERGE.md",
+      "COMMUNICATION_STACK_MERGE.md"
+    ]
+  },
+  "system": true,
+  "commands": [
+    "asystem",
+    "asystem_install",
+    "asystem_reinstall",
+    "asystem_app_add",
+    "asystem_app_call",
+    "asystem_app_list",
+    "asystem_app_remove",
+    "asystem_env_init",
+    "asystem_env_export",
+    "get_var",
+    "asystem_runtime_start",
+    "asystem_runtime_status",
+    "asystem_runtime_stop",
+    "asystem_status",
+    "ausers_create",
+    "ausers_get",
+    "ausers_list",
+    "ausers_set"
+  ]
+}

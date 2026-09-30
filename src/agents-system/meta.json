@@ -1,0 +1,9 @@
+{
+    "name": "agents-system",
+    "namespace": "agents_system",
+    "entrypoint": "main.py",
+    "application": {
+        "module": "app.application",
+        "class": "Application"
+    }
+}

@@ -1,0 +1,1154 @@
+{
+  "schema_version": 1,
+  "version": 1,
+  "kind": "agents-system-modules-manifest",
+  "app_module_name": "agents-system",
+  "manifest_absolute_path": "${MODULES_MANIFEST_PATH}",
+  "absolute_path": "${MODULES_DIR}",
+  "app_dir": "${APP_DIR}",
+  "children": [
+    {
+      "section_name": "agents",
+      "absolute_module_path": "${MODULES_DIR}/agents-manager",
+      "is_menu_option": true,
+      "is_runtime": false,
+      "runtime": [
+        "main"
+      ],
+      "module_name": "agents-manager",
+      "menu_name": "Agents Manager",
+      "description": "Instalacja, aktualizacja, wykonanie, stan i narzędzia lokalnych agentów OpenClaw.",
+      "commands": [
+        {
+          "name": "install",
+          "description": "Instaluje agenta z wersjonowanej definicji i przygotowuje jego runtime.",
+          "usage": "asystem agents install [-n NAME] [-u USER] [-m MODEL] [-g GATEWAY_USER] [--force] [--dry-run] [-v]",
+          "implementation_status": "not-implemented",
+          "flags": [
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Nazwa definicji agenta; bez flagi wybierany jest config.json z default=true.",
+              "usage": "-n NAME",
+              "takes_value": true,
+              "type": "agent-name",
+              "required": false
+            },
+            {
+              "name": "user",
+              "short": "-u",
+              "long": "--user",
+              "aliases": [],
+              "description": "Dedykowany użytkownik Linux agenta.",
+              "usage": "-u USER",
+              "takes_value": true,
+              "type": "linux-user",
+              "required": false
+            },
+            {
+              "name": "model",
+              "short": "-m",
+              "long": "--model",
+              "aliases": [],
+              "description": "Model przypisany agentowi w OpenClaw.",
+              "usage": "-m MODEL",
+              "takes_value": true,
+              "type": "string",
+              "required": false
+            },
+            {
+              "name": "gateway_user",
+              "short": "-g",
+              "long": "--gateway-user",
+              "aliases": [
+                "--gateway"
+              ],
+              "description": "Użytkownik uruchamiający gateway OpenClaw.",
+              "usage": "-g USER",
+              "takes_value": true,
+              "type": "linux-user",
+              "required": false
+            },
+            {
+              "name": "force",
+              "short": null,
+              "long": "--force",
+              "aliases": [],
+              "description": "Odświeża zarządzane pliki bez usuwania workspace.",
+              "usage": "--force",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "dry_run",
+              "short": null,
+              "long": "--dry-run",
+              "aliases": [],
+              "description": "Pokazuje plan bez zmiany stanu.",
+              "usage": "--dry-run",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "verbose",
+              "short": "-v",
+              "long": "--verbose",
+              "aliases": [],
+              "description": "Pokazuje wykonywane polecenia systemowe.",
+              "usage": "-v",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "description": "Odświeża pliki, narzędzia, bootstrap i konfigurację istniejącego agenta.",
+          "usage": "asystem agents update -n NAME [-g GATEWAY_USER] [--dry-run] [-v]",
+          "implementation_status": "not-implemented",
+          "flags": [
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Nazwa agenta.",
+              "usage": "-n NAME",
+              "takes_value": true,
+              "type": "agent-name",
+              "required": true
+            },
+            {
+              "name": "gateway_user",
+              "short": "-g",
+              "long": "--gateway-user",
+              "aliases": [
+                "--gateway"
+              ],
+              "description": "Użytkownik uruchamiający gateway OpenClaw.",
+              "usage": "-g USER",
+              "takes_value": true,
+              "type": "linux-user",
+              "required": false
+            },
+            {
+              "name": "dry_run",
+              "short": null,
+              "long": "--dry-run",
+              "aliases": [],
+              "description": "Pokazuje plan bez zmiany stanu.",
+              "usage": "--dry-run",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "verbose",
+              "short": "-v",
+              "long": "--verbose",
+              "aliases": [],
+              "description": "Pokazuje wykonywane polecenia systemowe.",
+              "usage": "-v",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "exec",
+          "description": "Uruchamia polecenie przez AgentExecutor w środowisku wskazanego agenta.",
+          "usage": "asystem agents exec -n NAME -c COMMAND [-r REQUESTER]",
+          "implementation_status": "not-implemented",
+          "flags": [
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Nazwa agenta.",
+              "usage": "-n NAME",
+              "takes_value": true,
+              "type": "agent-name",
+              "required": true
+            },
+            {
+              "name": "command",
+              "short": "-c",
+              "long": "--command",
+              "aliases": [],
+              "description": "Polecenie przekazywane AgentExecutorowi.",
+              "usage": "-c COMMAND",
+              "takes_value": true,
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "requested_by",
+              "short": "-r",
+              "long": "--requested-by",
+              "aliases": [],
+              "description": "Tożsamość żądająca wykonania.",
+              "usage": "-r REQUESTER",
+              "takes_value": true,
+              "type": "string",
+              "required": false
+            }
+          ]
+        },
+        {
+          "name": "delete",
+          "description": "Usuwa agenta; operacja pozostaje placeholderem w agents-manager.",
+          "usage": "asystem agents delete -n NAME",
+          "implementation_status": "not-implemented",
+          "flags": [
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Nazwa agenta.",
+              "usage": "-n NAME",
+              "takes_value": true,
+              "type": "agent-name",
+              "required": true
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "Wyświetla zsynchronizowany rejestr agentów.",
+          "usage": "asystem agents list [--json]",
+          "implementation_status": "not-implemented",
+          "flags": [
+            {
+              "name": "json",
+              "short": null,
+              "long": "--json",
+              "aliases": [],
+              "description": "Zwraca JSON; w konsoli asystem jest również globalnym trybem wyjścia.",
+              "usage": "--json",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "description": "Pokazuje stan, OpenClaw i zadania jednego agenta.",
+          "usage": "asystem agents status -n NAME [--json]",
+          "implementation_status": "not-implemented",
+          "flags": [
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Nazwa agenta.",
+              "usage": "-n NAME",
+              "takes_value": true,
+              "type": "agent-name",
+              "required": true
+            },
+            {
+              "name": "json",
+              "short": null,
+              "long": "--json",
+              "aliases": [],
+              "description": "Zwraca JSON; w konsoli asystem jest również globalnym trybem wyjścia.",
+              "usage": "--json",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "tools",
+          "description": "Pokazuje politykę narzędzi zapisaną dla agenta w OpenClaw.",
+          "usage": "asystem agents tools -n NAME [--json]",
+          "implementation_status": "not-implemented",
+          "flags": [
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Nazwa agenta.",
+              "usage": "-n NAME",
+              "takes_value": true,
+              "type": "agent-name",
+              "required": true
+            },
+            {
+              "name": "json",
+              "short": null,
+              "long": "--json",
+              "aliases": [],
+              "description": "Zwraca JSON; w konsoli asystem jest również globalnym trybem wyjścia.",
+              "usage": "--json",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "wakeup",
+          "description": "Budzi agenta i przekazuje kopertę wiadomości przez standardowe wejście.",
+          "usage": "asystem agents wakeup -n NAME [-g GATEWAY_USER] [--timeout SECONDS] [-v]",
+          "implementation_status": "not-implemented",
+          "input": {
+            "source": "stdin",
+            "type": "message-envelope-json",
+            "maximum_bytes": 1048576
+          },
+          "flags": [
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Nazwa agenta.",
+              "usage": "-n NAME",
+              "takes_value": true,
+              "type": "agent-name",
+              "required": true
+            },
+            {
+              "name": "gateway_user",
+              "short": "-g",
+              "long": "--gateway-user",
+              "aliases": [],
+              "description": "Użytkownik gatewaya OpenClaw.",
+              "usage": "-g USER",
+              "takes_value": true,
+              "type": "linux-user",
+              "required": false
+            },
+            {
+              "name": "timeout",
+              "short": null,
+              "long": "--timeout",
+              "aliases": [],
+              "description": "Limit czasu wybudzenia w sekundach.",
+              "usage": "--timeout SECONDS",
+              "takes_value": true,
+              "type": "integer",
+              "required": false,
+              "default": 600
+            },
+            {
+              "name": "verbose",
+              "short": "-v",
+              "long": "--verbose",
+              "aliases": [],
+              "description": "Pokazuje diagnostykę gatewaya.",
+              "usage": "-v",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "gateway-start",
+          "description": "Uruchamia gateway wiadomości agents-manager.",
+          "usage": "asystem agents gateway-start",
+          "implementation_status": "not-implemented",
+          "flags": []
+        },
+        {
+          "name": "gateway-status",
+          "description": "Pokazuje stan gatewaya wiadomości agents-manager.",
+          "usage": "asystem agents gateway-status",
+          "implementation_status": "not-implemented",
+          "flags": []
+        },
+        {
+          "name": "gateway-stop",
+          "description": "Zatrzymuje gateway wiadomości agents-manager.",
+          "usage": "asystem agents gateway-stop",
+          "implementation_status": "not-implemented",
+          "flags": []
+        },
+        {
+          "name": "gateway-restart",
+          "description": "Restartuje gateway wiadomości agents-manager.",
+          "usage": "asystem agents gateway-restart",
+          "implementation_status": "not-implemented",
+          "flags": []
+        }
+      ]
+    },
+    {
+      "module_name": "agents-data",
+      "section_name": null,
+      "absolute_module_path": "${MODULES_DIR}/agents-data",
+      "is_menu_option": false,
+      "is_runtime": false,
+      "runtime": [
+        "agents-data-runtime"
+      ],
+      "menu_name": null,
+      "description": "Lokalny klient danych i wiadomości agenta, obsługiwany przez agents-data-runtime.",
+      "commands": []
+    },
+    {
+      "module_name": "agents-data-backend",
+      "section_name": null,
+      "absolute_module_path": "${MODULES_DIR}/agents-data-backend",
+      "is_menu_option": false,
+      "is_runtime": false,
+      "runtime": [],
+      "menu_name": null,
+      "description": "Backend trwałych danych, cache i streamów systemu agentów.",
+      "commands": []
+    },
+    {
+      "module_name": "agents-system",
+      "section_name": "system",
+      "absolute_module_path": "${MODULES_DIR}/agents-system",
+      "is_menu_option": true,
+      "is_runtime": false,
+      "runtime": [
+        "main"
+      ],
+      "menu_name": "Agents System",
+      "description": "Control plane systemu agentów: konfiguracja, rejestr modułów, użytkownicy i zarządzanie runtime.",
+      "commands": [
+        {
+          "name": "app-add",
+          "description": "Rejestruje moduł aplikacji w rezydentnym runtime.",
+          "usage": "asystem_app_add --repo-name NAME [--repository-path PATH] [--entrypoint PATH] [--start]",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "name",
+              "short": "-r",
+              "long": "--repo-name",
+              "aliases": [],
+              "description": "Identyfikator repozytorium/modułu.",
+              "usage": "--repo-name VALUE",
+              "takes_value": true,
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "repository_path",
+              "short": null,
+              "long": "--repository-path",
+              "aliases": [],
+              "description": "Jawna ścieżka checkoutu.",
+              "usage": "--repository-path VALUE",
+              "takes_value": true,
+              "type": "path",
+              "required": false,
+              "default": null
+            },
+            {
+              "name": "repository_path",
+              "short": null,
+              "long": "--repo-path",
+              "aliases": [],
+              "description": "Alias ścieżki checkoutu.",
+              "usage": "--repo-path VALUE",
+              "takes_value": true,
+              "type": "path",
+              "required": false,
+              "default": null
+            },
+            {
+              "name": "entrypoint",
+              "short": null,
+              "long": "--entrypoint",
+              "aliases": [],
+              "description": "Jawny entrypoint Pythona.",
+              "usage": "--entrypoint VALUE",
+              "takes_value": true,
+              "type": "path",
+              "required": false,
+              "default": null
+            },
+            {
+              "name": "start",
+              "short": null,
+              "long": "--start",
+              "aliases": [],
+              "description": "Uruchom runtime po rejestracji.",
+              "usage": "--start",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc bez skutków ubocznych.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "app-call",
+          "description": "Wysyła obiekt JSON do zarejestrowanego modułu runtime.",
+          "usage": "asystem_app_call --name NAME [--payload JSON]",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Nazwa modułu.",
+              "usage": "--name VALUE",
+              "takes_value": true,
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "payload",
+              "short": "-p",
+              "long": "--payload",
+              "aliases": [],
+              "description": "Obiekt JSON przekazywany do modułu.",
+              "usage": "--payload VALUE",
+              "takes_value": true,
+              "type": "json",
+              "required": false,
+              "default": {}
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "app-list",
+          "description": "Wyświetla rejestr modułów runtime.",
+          "usage": "asystem_app_list",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "app-remove",
+          "description": "Usuwa wpis modułu z rejestru runtime.",
+          "usage": "asystem_app_remove --name NAME",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Nazwa modułu.",
+              "usage": "--name VALUE",
+              "takes_value": true,
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "env-export",
+          "description": "Ładuje konfigurację do bieżącej powłoki; plik wykonywalny renderuje bezpieczne instrukcje export.",
+          "usage": "asystem_env_export [--local | --file PATH]",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "local",
+              "short": "-l",
+              "long": "--local",
+              "aliases": [],
+              "description": "Czytaj resources/app_env.json.",
+              "usage": "--local",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "file",
+              "short": "-f",
+              "long": "--file",
+              "aliases": [],
+              "description": "Czytaj wskazany dokument JSON.",
+              "usage": "--file VALUE",
+              "takes_value": true,
+              "type": "path",
+              "required": false,
+              "default": null
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "env-init",
+          "description": "Waliduje, zapisuje i publikuje konfigurację środowiska Agents System.",
+          "usage": "asystem_env_init (--default | --file PATH | --interactive) [--force]",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "default",
+              "short": "-d",
+              "long": "--default",
+              "aliases": [],
+              "description": "Użyj wersjonowanego app_env.template.json.",
+              "usage": "--default",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "file",
+              "short": "-f",
+              "long": "--file",
+              "aliases": [],
+              "description": "Użyj wskazanego dokumentu JSON.",
+              "usage": "--file VALUE",
+              "takes_value": true,
+              "type": "path",
+              "required": false,
+              "default": null
+            },
+            {
+              "name": "interactive",
+              "short": "-i",
+              "long": "--interactive",
+              "aliases": [],
+              "description": "Zapytaj o wartości w terminalu.",
+              "usage": "--interactive",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "force",
+              "short": null,
+              "long": "--force",
+              "aliases": [],
+              "description": "Zastąp istniejący zwykły plik centralny.",
+              "usage": "--force",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc bez zapisu.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "get-var",
+          "description": "Odczytuje jedną albo wszystkie zmienne Agents System.",
+          "usage": "get_var [--local] [NAME]",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "local",
+              "short": "-l",
+              "long": "--local",
+              "aliases": [],
+              "description": "Czytaj wyłącznie resources/app_env.json.",
+              "usage": "--local",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ],
+          "positionals": [
+            {
+              "name": "name",
+              "required": false,
+              "default": null,
+              "description": "Nazwa zmiennej; brak wypisuje wszystkie."
+            }
+          ]
+        },
+        {
+          "name": "install",
+          "description": "Instaluje konto, checkout, konfigurację i publiczne wrappery Agents System.",
+          "usage": "sudo asystem_install [--user NAME] --yes",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "user",
+              "short": "-u",
+              "long": "--user",
+              "aliases": [],
+              "description": "Docelowy użytkownik systemowy.",
+              "usage": "--user VALUE",
+              "takes_value": true,
+              "type": "string",
+              "required": false
+            },
+            {
+              "name": "yes",
+              "short": null,
+              "long": "--yes",
+              "aliases": [],
+              "description": "Jawne potwierdzenie operacji.",
+              "usage": "--yes",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc bez skutków ubocznych.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "reinstall",
+          "description": "Odtwarza instalację i wrappery, zachowując lokalny app_env.json.",
+          "usage": "sudo asystem_reinstall [--user NAME] --yes",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "user",
+              "short": "-u",
+              "long": "--user",
+              "aliases": [],
+              "description": "Docelowy użytkownik systemowy.",
+              "usage": "--user VALUE",
+              "takes_value": true,
+              "type": "string",
+              "required": false
+            },
+            {
+              "name": "yes",
+              "short": null,
+              "long": "--yes",
+              "aliases": [],
+              "description": "Jawne potwierdzenie operacji.",
+              "usage": "--yes",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc bez skutków ubocznych.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "runtime-start",
+          "description": "Uruchamia rezydentny runtime modułów.",
+          "usage": "asystem_runtime_start",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "runtime-status",
+          "description": "Wyświetla stan rezydentnego runtime.",
+          "usage": "asystem_runtime_status",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "runtime-stop",
+          "description": "Zatrzymuje rezydentny runtime.",
+          "usage": "asystem_runtime_stop",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "system-status",
+          "description": "Pokazuje zbiorczy stan repozytoriów, agentów i runtime.",
+          "usage": "asystem_status [--json]",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "json",
+              "short": null,
+              "long": "--json",
+              "aliases": [],
+              "description": "Zwróć raport JSON.",
+              "usage": "--json",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "user-create",
+          "description": "Tworzy konto i katalogi użytkownika systemowego.",
+          "usage": "ausers_create [--user NAME] --yes",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "user",
+              "short": "-u",
+              "long": "--user",
+              "aliases": [],
+              "description": "Nazwa użytkownika.",
+              "usage": "--user VALUE",
+              "takes_value": true,
+              "type": "string",
+              "required": false
+            },
+            {
+              "name": "yes",
+              "short": null,
+              "long": "--yes",
+              "aliases": [],
+              "description": "Jawne potwierdzenie operacji.",
+              "usage": "--yes",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "user-get",
+          "description": "Odczytuje dane użytkownika systemowego.",
+          "usage": "ausers_get [--user NAME] [--home | --name | --group]",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "user",
+              "short": "-u",
+              "long": "--user",
+              "aliases": [],
+              "description": "Nazwa użytkownika.",
+              "usage": "--user VALUE",
+              "takes_value": true,
+              "type": "string",
+              "required": false,
+              "default": null
+            },
+            {
+              "name": "home",
+              "short": null,
+              "long": "--home",
+              "aliases": [],
+              "description": "Wypisz tylko katalog domowy.",
+              "usage": "--home",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "name",
+              "short": "-n",
+              "long": "--name",
+              "aliases": [],
+              "description": "Wypisz tylko nazwę.",
+              "usage": "--name",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "group",
+              "short": "-g",
+              "long": "--group",
+              "aliases": [],
+              "description": "Wypisz tylko grupę.",
+              "usage": "--group",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "user-list",
+          "description": "Wyświetla konta posiadające katalog w /home.",
+          "usage": "ausers_list",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        },
+        {
+          "name": "user-set",
+          "description": "Ustawia domyślnego użytkownika Agents System.",
+          "usage": "ausers_set --user NAME --yes",
+          "implementation_status": "implemented",
+          "flags": [
+            {
+              "name": "user",
+              "short": "-u",
+              "long": "--user",
+              "aliases": [],
+              "description": "Nazwa istniejącego użytkownika.",
+              "usage": "--user VALUE",
+              "takes_value": true,
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "yes",
+              "short": null,
+              "long": "--yes",
+              "aliases": [],
+              "description": "Jawne potwierdzenie operacji.",
+              "usage": "--yes",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            },
+            {
+              "name": "help",
+              "short": "-h",
+              "long": "--help",
+              "aliases": [],
+              "description": "Wyświetl pomoc.",
+              "usage": "--help",
+              "takes_value": false,
+              "type": "boolean",
+              "required": false,
+              "default": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "module_name": "app_api",
+      "section_name": null,
+      "absolute_module_path": "${MODULES_DIR}/app_api",
+      "is_menu_option": false,
+      "is_runtime": false,
+      "runtime": [
+        "main"
+      ],
+      "menu_name": null,
+      "description": "Adapter konsoli i API interfejsu asystem.",
+      "commands": []
+    },
+    {
+      "module_name": "agents-data-runtime",
+      "section_name": null,
+      "absolute_module_path": "${MODULES_DIR}/agents-data-runtime",
+      "is_menu_option": false,
+      "is_runtime": true,
+      "runtime": [
+        "agents-data-runtime"
+      ],
+      "menu_name": null,
+      "description": "Osobny runtime komunikacji i dostarczania wiadomości agentom.",
+      "commands": []
+    },
+    {
+      "module_name": "runtime",
+      "section_name": null,
+      "absolute_module_path": "${MODULES_DIR}/runtime",
+      "is_menu_option": false,
+      "is_runtime": true,
+      "runtime": [
+        "main"
+      ],
+      "menu_name": null,
+      "description": "Główny rezydentny runtime modułów Agents System.",
+      "commands": []
+    }
+  ]
+}

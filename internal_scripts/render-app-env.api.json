@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "kind": "internal-script-api",
+  "name": "render-app-env",
+  "description": "Renders the mode-specific Agents System environment document.",
+  "contract": "internal_scripts/render-app-env.json",
+  "executable": "internal_scripts/render-app-env.sh",
+  "python_target": "src/internal_scripts/render_app_env.py",
+  "flag_names": [
+    "-m",
+    "--mode",
+    "-d",
+    "--install-dir",
+    "--user-system",
+    "--user-group",
+    "--user-system-home",
+    "--config-dir",
+    "--data-dir",
+    "--runtime-dir",
+    "--bash-source",
+    "-o",
+    "--output",
+    "-f",
+    "--force",
+    "-v",
+    "--verbose",
+    "-h",
+    "--help"
+  ],
+  "flags": [
+    {
+      "name": "mode",
+      "short": "-m",
+      "long": "--mode",
+      "required": true,
+      "takes_value": true,
+      "choices": [
+        "system",
+        "dev"
+      ]
+    },
+    {
+      "name": "install_dir",
+      "short": "-d",
+      "long": "--install-dir",
+      "required": true,
+      "takes_value": true
+    },
+    {
+      "name": "user_system",
+      "short": null,
+      "long": "--user-system",
+      "required": false,
+      "takes_value": true
+    },
+    {
+      "name": "user_group",
+      "short": null,
+      "long": "--user-group",
+      "required": false,
+      "takes_value": true
+    },
+    {
+      "name": "user_system_home",
+      "short": null,
+      "long": "--user-system-home",
+      "required": false,
+      "takes_value": true
+    },
+    {
+      "name": "config_dir",
+      "short": null,
+      "long": "--config-dir",
+      "required": false,
+      "takes_value": true
+    },
+    {
+      "name": "data_dir",
+      "short": null,
+      "long": "--data-dir",
+      "required": false,
+      "takes_value": true
+    },
+    {
+      "name": "runtime_dir",
+      "short": null,
+      "long": "--runtime-dir",
+      "required": false,
+      "takes_value": true
+    },
+    {
+      "name": "bash_source",
+      "short": null,
+      "long": "--bash-source",
+      "required": false,
+      "takes_value": true,
+      "choices": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "output",
+      "short": "-o",
+      "long": "--output",
+      "required": false,
+      "takes_value": true
+    },
+    {
+      "name": "force",
+      "short": "-f",
+      "long": "--force",
+      "required": false,
+      "takes_value": false
+    },
+    {
+      "name": "verbose",
+      "short": "-v",
+      "long": "--verbose",
+      "required": false,
+      "takes_value": false
+    },
+    {
+      "name": "help",
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false
+    }
+  ]
+}

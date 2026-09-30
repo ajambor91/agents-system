@@ -1,0 +1,11 @@
+{
+  "schema_version": 1, "command": "user-set", "mode": "write", "host_script": "host_scripts/ausers-set.sh",
+  "description": "Ustawia domyślnego użytkownika Agents System.", "usage": "ausers_set --user NAME --yes",
+  "target": {"application": "Application", "command_class": "UserSet", "method": "execute"},
+  "flags": [
+    {"short": "-u", "long": "--user", "required": true, "takes_value": true, "type": "string", "description": "Nazwa istniejącego użytkownika."},
+    {"short": null, "long": "--yes", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Jawne potwierdzenie operacji."},
+    {"short": "-h", "long": "--help", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Wyświetl pomoc."}
+  ],
+  "steps": ["require-confirmation", "validate-user", "atomic-write-user-config"], "outputs": ["user-json"]
+}

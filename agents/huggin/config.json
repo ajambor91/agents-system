@@ -1,0 +1,18 @@
+{
+    "name": "huggin",
+    "user": "huggin",
+    "model": "google/gemini-3.7-flash",
+    "default": false,
+    "gateway_host": "127.0.0.1",
+    "gateway_port": 18789,
+    "execution": {
+        "backend": "agent-executor",
+        "required": true,
+        "timeout_seconds": 300
+    },
+    "tools": {
+        "profile": "coding",
+        "also_allow": ["agent_exec"],
+        "deny": ["exec", "process"]
+    }
+}

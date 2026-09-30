@@ -102,17 +102,68 @@ Nie mieszaj tych dokumentów:
 
 Wspólne szablony JSON mają docelowo należeć do `agents-system`; do czasu migracji nie zmieniaj schematu `repo-manifests` bez aktualizacji generatora i testów.
 
+Konfiguracja środowiska ma osobny kontrakt:
+
+- `resources/app_env.template.json` jest wersjonowanym źródłem i musi zawierać
+  opisy, przykłady oraz placeholdery `${NAME}` zamiast powtarzanych ścieżek;
+- `resources/app_env.json` jest lokalnym, ignorowanym przez Git artefaktem;
+- `APP_ENV_PATH` wskazuje aktywny dokument trybu systemowego; w trybie `dev`
+  aktywny jest lokalny `resources/app_env.json`;
+- aplikacje nie eksportują konfiguracji automatycznie do procesu;
+  `EnvironmentService.load_into_environment()` pozostaje wyłącznie jawnym API
+  i jest nieaktywne w trybie `dev`;
+- gdy `INSTALL_MODE=dev` i JSON zawiera `BASH_SOURCE=true`, kolejność to
+  środowisko powłoki, jawna flaga CLI, a następnie `app_env.json`; poza tym
+  aplikacje ignorują środowisko i stosują kolejność flaga CLI, `app_env.json`;
+- eksporty powłoki generuje wyłącznie `EnvironmentService`; `BASH_SOURCE` nie
+  jest eksportowane, ponieważ jest specjalną tablicą Basha;
+- domyślny `get_var` czyta aktywną konfigurację, a `--local` jawnie wybiera
+  artefakt w repozytorium.
+
 ## Bezpieczeństwo i testy
 
 Przed zapisem waliduj ścieżkę, nie nadpisuj zwykłych plików bez zgody i zapisuj atomowo. `.env` musi być ignorowany przez Git, a `.env.example` nie może zawierać sekretów. Uprawnienia root, sieć i operacje destrukcyjne wymagają jawnego kontraktu.
 
 Minimalne testy zmiany obejmują parser flag, zachowanie klasy use-case, wrapper, tryb systemowy, konfigurację środowiska, ścieżki oraz zgodność JSON z implementacją. Operacje usuwania testuj wyłącznie w katalogu tymczasowym.
 
-## Runtime modułów
+## Stałe aplikacje i runtime
 
-Rezydentny runtime znajduje się w `src/agents-system/main.py`. Moduły dodaje się
-do rejestru przez `asystem_app_add`; nie importuj repozytoriów przez stałe,
-ręcznie wpisane ścieżki w kodzie Agents System.
+Ścieżki aplikacji są częścią kontraktu repozytorium i nie są wyliczane z
+nazwy paczki. Control plane znajduje się zawsze w
+`src/agents-system/main.py`. Wariant `src/agents_system/` z podkreśleniem jest
+niedozwolony.
+
+Wspólny, rezydentny runtime ma osobny entrypoint `src/runtime/main.py`, a jego
+silnik znajduje się w `src/runtime/service.py`. Control plane może nim
+zarządzać, ale logika utrzymywania procesu należy do katalogu `runtime`.
+
+Pozostałe stałe katalogi aplikacji to:
+
+- `src/app_api/` — manifest-driven konsola i API interfejsu `asystem`,
+- `src/agents-manager/` — wyłącznie desktopowa aplikacja Pythona,
+- `src/agents-data/` — lokalny klient danych i wiadomości agenta,
+- `src/agents-data-runtime/` — osobny runtime komunikacji i dostarczania wiadomości,
+- `src/agents-data-backend/` — backend trwałych danych, cache i streamów.
+
+`app_api` jest zaimplementowanym adapterem interfejsu i nigdy nie wykonuje
+logiki domenowej bezpośrednio. Ładuje `asystem.app.json` oraz pliki
+`*.module.json`, scala ich widok wyłącznie w pamięci i przekazuje typowaną
+kopertę do komendy `console-dispatch` w control plane. Każda sekcja menu ma
+osobny manifest JSON. Publiczny wrapper `host_scripts/asystem.sh` prowadzi
+wyłącznie do `src/app_api/main.py`.
+
+W `app_api` plik `main.py` nie wybiera runtime ani renderera. Te decyzje należą
+do `app/application.py`. Adaptery manifestów, renderowania, control plane i IPC
+runtime muszą pozostać w `app/services/`; nie dodawaj ponownie płaskich modułów
+`application.py`, `manifests.py`, `renderer.py` lub `control_plane.py` obok
+`main.py`.
+
+Pozostałe trzy aplikacje są obecnie szkieletami migracji. Nie przenoś do nich
+kodu produkcyjnego bez zachowania etapów i testów opisanych w
+`AGENT_MANAGER_MERGE.md` i `COMMUNICATION_STACK_MERGE.md`.
+
+Moduły dodaje się do rejestru przez `asystem_app_add`; nie importuj
+repozytoriów przez stałe, ręcznie wpisane ścieżki w kodzie Agents System.
 
 Kontrakt załadowanej aplikacji to jedno z poniższych:
 

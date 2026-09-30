@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "command": "render-modules-manifest",
+  "mode": "write",
+  "steps_scope": "implemented_behavior_contract",
+  "host_script": "${APPLICATION_ROOT}/internal_scripts/render-modules-manifest.sh",
+  "target": {
+    "python_script": "${APPLICATION_ROOT}/src/internal_scripts/render_modules_manifest.py",
+    "entrypoint": "main",
+    "runtime": false
+  },
+  "flags": [
+    {
+      "short": "-a",
+      "long": "--app-dir",
+      "required": true,
+      "takes_value": true,
+      "default": null
+    },
+    {
+      "short": "-d",
+      "long": "--modules-dir",
+      "required": true,
+      "takes_value": true,
+      "default": null
+    },
+    {
+      "short": "-m",
+      "long": "--manifest-path",
+      "required": true,
+      "takes_value": true,
+      "default": null
+    },
+    {
+      "short": "-o",
+      "long": "--output",
+      "required": false,
+      "takes_value": true,
+      "default": "${APPLICATION_ROOT}/resources/agents-system.module.json"
+    },
+    {
+      "short": "-f",
+      "long": "--force",
+      "required": false,
+      "takes_value": false,
+      "default": false
+    },
+    {
+      "short": "-v",
+      "long": "--verbose",
+      "required": false,
+      "takes_value": false,
+      "default": false
+    },
+    {
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false,
+      "default": false
+    }
+  ],
+  "source": {
+    "template": "${APPLICATION_ROOT}/resources/agents-system.module.template.json",
+    "format": "agents-system-modules-manifest children array",
+    "resolved_placeholders": [
+      "${APP_DIR}",
+      "${MODULES_DIR}",
+      "${MODULES_MANIFEST_PATH}"
+    ]
+  },
+  "destination": {
+    "rendered_file_name": "agents-system.module.json",
+    "default_output": "${APPLICATION_ROOT}/resources/agents-system.module.json",
+    "installed_output": "${APP_CONFIG_DIR}/${MODULES_MANIFEST_FILE}"
+  },
+  "render_context": [
+    {
+      "name": "APP_DIR",
+      "source": "--app-dir",
+      "required": true,
+      "description": "Absolute root of the installed application package."
+    },
+    {
+      "name": "MODULES_DIR",
+      "source": "--modules-dir",
+      "required": true,
+      "description": "Absolute src directory containing all module directories."
+    },
+    {
+      "name": "MODULES_MANIFEST_PATH",
+      "source": "--manifest-path",
+      "required": true,
+      "description": "Absolute final manifest path under APP_CONFIG_DIR."
+    }
+  ],
+  "render_rules": [
+    "Replace top-level ${APP_DIR}, ${MODULES_DIR} and ${MODULES_MANIFEST_PATH} placeholders.",
+    "Resolve every children[].absolute_module_path below MODULES_DIR.",
+    "Preserve menu commands and module runtime assignments.",
+    "Reject duplicate modules, paths, menu sections and unknown runtime references.",
+    "Reject every unresolved ${NAME} placeholder."
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "id": "parse-input",
+      "description": "Parse explicit modules and manifest paths."
+    },
+    {
+      "order": 2,
+      "id": "load-template",
+      "description": "Load and validate agents-system.module.template.json."
+    },
+    {
+      "order": 3,
+      "id": "render-paths",
+      "description": "Resolve manifest and module paths from installer-generated environment values."
+    },
+    {
+      "order": 4,
+      "id": "validate-graph",
+      "description": "Validate menu, runtime and command metadata."
+    },
+    {
+      "order": 5,
+      "id": "write-output",
+      "description": "Atomically write agents-system.module.json."
+    },
+    {
+      "order": 6,
+      "id": "verify-output",
+      "description": "Reload output and reject unresolved placeholders."
+    }
+  ],
+  "outputs": [
+    "rendered_agents-system.module.json",
+    "validated_modules_manifest"
+  ],
+  "failure_policy": "Malformed templates, unsafe paths, missing modules, duplicate identities, unknown runtimes or unresolved placeholders stop rendering; output is replaced atomically only with --force."
+}

@@ -1,5 +1,29 @@
 # Agents System
 
+Instalator systemu jest osobną aplikacją opisaną przez
+[`install/install.json`](install/install.json). Instrukcja użycia, tryby
+`repo`/`system` i rollback znajdują się w [`install/README.md`](install/README.md).
+
+Repozytorium jest docelowym monorepo systemu agentów. Kanoniczny opis
+architektury znajduje się w [ARCHITECTURE.md](ARCHITECTURE.md), a najbliższe
+plany scalenia w [AGENT_MANAGER_MERGE.md](AGENT_MANAGER_MERGE.md) oraz
+[COMMUNICATION_STACK_MERGE.md](COMMUNICATION_STACK_MERGE.md).
+
+Stałe entrypointy aplikacji:
+
+| Aplikacja | Entrypoint | Stan |
+| --- | --- | --- |
+| agents-system | `src/agents-system/main.py` | zaimplementowana |
+| runtime | `src/runtime/main.py` | zaimplementowana |
+| agents-data-runtime | `src/agents-data-runtime/main.py` | przeniesiony broker komunikacji |
+| app_api | `src/app_api/main.py` | zaimplementowana konsola/API |
+| agents-manager | `src/agents-manager/main.py` | kod przeniesiony |
+| agents-data | `src/agents-data/main.py` | kod przeniesiony |
+| agents-data-backend | `src/agents-data-backend/main.py` | szkielet migracji |
+
+Ścieżki te są jawne i stabilne; repozytorium nie używa katalogu
+`src/agents_system/`.
+
 `agents-system` jest repozytorium nadrzędnym dla lokalnego systemu agentów AI. Opisuje wspólne zasady, strukturę repozytoriów, bezpieczeństwo, lifecycle i kontrakty danych. Konkretne aplikacje oraz narzędzia są dostarczane przez osobne repozytoria.
 
 ## 1. Elementy systemu
@@ -227,3 +251,108 @@ sudo ausers_set --user user-system --yes
 ```
 
 `ausers_create` bez `--yes` tylko opisuje plan i nie zmienia systemu.
+
+## 12. Konfiguracja środowiska
+
+Bootstrap i reinstalacja także przechodzą przez klasy Pythona, a wrappery Bash
+jedynie przekazują argumenty. Obie operacje wymagają jawnego potwierdzenia:
+
+```bash
+sudo asystem_install --user user-system --yes
+sudo asystem_reinstall --user user-system --yes
+```
+
+Instalacja przygotowuje konto, checkout, publiczne linki i od razu publikuje
+domyślną konfigurację. Reinstalacja zachowuje istniejący
+`resources/app_env.json` i ponownie tworzy z niego artefakty centralne.
+
+Źródłem struktury jest wersjonowany `resources/app_env.template.json`. Każda
+zmienna ma `name`, `value`, `description` i `example`. Wartości mogą korzystać
+z placeholderów `${NAZWA}`, dlatego pełne ścieżki nie powtarzają
+`/home/user-system`. Placeholdery domenowe w postaci `{{repository_name}}` są
+zachowywane do późniejszego uzupełnienia przez aplikację.
+
+Konfigurację inicjalizuje dokładnie jeden z trybów:
+
+```bash
+sudo asystem_env_init --default
+sudo asystem_env_init --file /ścieżka/do/app_env.json
+sudo asystem_env_init --interactive
+```
+
+Po walidacji dokument jest atomowo zapisywany jako ignorowany przez Git
+`resources/app_env.json`. Następnie powstaje dowiązanie pod ścieżką wyliczoną
+pod `APP_ENV_PATH`, plik `environment.sh` oraz — przy
+uruchomieniu jako root — bezpieczna, root-owned konfiguracja
+`/etc/profile.d/agents-system.sh`. Istniejący zwykły plik centralny nie jest
+nadpisywany bez jawnego `--force`.
+
+Aplikacje odczytują konfigurację bez automatycznego eksportowania jej do procesu.
+W trybie `dev` z `BASH_SOURCE=true` obowiązuje kolejność: środowisko powłoki,
+flaga CLI, `app_env.json`; w pozostałych przypadkach: flaga CLI, `app_env.json`.
+Jawne ładowanie do środowiska przez `EnvironmentService` działa wyłącznie poza
+trybem `repo`. `asystem_env_init` generuje również integrację powłoki w
+`environment.sh` i `/etc/profile.d/agents-system.sh`. Po jej wczytaniu
+`asystem_env_export` jest funkcją wykonującą bezpieczne eksporty bezpośrednio w
+bieżącej powłoce:
+
+```bash
+asystem_env_export
+echo "$APP_DATA_DIR"
+```
+
+Pierwsza konfiguracja nie może zmienić procesu powłoki, który uruchomił
+`asystem_env_init`. Dla już otwartego terminala integrację wczytuje się raz:
+
+```bash
+source /etc/profile.d/agents-system.sh
+```
+
+Nowa sesja loginowa wczyta ją automatycznie. Wywołanie pliku wykonywalnego z
+pominięciem funkcji, np. `/usr/local/bin/asystem_env_export`, nadal wypisuje
+czyste instrukcje `export` dla automatyzacji.
+
+`asystem_env_export --local` ładuje lokalny artefakt, a `--file PATH` dowolny
+zgodny dokument. `get_var NAME` wypisuje pojedynczą wartość, `get_var` wszystkie
+wartości w formacie `NAME=value`, natomiast `get_var --local` zawsze omija
+środowisko procesu i czyta `resources/app_env.json`.
+
+Parser wykrywa nieznane placeholdery, cykle, powtórzone nazwy, błędne nazwy
+zmiennych i nieobsługiwaną wersję schematu przed pierwszym zapisem.
+
+## 13. Konsola `asystem`
+
+Publiczna konsola jest osobną aplikacją Python w `src/app_api/`. Nie importuje
+logiki domenowej Agents Managera. Ładuje główny
+`src/app_api/manifests/asystem.app.json`, pobiera wszystkie pliki
+`*.module.json` i buduje scalony katalog sekcji wyłącznie w pamięci.
+
+`main.py` jest cienkim composition rootem. `app/application.py` wybiera runtime,
+tryb i renderer, natomiast `app/services/` zawiera osobne adaptery manifestów,
+control plane, IPC runtime i prezentacji.
+
+```bash
+asystem
+asystem agents
+asystem agents install --help
+asystem agents install -n huggin
+```
+
+Ostatnia komenda przechodzi przez wewnętrzną komendę `console-dispatch` w
+`agents-system`. Dopóki migracja Agents Managera nie zostanie wykonana, zwraca
+`Not implemented yet.`.
+
+Tryby prezentacji:
+
+```bash
+asystem --human             # domyślny widok terminalowy
+asystem --human-raw agents  # czysty tekst
+asystem --agent agents      # zwarty JSON dla agenta
+asystem --json              # pełny scalony manifest
+asystem --interactive       # interaktywna konsola terminalowa
+```
+
+`app_api` udostępnia `create_service()` i jest rejestrowany jako wbudowany
+moduł przy starcie wspólnego runtime. Gdy runtime nie działa albo moduł nie jest
+jeszcze dostępny, CLI może bezpiecznie wykonać lokalny adapter, ponieważ przed
+fallbackiem nie zaszła operacja domenowa.

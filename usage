@@ -1,0 +1,37 @@
+Agents System
+
+Konsola:
+  asystem [-h|--help]
+  asystem [--human|--human-raw|--agent|--json] [SECTION [COMMAND [FLAGS]]]
+  asystem --interactive
+  asystem agents [install|update|exec|delete|list|status|tools|wakeup]
+
+Instalacja:
+  sudo asystem_install [--user NAME] --yes
+  sudo asystem_reinstall [--user NAME] --yes
+
+Konfiguracja środowiska:
+  sudo asystem_env_init --default
+  sudo asystem_env_init --file PATH
+  sudo asystem_env_init --interactive
+  asystem_env_export
+  # jednorazowo w terminalu otwartym przed inicjalizacją:
+  source /etc/profile.d/agents-system.sh
+  get_var [--local] [NAME]
+
+Moduły i runtime:
+  asystem_app_add --repo-name NAME [--repository-path PATH] [--entrypoint PATH] [--start]
+  asystem_app_list
+  asystem_app_remove --name NAME
+  asystem_app_call --name NAME [--payload JSON]
+  asystem_runtime_start | asystem_runtime_status | asystem_runtime_stop
+
+System i użytkownicy:
+  asystem_status [--json]
+  sudo ausers_create --user NAME --yes
+  ausers_get [--user NAME] [--home|--name|--group]
+  ausers_list
+  sudo ausers_set --user NAME --yes
+
+Każda komenda obsługuje --help. Publiczne nazwy powstają z host_scripts przez
+usunięcie .sh i zamianę myślników na podkreślenia.

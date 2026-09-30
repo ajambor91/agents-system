@@ -1,0 +1,300 @@
+{
+  "schema_version": 1,
+  "kind": "agents-system-environment",
+  "variables": [
+    {
+      "name": "INSTALL_MODE",
+      "value": "system",
+      "description": "Selected installation mode used to resolve all mode-dependent paths.",
+      "example": "system"
+    },
+    {
+      "name": "BASH_SOURCE",
+      "value": "true",
+      "description": "In dev mode, allow exported shell variables to override CLI flags and app_env.json values.",
+      "example": "true"
+    },
+    {
+      "name": "APP_NAME",
+      "value": "agents-system",
+      "description": "Stable application identifier used for installation, configuration, state, runtime and systemd names.",
+      "example": "agents-system"
+    },
+    {
+      "name": "INSTALL_DIR",
+      "value": "/opt",
+      "description": "Absolute directory containing the installed application.",
+      "example": "/opt"
+    },
+    {
+      "name": "APP_DIR",
+      "value": "/opt",
+      "description": "Absolute installed application root used to derive module and plugin paths.",
+      "example": "/opt"
+    },
+    {
+      "name": "USER_SYSTEM",
+      "value": "user-system",
+      "description": "Dedicated application account or the invoker selected by dev mode without --user-system.",
+      "example": "user-system"
+    },
+    {
+      "name": "USER_GROUP",
+      "value": "user-system",
+      "description": "Resolved group controlling access to installed application files and managed agent configuration.",
+      "example": "user-system"
+    },
+    {
+      "name": "USER_SYSTEM_HOME",
+      "value": "/home/user-system",
+      "description": "Actual home directory of USER_SYSTEM; never construct it solely by concatenating /home and the username.",
+      "example": "/home/user-system"
+    },
+    {
+      "name": "APP_CONFIG_DIR",
+      "value": "/etc/agents-system/agents-system",
+      "description": "Application-level configuration directory. It is not a location for agent history or messages.",
+      "example": "/etc/agents-system/agents-system"
+    },
+    {
+      "name": "APP_DATA_DIR",
+      "value": "/var/lib/agents-system",
+      "description": "Mutable durable data owned by the application.",
+      "example": "/var/lib/agents-system"
+    },
+    {
+      "name": "APP_RUNTIME_DIR",
+      "value": "/run/agents-system",
+      "description": "Volatile PID and Unix-socket directory.",
+      "example": "/run/agents-system"
+    },
+    {
+      "name": "APP_ENV_FILE",
+      "value": "app_env.json",
+      "description": "Managed Agents System variable APP_ENV_FILE.",
+      "example": "app_env.json"
+    },
+    {
+      "name": "APP_ENV_PATH",
+      "value": "/etc/agents-system/agents-system/app_env.json",
+      "description": "Managed Agents System variable APP_ENV_PATH.",
+      "example": "/etc/agents-system/agents-system/app_env.json"
+    },
+    {
+      "name": "MODULES_DIR",
+      "value": "/opt/src",
+      "description": "Absolute path to the installed modules.",
+      "example": "/opt/agents-system/src"
+    },
+    {
+      "name": "MODULES_MANIFEST_FILE",
+      "value": "agents-system.module.json",
+      "description": "Installed Agents System modules manifest filename.",
+      "example": "agents-system.module.json"
+    },
+    {
+      "name": "MODULES_MANIFEST_PATH",
+      "value": "/etc/agents-system/agents-system/agents-system.module.json",
+      "description": "Absolute installed modules manifest path.",
+      "example": "/etc/agents-system/agents-system.module.json"
+    },
+    {
+      "name": "AGENTS_DATA_RUNTIME",
+      "value": "agents-system_agents_data_runtime.sock",
+      "description": "Unix-socket filename for the dedicated Agents Data runtime.",
+      "example": "agents-system_agents_data_runtime.sock"
+    },
+    {
+      "name": "AGENTS_DATA_RUNTIME_PATH",
+      "value": "/run/agents-system/agents-system_agents_data_runtime.sock",
+      "description": "Managed Agents System variable AGENTS_DATA_RUNTIME_PATH.",
+      "example": "/run/agents-system/agents-system_agents_data_runtime.sock"
+    },
+    {
+      "name": "AGENTS_DATA_COMMUNICATION_APP",
+      "value": "http://localhost:3000",
+      "description": "Local HTTP endpoint of the Agents Data communication application.",
+      "example": "http://localhost:3000"
+    },
+    {
+      "name": "APP_RUNTIME",
+      "value": "agents-system_main_app_runtime.sock",
+      "description": "Unix-socket filename for the main application runtime.",
+      "example": "agents-system_main_app_runtime.sock"
+    },
+    {
+      "name": "APP_RUNTIME_PATH",
+      "value": "/run/agents-system/agents-system_main_app_runtime.sock",
+      "description": "Managed Agents System variable APP_RUNTIME_PATH.",
+      "example": "/run/agents-system/agents-system_main_app_runtime.sock"
+    },
+    {
+      "name": "AGENT_HOME_ROOT",
+      "value": "/home",
+      "description": "Default root for regular agent Linux homes. Actual homes must be confirmed through the passwd database.",
+      "example": "/home"
+    },
+    {
+      "name": "AGENT_HOME_TEMPLATE",
+      "value": "/home/{{agent_name}}",
+      "description": "Display and planning template only; runtime account lookup remains authoritative.",
+      "example": "/home/mimir"
+    },
+    {
+      "name": "AGENT_CONFIG_DIR_NAME",
+      "value": ".agents",
+      "description": "Managed Agents System variable AGENT_CONFIG_DIR_NAME.",
+      "example": ".agents"
+    },
+    {
+      "name": "AGENT_CONFIG_DIR_TEMPLATE",
+      "value": "/home/{{agent_name}}/.agents",
+      "description": "Managed Agents System variable AGENT_CONFIG_DIR_TEMPLATE.",
+      "example": "/home/mimir/.agents"
+    },
+    {
+      "name": "AGENT_CONFIG_FILE",
+      "value": "config.json",
+      "description": "Managed Agents System variable AGENT_CONFIG_FILE.",
+      "example": "config.json"
+    },
+    {
+      "name": "AGENT_CONFIG_PATH_TEMPLATE",
+      "value": "/home/{{agent_name}}/.agents/config.json",
+      "description": "Managed Agents System variable AGENT_CONFIG_PATH_TEMPLATE.",
+      "example": "/home/mimir/.agents/config.json"
+    },
+    {
+      "name": "AGENT_RUNTIME_CONFIG_FILE",
+      "value": "runtime.json",
+      "description": "Per-agent runtime configuration, not a PID or socket file.",
+      "example": "runtime.json"
+    },
+    {
+      "name": "AGENT_RUNTIME_CONFIG_PATH_TEMPLATE",
+      "value": "/home/{{agent_name}}/.agents/runtime.json",
+      "description": "Managed Agents System variable AGENT_RUNTIME_CONFIG_PATH_TEMPLATE.",
+      "example": "/home/mimir/.agents/runtime.json"
+    },
+    {
+      "name": "AGENT_SHELL_CONFIG_FILE",
+      "value": "shell.json",
+      "description": "Managed Agents System variable AGENT_SHELL_CONFIG_FILE.",
+      "example": "shell.json"
+    },
+    {
+      "name": "AGENT_SHELL_CONFIG_PATH_TEMPLATE",
+      "value": "/home/{{agent_name}}/.agents/shell.json",
+      "description": "Managed Agents System variable AGENT_SHELL_CONFIG_PATH_TEMPLATE.",
+      "example": "/home/mimir/.agents/shell.json"
+    },
+    {
+      "name": "AGENT_SHELLS_DIR",
+      "value": "shells",
+      "description": "Managed Agents System variable AGENT_SHELLS_DIR.",
+      "example": "shells"
+    },
+    {
+      "name": "AGENT_SHELLS_DIR_TEMPLATE",
+      "value": "/home/{{agent_name}}/.agents/shells",
+      "description": "Managed Agents System variable AGENT_SHELLS_DIR_TEMPLATE.",
+      "example": "/home/mimir/.agents/shells"
+    },
+    {
+      "name": "AGENT_AGENTRC_FILE",
+      "value": ".agentrc",
+      "description": "Managed Agents System variable AGENT_AGENTRC_FILE.",
+      "example": ".agentrc"
+    },
+    {
+      "name": "AGENT_AGENTRC_PATH_TEMPLATE",
+      "value": "/home/{{agent_name}}/.agents/shells/.agentrc",
+      "description": "Managed Agents System variable AGENT_AGENTRC_PATH_TEMPLATE.",
+      "example": "/home/mimir/.agents/shells/.agentrc"
+    },
+    {
+      "name": "AGENT_BASHRC_FILE",
+      "value": ".bashrc",
+      "description": "Managed Agents System variable AGENT_BASHRC_FILE.",
+      "example": ".bashrc"
+    },
+    {
+      "name": "AGENT_BASHRC_PATH_TEMPLATE",
+      "value": "/home/{{agent_name}}/.agents/shells/.bashrc",
+      "description": "Managed Agents System variable AGENT_BASHRC_PATH_TEMPLATE.",
+      "example": "/home/mimir/.agents/shells/.bashrc"
+    },
+    {
+      "name": "AGENT_HISTORY_DIR_NAME",
+      "value": ".history",
+      "description": "Managed Agents System variable AGENT_HISTORY_DIR_NAME.",
+      "example": ".history"
+    },
+    {
+      "name": "AGENT_HISTORY_DIR_TEMPLATE",
+      "value": "/home/{{agent_name}}/.history",
+      "description": "Managed Agents System variable AGENT_HISTORY_DIR_TEMPLATE.",
+      "example": "/home/mimir/.history"
+    },
+    {
+      "name": "AGENT_HISTORY_FILE",
+      "value": "history.jsonl",
+      "description": "Managed Agents System variable AGENT_HISTORY_FILE.",
+      "example": "history.jsonl"
+    },
+    {
+      "name": "AGENT_HISTORY_PATH_TEMPLATE",
+      "value": "/home/{{agent_name}}/.history/history.jsonl",
+      "description": "Managed Agents System variable AGENT_HISTORY_PATH_TEMPLATE.",
+      "example": "/home/mimir/.history/history.jsonl"
+    },
+    {
+      "name": "AGENT_INBOX_DIR_NAME",
+      "value": ".inbox",
+      "description": "Managed Agents System variable AGENT_INBOX_DIR_NAME.",
+      "example": ".inbox"
+    },
+    {
+      "name": "AGENT_INBOX_DIR_TEMPLATE",
+      "value": "/home/{{agent_name}}/.inbox",
+      "description": "Managed Agents System variable AGENT_INBOX_DIR_TEMPLATE.",
+      "example": "/home/mimir/.inbox"
+    },
+    {
+      "name": "AGENT_COMMUNICATION_FILE",
+      "value": "communication.json",
+      "description": "Managed Agents System variable AGENT_COMMUNICATION_FILE.",
+      "example": "communication.json"
+    },
+    {
+      "name": "AGENT_COMMUNICATION_PATH_TEMPLATE",
+      "value": "/home/{{agent_name}}/.inbox/communication.json",
+      "description": "Managed Agents System variable AGENT_COMMUNICATION_PATH_TEMPLATE.",
+      "example": "/home/mimir/.inbox/communication.json"
+    },
+    {
+      "name": "SYSTEM_AGENT_RUNTIME_SOCKET",
+      "value": "/run/agents-system/agents-system_main_app_runtime.sock",
+      "description": "Compatibility alias for APP_RUNTIME_PATH.",
+      "example": "/run/agents-system/agents-system_main_app_runtime.sock"
+    },
+    {
+      "name": "SYSTEM_AGENT_RUNTIME_PID",
+      "value": "/run/agents-system/agents_runtime.pid",
+      "description": "Managed Agents System variable SYSTEM_AGENT_RUNTIME_PID.",
+      "example": "/run/agents-system/agents_runtime.pid"
+    },
+    {
+      "name": "COMMUNICATION_AGENT_RUNTIME_SOCKET",
+      "value": "/run/agents-system/agents-system_agents_data_runtime.sock",
+      "description": "Compatibility alias for AGENTS_DATA_RUNTIME_PATH.",
+      "example": "/run/agents-system/agents-system_agents_data_runtime.sock"
+    },
+    {
+      "name": "COMMUNICATION_AGENT_RUNTIME_PID",
+      "value": "/run/agents-system/communication_runtime.pid",
+      "description": "Managed Agents System variable COMMUNICATION_AGENT_RUNTIME_PID.",
+      "example": "/run/agents-system/communication_runtime.pid"
+    }
+  ]
+}

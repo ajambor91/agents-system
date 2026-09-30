@@ -1,0 +1,12 @@
+{
+    "name": "app_api",
+    "namespace": "app_api",
+    "entrypoint": "main.py",
+    "application": {
+        "module": "app.application",
+        "class": "Application"
+    },
+    "service": {
+        "factory": "create_service"
+    }
+}

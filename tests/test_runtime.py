@@ -15,11 +15,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ENTRYPOINT = ROOT / "src" / "agents-system" / "main.py"
+RUNTIME_SERVICE = ROOT / "src" / "runtime" / "service.py"
 
 
 def load_runtime():
     """Load the standalone runtime entrypoint for isolated tests."""
-    spec = importlib.util.spec_from_file_location("agents_system_runtime_test", ENTRYPOINT)
+    spec = importlib.util.spec_from_file_location("agents_system_runtime_test", RUNTIME_SERVICE)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -57,10 +58,8 @@ class RuntimeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             environment = os.environ.copy()
-            environment["AGENTS_SYSTEM_HOME"] = str(root / ".agents")
-            environment["AGENTS_REPOSITORY_STATE_HOME"] = str(root / ".repos")
             result = subprocess.run(
-                [sys.executable, str(ENTRYPOINT), "remove", "--name", "ai_module"],
+                [sys.executable, str(ENTRYPOINT), "app-remove", "--name", "ai_module"],
                 env=environment,
                 text=True,
                 capture_output=True,
@@ -151,6 +150,15 @@ class RuntimeTests(unittest.TestCase):
 
             self.assertTrue((root / ".repos" / "modules.json").is_file())
             self.assertFalse((root / ".agents" / "modules.json").exists())
+
+    def test_app_api_is_a_builtin_runtime_module(self) -> None:
+        registry = {"schema_version": 1, "modules": {}}
+
+        self.runtime.register_builtin_modules(registry)
+
+        record = registry["modules"]["app_api"]
+        self.assertEqual(record["repository_path"], str(ROOT))
+        self.assertEqual(record["entrypoint"], str(ROOT / "src" / "app_api" / "main.py"))
 
     def test_legacy_registry_is_migrated_to_repositories_state_root(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

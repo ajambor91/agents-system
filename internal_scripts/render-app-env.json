@@ -1,0 +1,546 @@
+{
+  "schema_version": 1,
+  "command": "render-app-env",
+  "mode": "write",
+  "steps_scope": "proposed_behavior_contract",
+  "host_script": "${APPLICATION_ROOT}/internal_scripts/render-app-env.sh",
+  "target": {
+    "python_script": "${APPLICATION_ROOT}/src/internal_scripts/render_app_env.py",
+    "entrypoint": "main",
+    "runtime": false
+  },
+  "flags": [
+    {
+      "short": "-m",
+      "long": "--mode",
+      "required": true,
+      "takes_value": true,
+      "choices": [
+        "system",
+        "dev"
+      ],
+      "default": null
+    },
+    {
+      "short": "-d",
+      "long": "--install-dir",
+      "required": true,
+      "takes_value": true,
+      "default": null
+    },
+    {
+      "short": null,
+      "long": "--user-system",
+      "required": false,
+      "takes_value": true,
+      "default": "USER_SYSTEM"
+    },
+    {
+      "short": null,
+      "long": "--user-group",
+      "required": false,
+      "takes_value": true,
+      "default": "USER_GROUP"
+    },
+    {
+      "short": null,
+      "long": "--user-system-home",
+      "required": false,
+      "takes_value": true,
+      "default": "passwd_lookup_for_USER_SYSTEM"
+    },
+    {
+      "short": null,
+      "long": "--config-dir",
+      "required": false,
+      "takes_value": true,
+      "default": "mode_default"
+    },
+    {
+      "short": null,
+      "long": "--data-dir",
+      "required": false,
+      "takes_value": true,
+      "default": "mode_default"
+    },
+    {
+      "short": null,
+      "long": "--runtime-dir",
+      "required": false,
+      "takes_value": true,
+      "default": "mode_default"
+    },
+    {
+      "short": null,
+      "long": "--bash-source",
+      "required": false,
+      "takes_value": true,
+      "choices": [
+        "true",
+        "false"
+      ],
+      "default": "mode_default"
+    },
+    {
+      "short": "-o",
+      "long": "--output",
+      "required": false,
+      "takes_value": true,
+      "default": "${APPLICATION_ROOT}/resources/app_env.json"
+    },
+    {
+      "short": "-f",
+      "long": "--force",
+      "required": false,
+      "takes_value": false,
+      "default": false
+    },
+    {
+      "short": "-v",
+      "long": "--verbose",
+      "required": false,
+      "takes_value": false,
+      "default": false
+    },
+    {
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false,
+      "default": false
+    }
+  ],
+  "input_precedence": [
+    "cli_flag",
+    "environment_variable",
+    "get_var",
+    "default_install.json",
+    "derived_mode_specific_value"
+  ],
+  "source": {
+    "template": "${APPLICATION_ROOT}/resources/app_env.template.json",
+    "defaults": "${APPLICATION_ROOT}/resources/default_install.json when present, otherwise ${APPLICATION_ROOT}/install/default_install.json",
+    "format": "agents-system-environment variables array"
+  },
+  "destination": {
+    "rendered_file_name": "app_env.json",
+    "default_output": "${APPLICATION_ROOT}/resources/app_env.json",
+    "description": "The renderer writes one file. The installer is responsible for copying or linking it into src/resources and /etc."
+  },
+  "mode_paths": {
+    "system": {
+      "APP_CONFIG_DIR": "/etc/agents-system",
+      "APP_DATA_DIR": "/var/lib/${APP_NAME}",
+      "APP_RUNTIME_DIR": "/run/${APP_NAME}",
+      "description": "Defaults used only when neither CLI nor defaults files provide exact paths."
+    },
+    "dev": {
+      "APP_CONFIG_DIR": "${USER_SYSTEM_HOME}/.${APP_NAME}/config",
+      "APP_DATA_DIR": "${USER_SYSTEM_HOME}/.${APP_NAME}/data",
+      "APP_RUNTIME_DIR": "${USER_SYSTEM_HOME}/.${APP_NAME}/run",
+      "description": "Defaults used only when neither CLI nor defaults files provide exact paths."
+    }
+  },
+  "managed_variables": [
+    {
+      "name": "INSTALL_MODE",
+      "required": true,
+      "source": "--mode supplied by installer",
+      "allowed_values": [
+        "system",
+        "dev"
+      ],
+      "description": "Selected installation mode used to resolve all mode-dependent paths."
+    },
+    {
+      "name": "MODULES_DIR",
+      "required": true,
+      "source": "app_env.template.json",
+      "description": "Modules directory derived from APP_DIR."
+    },
+    {
+      "name": "PLUGINS_DIR",
+      "required": true,
+      "source": "app_env.template.json",
+      "description": "Provider plugins directory derived from APP_DIR."
+    },
+    {
+      "name": "BASH_SOURCE",
+      "required": true,
+      "description": "In dev mode, allow exported shell variables to override CLI flags and app_env.json values. Ignored in system mode.",
+      "source": "--bash-source, default_install.json or mode default"
+    },
+    {
+      "name": "APP_NAME",
+      "required": true,
+      "source": "default_install.json",
+      "description": "Stable application identifier used for installation, configuration, state, runtime and systemd names."
+    },
+    {
+      "name": "INSTALL_DIR",
+      "required": true,
+      "source": "--install-dir supplied by installer",
+      "description": "Absolute directory containing the installed application."
+    },
+    {
+      "name": "APP_DIR",
+      "required": true,
+      "value": "${INSTALL_DIR}",
+      "description": "Absolute installed application root used to derive module and plugin paths."
+    },
+    {
+      "name": "USER_SYSTEM",
+      "required": true,
+      "source": "--user-system, USER_SYSTEM environment/get_var or default_install.json",
+      "description": "System account, dev clone account, or invoker selected by plain dev mode."
+    },
+    {
+      "name": "USER_GROUP",
+      "required": true,
+      "source": "--user-group, USER_GROUP environment/get_var or default_install.json",
+      "description": "Resolved group controlling access to installed application files and managed agent configuration."
+    },
+    {
+      "name": "USER_SYSTEM_HOME",
+      "required": true,
+      "source": "system passwd database after account resolution",
+      "description": "Actual home directory of USER_SYSTEM; never construct it solely by concatenating /home and the username."
+    },
+    {
+      "name": "APP_CONFIG_DIR",
+      "required": true,
+      "source": "--config-dir or resolved mode configuration",
+      "description": "Application-level configuration directory. It is not a location for agent history or messages."
+    },
+    {
+      "name": "APP_DATA_DIR",
+      "required": true,
+      "source": "--data-dir or resolved mode configuration",
+      "description": "Mutable durable data owned by the application."
+    },
+    {
+      "name": "APP_RUNTIME_DIR",
+      "required": true,
+      "source": "--runtime-dir or resolved mode configuration",
+      "description": "Volatile PID and Unix-socket directory."
+    },
+    {
+      "name": "APP_ENV_FILE",
+      "required": true,
+      "value": "app_env.json"
+    },
+    {
+      "name": "APP_ENV_PATH",
+      "required": true,
+      "value": "${APP_CONFIG_DIR}/${APP_ENV_FILE}"
+    },
+    {
+      "name": "MODULES_MANIFEST_FILE",
+      "required": true,
+      "source": "app_env.template.json",
+      "description": "Installed modules manifest filename."
+    },
+    {
+      "name": "MODULES_MANIFEST_PATH",
+      "required": true,
+      "source": "app_env.template.json",
+      "description": "Installed modules manifest path derived from APP_CONFIG_DIR."
+    },
+    {
+      "name": "AGENTS_DATA_RUNTIME",
+      "required": true,
+      "value": "agents-system_agents_data_runtime.sock",
+      "description": "Unix-socket filename for the dedicated Agents Data runtime."
+    },
+    {
+      "name": "AGENTS_DATA_RUNTIME_PATH",
+      "required": true,
+      "value": "${APP_RUNTIME_DIR}/${AGENTS_DATA_RUNTIME}"
+    },
+    {
+      "name": "AGENTS_DATA_COMMUNICATION_APP",
+      "required": true,
+      "value": "http://localhost:3000",
+      "description": "Local HTTP endpoint of the Agents Data communication application."
+    },
+    {
+      "name": "APP_RUNTIME",
+      "required": true,
+      "value": "agents-system_main_app_runtime.sock",
+      "description": "Unix-socket filename for the main application runtime."
+    },
+    {
+      "name": "APP_RUNTIME_PATH",
+      "required": true,
+      "value": "${APP_RUNTIME_DIR}/${APP_RUNTIME}"
+    },
+    {
+      "name": "AGENT_HOME_ROOT",
+      "required": true,
+      "value": "/home",
+      "description": "Default root for regular agent Linux homes. Actual homes must be confirmed through the passwd database."
+    },
+    {
+      "name": "AGENT_HOME_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_HOME_ROOT}/{{agent_name}}",
+      "description": "Display and planning template only; runtime account lookup remains authoritative."
+    },
+    {
+      "name": "AGENT_CONFIG_DIR_NAME",
+      "required": true,
+      "value": ".agents"
+    },
+    {
+      "name": "AGENT_CONFIG_DIR_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_HOME_TEMPLATE}/${AGENT_CONFIG_DIR_NAME}",
+      "example": "/home/mimir/.agents"
+    },
+    {
+      "name": "AGENT_CONFIG_FILE",
+      "required": true,
+      "value": "config.json"
+    },
+    {
+      "name": "AGENT_CONFIG_PATH_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_CONFIG_DIR_TEMPLATE}/${AGENT_CONFIG_FILE}",
+      "example": "/home/mimir/.agents/config.json"
+    },
+    {
+      "name": "AGENT_RUNTIME_CONFIG_FILE",
+      "required": true,
+      "value": "runtime.json",
+      "description": "Per-agent runtime configuration, not a PID or socket file."
+    },
+    {
+      "name": "AGENT_RUNTIME_CONFIG_PATH_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_CONFIG_DIR_TEMPLATE}/${AGENT_RUNTIME_CONFIG_FILE}",
+      "example": "/home/mimir/.agents/runtime.json"
+    },
+    {
+      "name": "AGENT_SHELL_CONFIG_FILE",
+      "required": true,
+      "value": "shell.json"
+    },
+    {
+      "name": "AGENT_SHELL_CONFIG_PATH_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_CONFIG_DIR_TEMPLATE}/${AGENT_SHELL_CONFIG_FILE}",
+      "example": "/home/mimir/.agents/shell.json"
+    },
+    {
+      "name": "AGENT_SHELLS_DIR",
+      "required": true,
+      "value": "shells"
+    },
+    {
+      "name": "AGENT_SHELLS_DIR_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_CONFIG_DIR_TEMPLATE}/${AGENT_SHELLS_DIR}",
+      "example": "/home/mimir/.agents/shells"
+    },
+    {
+      "name": "AGENT_AGENTRC_FILE",
+      "required": true,
+      "value": ".agentrc"
+    },
+    {
+      "name": "AGENT_AGENTRC_PATH_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_SHELLS_DIR_TEMPLATE}/${AGENT_AGENTRC_FILE}",
+      "example": "/home/mimir/.agents/shells/.agentrc"
+    },
+    {
+      "name": "AGENT_BASHRC_FILE",
+      "required": true,
+      "value": ".bashrc"
+    },
+    {
+      "name": "AGENT_BASHRC_PATH_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_SHELLS_DIR_TEMPLATE}/${AGENT_BASHRC_FILE}",
+      "example": "/home/mimir/.agents/shells/.bashrc"
+    },
+    {
+      "name": "AGENT_HISTORY_DIR_NAME",
+      "required": true,
+      "value": ".history"
+    },
+    {
+      "name": "AGENT_HISTORY_DIR_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_HOME_TEMPLATE}/${AGENT_HISTORY_DIR_NAME}",
+      "example": "/home/mimir/.history"
+    },
+    {
+      "name": "AGENT_HISTORY_FILE",
+      "required": true,
+      "value": "history.jsonl"
+    },
+    {
+      "name": "AGENT_HISTORY_PATH_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_HISTORY_DIR_TEMPLATE}/${AGENT_HISTORY_FILE}",
+      "example": "/home/mimir/.history/history.jsonl"
+    },
+    {
+      "name": "AGENT_INBOX_DIR_NAME",
+      "required": true,
+      "value": ".inbox"
+    },
+    {
+      "name": "AGENT_INBOX_DIR_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_HOME_TEMPLATE}/${AGENT_INBOX_DIR_NAME}",
+      "example": "/home/mimir/.inbox"
+    },
+    {
+      "name": "AGENT_COMMUNICATION_FILE",
+      "required": true,
+      "value": "communication.json"
+    },
+    {
+      "name": "AGENT_COMMUNICATION_PATH_TEMPLATE",
+      "required": true,
+      "value": "${AGENT_INBOX_DIR_TEMPLATE}/${AGENT_COMMUNICATION_FILE}",
+      "example": "/home/mimir/.inbox/communication.json"
+    },
+    {
+      "name": "SYSTEM_AGENT_RUNTIME_SOCKET",
+      "required": true,
+      "value": "${APP_RUNTIME_PATH}",
+      "description": "Compatibility alias for APP_RUNTIME_PATH."
+    },
+    {
+      "name": "SYSTEM_AGENT_RUNTIME_PID",
+      "required": true,
+      "value": "${APP_RUNTIME_DIR}/agents_runtime.pid"
+    },
+    {
+      "name": "COMMUNICATION_AGENT_RUNTIME_SOCKET",
+      "required": true,
+      "value": "${AGENTS_DATA_RUNTIME_PATH}",
+      "description": "Compatibility alias for AGENTS_DATA_RUNTIME_PATH."
+    },
+    {
+      "name": "COMMUNICATION_AGENT_RUNTIME_PID",
+      "required": true,
+      "value": "${APP_RUNTIME_DIR}/communication_runtime.pid"
+    }
+  ],
+  "template_migration": {
+    "remove_variables": [
+      "REPOSITORIES_DIR",
+      "REPOSITORIES_DIR_FULL",
+      "REPOSITORIES_METADATA",
+      "REPOSITORIES_METADATA_FULL",
+      "REPOSITORIES_GENERAL_FILE",
+      "REPOSITORIES_GENERAL_HISTORY",
+      "REPOSITORY_DATA_FILE",
+      "REPOSITORY_HISTORY_DIR",
+      "REPOSITORY_HISTORY_PATH",
+      "AGENTS_SYSTEM_MODULES_FILE",
+      "AGENTS_SYSTEM_MODULES_PATH"
+    ],
+    "replace_variables": [
+      {
+        "old": "APP_DATA_FULL_DIR",
+        "new": "APP_CONFIG_DIR, APP_DATA_DIR and APP_RUNTIME_DIR",
+        "reason": "Configuration, durable mutable data and volatile runtime data require different Linux locations."
+      },
+      {
+        "old": "AGENT_METADATA and AGENT_METADATA_FULL",
+        "new": "AGENT_CONFIG_DIR_NAME and AGENT_CONFIG_DIR_TEMPLATE",
+        "reason": "The target layout stores each agent's configuration in that agent's own Linux home."
+      },
+      {
+        "old": "GENERAL_ENV_FILE",
+        "new": "APP_ENV_FILE and APP_ENV_PATH"
+      }
+    ],
+    "retain_meaning_with_new_path": [
+      "SYSTEM_AGENT_RUNTIME_SOCKET",
+      "SYSTEM_AGENT_RUNTIME_PID",
+      "COMMUNICATION_AGENT_RUNTIME_SOCKET",
+      "COMMUNICATION_AGENT_RUNTIME_PID"
+    ]
+  },
+  "steps": [
+    {
+      "order": 1,
+      "id": "parse-input",
+      "description": "Parse CLI arguments provided by the user, agent or installer. The shell wrapper resolves its own physical physical application root, invokes exactly src/internal_scripts/render_app_env.py and forwards argv unchanged apart from the package-dir bootstrap value."
+    },
+    {
+      "order": 2,
+      "id": "load-template",
+      "description": "Read and validate resources/default_install.json and resources/app_env.template.json as schema_version 1, kind agents-system-environment and an array of uniquely named variables."
+    },
+    {
+      "order": 3,
+      "id": "resolve-and-validate-inputs",
+      "description": "Resolve repo values with BASH_SOURCE enabled using environment, flags, app_env.json and defaults in that order; otherwise use flags, app_env.json and defaults; validate APP_NAME, physical application root, INSTALL_DIR, USER_SYSTEM, USER_GROUP and USER_SYSTEM_HOME against the filesystem and passwd database."
+    },
+    {
+      "order": 4,
+      "id": "resolve-mode-paths",
+      "description": "For dev mode derive application paths below USER_SYSTEM_HOME; for system mode separate /etc configuration, /var/lib durable data and /run volatile runtime paths."
+    },
+    {
+      "order": 5,
+      "id": "build-agent-path-templates",
+      "description": "Build per-agent path templates rooted in the individual agent's home: .agents for config, .history/history.jsonl for activity history and .inbox/communication.json for received messages."
+    },
+    {
+      "order": 6,
+      "id": "remove-repository-history-contract",
+      "description": "Omit repository checkout, repository metadata and repository history variables; these belong to repo-manager and repo-manifests rather than Agents System environment configuration."
+    },
+    {
+      "order": 7,
+      "id": "render-managed-variables",
+      "description": "Create the final variables array from the managed-variable contract, resolving nested placeholders deterministically and rejecting unknown, cyclic or unresolved placeholders."
+    },
+    {
+      "order": 8,
+      "id": "validate-path-boundaries",
+      "description": "Normalize every absolute path, reject traversal and unexpected symlink escapes, and ensure no history, inbox or mutable runtime path points under /etc."
+    },
+    {
+      "order": 9,
+      "id": "validate-agent-layout",
+      "description": "Verify that config.json, runtime.json, shell.json and shells resolve below /home/{{agent_name}}/.agents, while history and communication resolve to the separate .history and .inbox directories."
+    },
+    {
+      "order": 10,
+      "id": "write-rendered-resource",
+      "description": "Write app_env.json atomically to --output with valid UTF-8 JSON; preserve app_env.template.json unchanged. Refuse to replace an existing output unless --force is present."
+    },
+    {
+      "order": 11,
+      "id": "verify-output",
+      "description": "Reload the written JSON and verify unique names, fully resolved required values and correct mode-specific paths."
+    },
+    {
+      "order": 12,
+      "id": "return-render-result",
+      "description": "Print or return the rendered output path and resolved-variable names without secrets. Exit codes and output are identical whether invoked by the installer or directly by a user."
+    }
+  ],
+  "ownership_contract": {
+    "agent_config_location": "/home/{{agent_name}}/.agents",
+    "agent_config_owner": "USER_SYSTEM:USER_GROUP",
+    "observed_config_file_mode": "0640 with optional ACL",
+    "observed_directory_mode": "setgid layout requiring explicit policy validation",
+    "note": "The existing listing under /home/user-system/.agents/mimir reflects the old central layout and must not be treated as the destination for newly created per-agent configuration. Exact ACL entries are outside this rendering contract and belong to the agent-environment creation service."
+  },
+  "outputs": [
+    "rendered_app_env.json",
+    "resolved_application_paths",
+    "per_agent_config_history_and_inbox_path_templates"
+  ],
+  "failure_policy": "Any invalid template, missing required value, duplicate variable name, unresolved or cyclic placeholder, unsafe path or JSON serialization error stops rendering. Write through a temporary sibling file and atomic rename so failure leaves no partial output. Without --force, an existing output is not replaced. No repository-history variable is restored as a fallback."
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1, "command": "get-var", "mode": "read",
+  "host_script": "host_scripts/get-var.sh",
+  "description": "Odczytuje jedną albo wszystkie zmienne Agents System.",
+  "usage": "get_var [--local] [NAME]",
+  "target": {"application": "Application", "command_class": "GetVar", "method": "execute"},
+  "flags": [
+    {"short": "-l", "long": "--local", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Czytaj wyłącznie resources/app_env.json."},
+    {"short": "-h", "long": "--help", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Wyświetl pomoc."}
+  ],
+  "positionals": [{"name": "name", "required": false, "default": null, "description": "Nazwa zmiennej; brak wypisuje wszystkie."}],
+  "steps": ["select-config", "resolve-placeholders", "read-variable"], "outputs": ["raw-value-or-name-value-list"]
+}

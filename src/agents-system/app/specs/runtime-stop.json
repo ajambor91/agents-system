@@ -1,0 +1,7 @@
+{
+  "schema_version": 1, "command": "runtime-stop", "mode": "write", "host_script": "host_scripts/asystem-runtime-stop.sh",
+  "description": "Zatrzymuje rezydentny runtime.", "usage": "asystem_runtime_stop",
+  "target": {"application": "Application", "command_class": "RuntimeStop", "method": "execute"},
+  "flags": [{"short": "-h", "long": "--help", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Wyświetl pomoc."}],
+  "steps": ["read-pid", "send-sigterm"], "outputs": ["runtime-stop-json"]
+}

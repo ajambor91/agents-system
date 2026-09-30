@@ -1,0 +1,14 @@
+{
+  "schema_version": 1, "command": "env-export", "mode": "read",
+  "host_script": "host_scripts/asystem-env-export.sh",
+  "description": "Ładuje konfigurację do bieżącej powłoki; plik wykonywalny renderuje bezpieczne instrukcje export.",
+  "usage": "asystem_env_export [--local | --file PATH]",
+  "target": {"application": "Application", "command_class": "EnvExport", "method": "execute"},
+  "flags": [
+    {"short": "-l", "long": "--local", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Czytaj resources/app_env.json."},
+    {"short": "-f", "long": "--file", "required": false, "takes_value": true, "type": "path", "default": null, "description": "Czytaj wskazany dokument JSON."},
+    {"short": "-h", "long": "--help", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Wyświetl pomoc."}
+  ],
+  "exclusive_groups": [{"members": ["local", "file"], "minimum": 0, "maximum": 1}],
+  "steps": ["read-config", "resolve-placeholders", "shell-quote-values", "eval-in-shell-function"], "outputs": ["current-shell-environment", "posix-export-lines"]
+}
