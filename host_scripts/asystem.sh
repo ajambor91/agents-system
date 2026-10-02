@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# system modules: --installed (pliki JSON) lub --running (runtime Unix socket).
 # Flagi globalne: -h/--help, --human, --human-raw, --agent, --json, --interactive.
 SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")/.." && pwd)"
-exec python3 "$ROOT_DIR/src/app_api/main.py" "$@"
+PYTHONPATH="$ROOT_DIR/src:$ROOT_DIR/src/lib${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH
+exec python3 -m app_api "$@"

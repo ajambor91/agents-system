@@ -5,47 +5,47 @@ import shutil
 
 from pathlib import Path
 
-from app.commands.base import (
+from .base import (
     Command,
 )
-from app.services.agent_catalog import (
+from ..services.agent_catalog import (
     AgentCatalog,
 )
-from app.services.agent_config import (
+from ..services.agent_config import (
     AgentConfigService,
 )
-from app.services.agent_executor import (
+from ..services.agent_executor import (
     AgentExecutor,
     AgentRuntime,
 )
-from app.services.agent_registry import (
+from ..services.agent_registry import (
     AgentRegistryService,
 )
-from app.services.linux_user import (
+from ..services.linux_user import (
     LinuxUserService,
 )
-from app.services.openclaw import (
+from ..services.openclaw import (
     OpenClawService,
 )
-from app.services.process import (
+from ..services.process import (
     ProcessRunner,
 )
-from app.services.runtime_config import (
+from ..services.runtime_config import (
     RuntimeConfigService,
 )
-from app.services.shell import (
+from ..services.shell import (
     ShellService,
 )
-from app.services.shared_tools import (
+from ..services.shared_tools import (
     SharedToolsService,
 )
-from app.services.state import (
+from ..services.state import (
     AgentStateService,
 )
-from app.services.sudo_policy import (
+from ..services.sudo_policy import (
     SudoPolicyService,
 )
-from app.services.symlink import (
+from ..services.symlink import (
     ShellLinkService,
 )
 

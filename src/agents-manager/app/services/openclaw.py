@@ -8,7 +8,7 @@ import tempfile
 
 from pathlib import Path
 
-from app.services.process import ProcessRunner
+from .process import ProcessRunner
 
 
 class OpenClawService:

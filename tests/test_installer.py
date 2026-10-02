@@ -158,7 +158,7 @@ class InstallerTests(unittest.TestCase):
                 "agents-system",
                 "app_api",
                 "agents-data-runtime",
-                "runtime",
+                "_runtime",
             ):
                 (target / "src" / module_name).mkdir(parents=True)
             configuration = replace(
@@ -220,7 +220,8 @@ class InstallerTests(unittest.TestCase):
             generated = installer._generate_configuration(configuration, journal)
 
             self.assertEqual(
-                generated, target / "src" / "_runtime" / "app" / "configuration.py"
+                generated,
+                target / "src" / "lib" / "configuration" / "configuration.py",
             )
             content = generated.read_text(encoding="utf-8")
             self.assertIn("APP_DIR: ClassVar[str]", content)

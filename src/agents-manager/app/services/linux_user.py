@@ -7,7 +7,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.services.process import (
+from .process import (
     ProcessRunner,
 )
 

@@ -5,10 +5,10 @@ from __future__ import annotations
 import argparse
 import json
 
-from app.commands.base import Command
-from app.services.agent_catalog import AgentCatalog
-from app.services.openclaw import OpenClawService
-from app.services.process import ProcessRunner
+from .base import Command
+from ..services.agent_catalog import AgentCatalog
+from ..services.openclaw import OpenClawService
+from ..services.process import ProcessRunner
 
 
 class ToolsCommand(Command):

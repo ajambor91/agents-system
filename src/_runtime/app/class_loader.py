@@ -1,47 +1,60 @@
-from .models.module_entry import ModuleEntry
-from .models.meta_data_class import MetaDataClass
+from __future__ import annotations
+
+from pathlib import Path
 
 from shared.json_loader import JsonLoader
 
-class ClassLoader:
-    _META_FILE_NAME = None
-    _modules_list = None
-    _foundClasses = None
-    def __init__(self, modules_list):
-        self._META_FILE_NAME = 'meta.json'
-        self._modules_list = modules_list
-        self._foundClasses = self._getModulesList()
+from .models.meta_data_class import MetaDataClass
+from .models.module_entry import ModuleEntry
 
-    def loadClasses(self):
-        self._foundClasses = self._getModulesListFile()
+
+class ClassLoader:
+    _META_FILE_NAME = "meta.json"
+
+    def __init__(self, modules_list: dict) -> None:
+        self._modules_list = modules_list
+        self._found_classes = self._get_modules_list()
+
+    def loadClasses(self) -> "ClassLoader":
+        self._found_classes = self._get_modules_list()
         return self
 
-    def getClasses(self):
-        return self._foundClasses
+    def getClasses(self) -> dict[str, ModuleEntry]:
+        return self._found_classes.copy()
 
-    def _getModulesList(self):
-        
-        if self.modules_list is None:
-            raise RuntimeError("Configuration not set for ClassLoader")
-        extracted_modules_list = dict[string, object] = {}
-        modules_data = self._modules_list['children'];
-        for module in modules_data:
-            runtime = module['runtime']
-            if runtime is None or runtime.size == 0:
+    def _get_modules_list(self) -> dict[str, ModuleEntry]:
+        children = self._modules_list.get("children")
+        if not isinstance(children, list):
+            raise ValueError("Modules manifest must contain a children list")
+
+        extracted: dict[str, ModuleEntry] = {}
+        for module in children:
+            runtime_methods = module.get("runtime")
+            if not isinstance(runtime_methods, list) or not runtime_methods:
                 continue
-            meta_content = JsonLoader.getJsonFileContent()
-            module_class_name = meta_content['application']['class']
-            module_name = meta_content['application']['module']
-            module_namespace = meta_content['namespace']
-            module_entrypoint =meta_content['entrypoint']
-            
-            module_name = module['module_name']
-            is_runtime =  module['is_runtime']
-            absolute_module_path = module['absolute_module_path']
-            meta_class = MetaDataClass(module_namespace, module_entrypoint, module_name, module_class_name) 
-            module_entry = ModuleEntry(absolute_module_path, is_runtime, runtime, module_name, meta_class) 
-            extracted_modules_list[module_name] = module_entry
-        return extracted_modules_list
 
+            module_name = module["module_name"]
+            module_dir = Path(module["absolute_module_path"]).expanduser().resolve()
+            metadata_path = module_dir / self._META_FILE_NAME
+            if not metadata_path.is_file():
+                continue
+            metadata = JsonLoader.getJsonFileContent(metadata_path)
+            application = metadata.get("application")
+            if not isinstance(application, dict):
+                raise ValueError(f"{module_dir}: missing application metadata")
 
-            
+            meta_class = MetaDataClass(
+                namespace=metadata["namespace"],
+                entrypoint=metadata["entrypoint"],
+                module=application["module"],
+                class_name=application["class"],
+            )
+            extracted[module_name] = ModuleEntry(
+                absolute_module_path=str(module_dir),
+                is_runtime=bool(module.get("is_runtime")),
+                meta_data=meta_class,
+                runtime=[str(method) for method in runtime_methods],
+                module_name=module_name,
+            )
+
+        return extracted

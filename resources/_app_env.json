@@ -295,6 +295,18 @@
       "value": "/run/agents-system/communication_runtime.pid",
       "description": "Managed Agents System variable COMMUNICATION_AGENT_RUNTIME_PID.",
       "example": "/run/agents-system/communication_runtime.pid"
+    },
+    {
+      "name": "MAX_MESSAGE_BYTES_BASE",
+      "value": "1024",
+      "description": "Base byte value used to calculate the maximum runtime message size.",
+      "example": "1024"
+    },
+    {
+      "name": "MAX_MESSAGE_BYTES_MULTIPLIER",
+      "value": "1024",
+      "description": "Multiplier used with MAX_MESSAGE_BYTES_BASE to calculate the maximum runtime message size.",
+      "example": "1024"
     }
   ]
 }

@@ -7,9 +7,9 @@ import sys
 
 from argparse import Namespace
 
-from app.context import ApplicationContext
-from app.services.process import ProcessRunner
-from app.services.wakeup import WakeupService
+from ..context import ApplicationContext
+from ..services.process import ProcessRunner
+from ..services.wakeup import WakeupService
 
 
 class WakeupCommand:

@@ -1,37 +1,20 @@
 Agents System
 
 Konsola:
-  asystem [-h|--help]
   asystem [--human|--human-raw|--agent|--json] [SECTION [COMMAND [FLAGS]]]
   asystem --interactive
-  asystem agents [install|update|exec|delete|list|status|tools|wakeup]
+  asystem system modules --help
+  asystem system modules --installed
+  asystem system modules --running
+  asystem --json system modules --installed
 
-Instalacja:
-  sudo asystem_install [--user NAME] --yes
-  sudo asystem_reinstall [--user NAME] --yes
+Moduł Agents System:
+  PYTHONPATH=src python3 -m agents-system [--json] modules --installed
+  PYTHONPATH=src python3 -m agents-system [--json] modules --running
+  python3 -m agents_system modules --installed  # po instalacji pakietu
 
-Konfiguracja środowiska:
-  sudo asystem_env_init --default
-  sudo asystem_env_init --file PATH
-  sudo asystem_env_init --interactive
-  asystem_env_export
-  # jednorazowo w terminalu otwartym przed inicjalizacją:
-  source /etc/profile.d/agents-system.sh
-  get_var [--local] [NAME]
+Application(configuration) udostępnia publiczną metodę modules(installed=False,
+running=False). Wymagana jest dokładnie jedna flaga. --installed czyta pliki
+JSON z INSTALLED_MODULES_DIR; --running wymaga działającego runtime i socketu.
 
-Moduły i runtime:
-  asystem_app_add --repo-name NAME [--repository-path PATH] [--entrypoint PATH] [--start]
-  asystem_app_list
-  asystem_app_remove --name NAME
-  asystem_app_call --name NAME [--payload JSON]
-  asystem_runtime_start | asystem_runtime_status | asystem_runtime_stop
-
-System i użytkownicy:
-  asystem_status [--json]
-  sudo ausers_create --user NAME --yes
-  ausers_get [--user NAME] [--home|--name|--group]
-  ausers_list
-  sudo ausers_set --user NAME --yes
-
-Każda komenda obsługuje --help. Publiczne nazwy powstają z host_scripts przez
-usunięcie .sh i zamianę myślników na podkreślenia.
+Instalacja systemu ma osobny entrypoint opisany w install/README.md.

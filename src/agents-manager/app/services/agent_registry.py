@@ -8,9 +8,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.context import ApplicationContext
-from app.services.openclaw import OpenClawService
-from app.services.state import AgentStateService
+from ..context import ApplicationContext
+from .openclaw import OpenClawService
+from .state import AgentStateService
 
 
 class AgentRegistryService:

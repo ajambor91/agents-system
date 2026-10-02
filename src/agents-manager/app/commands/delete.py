@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from app.commands.base import Command
+from .base import Command
 
 
 class DeleteCommand(Command):

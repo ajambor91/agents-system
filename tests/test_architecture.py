@@ -7,10 +7,10 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 FIXED_ENTRYPOINTS = {
-    "agents-system": "src/agents-system/main.py",
-    "runtime": "src/runtime/main.py",
+    "agents-system": "src/agents-system/__main__.py",
+    "runtime": "src/_runtime/main.py",
     "agents-data-runtime": "src/agents-data-runtime/main.py",
-    "app_api": "src/app_api/main.py",
+    "app_api": "src/app_api/__main__.py",
     "agents-manager": "src/agents-manager/main.py",
     "agents-data": "src/agents-data/main.py",
     "agents-data-backend": "src/agents-data-backend/main.py",
@@ -37,7 +37,7 @@ class ArchitectureContractTests(unittest.TestCase):
     def test_app_api_uses_application_and_service_layers(self) -> None:
         root = REPOSITORY_ROOT / "src" / "app_api"
         self.assertTrue((root / "app" / "application.py").is_file())
-        for service in ("control_plane.py", "manifests.py", "renderer.py", "runtime.py"):
+        for service in ("module_dispatcher.py", "module_loader.py", "runtime.py", "manifests.py", "renderer.py"):
             self.assertTrue((root / "app" / "services" / service).is_file())
         for flat_module in ("application.py", "control_plane.py", "manifests.py", "models.py", "renderer.py"):
             self.assertFalse((root / flat_module).exists())
@@ -47,7 +47,7 @@ class ArchitectureContractTests(unittest.TestCase):
             with self.subTest(wrapper=wrapper.name):
                 content = wrapper.read_text()
                 self.assertNotIn("src/agents_system/", content)
-                expected = "src/app_api/main.py" if wrapper.name == "asystem.sh" else "src/agents-system/main.py"
+                expected = "python3 -m app_api" if wrapper.name == "asystem.sh" else "src/agents-system/__main__.py"
                 self.assertIn(expected, content)
 
     def test_architecture_links_both_merge_plans(self) -> None:

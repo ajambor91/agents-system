@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from app.services.agent_catalog import AgentCatalog
+from .agent_catalog import AgentCatalog
 
 
 @dataclass(frozen=True)

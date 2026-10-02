@@ -1,8 +1,0 @@
-{
-  "schema_version": 1, "command": "app-list", "mode": "read",
-  "host_script": "host_scripts/asystem-app-list.sh",
-  "description": "Wyświetla rejestr modułów runtime.", "usage": "asystem_app_list",
-  "target": {"application": "Application", "command_class": "AppList", "method": "execute"},
-  "flags": [{"short": "-h", "long": "--help", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Wyświetl pomoc."}],
-  "steps": ["read-registry"], "outputs": ["modules-json"]
-}

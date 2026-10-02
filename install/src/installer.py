@@ -166,6 +166,8 @@ class Installer:
             self._log("configuration class: generated")
             self._prepare_state_directories(configuration, journal, uid, gid)
             self._log("state directories: ready")
+            module_record = self._install_module_record(configuration, journal, uid, gid)
+            self._log("installed modules: recorded")
             if configuration.mode == "system" or configuration.clone_repo:
                 self._set_ownership(configuration.install_dir, uid, gid, configuration.mode)
             self._set_ownership(configuration.config_dir, uid, gid, configuration.mode)
@@ -179,6 +181,7 @@ class Installer:
             )
             self._log("src/.env: ready")
             outputs = self._verify(configuration)
+            outputs["installed_modules_file"] = str(module_record)
             outputs["journal"] = str(journal.root)
             journal.finish("success", outputs=outputs)
             return outputs
@@ -362,6 +365,7 @@ class Installer:
     def _validate_sources(self, mode: str) -> None:
         required = [
             self.package_dir / "resources" / "app_env.template.json",
+            self.package_dir / "resources" / "agents-system.json",
             self.package_dir / "resources" / "agents-system.module.template.json",
             self.package_dir / "internal_scripts" / "render-app-env.sh",
             self.package_dir / "internal_scripts" / "render-modules-manifest.sh",
@@ -750,7 +754,13 @@ class Installer:
         script = configuration.install_dir / "internal_scripts" / "generate_configuration.sh"
         if not script.is_file():
             raise InstallationError(f"Brak generatora Configuration w paczce: {script}")
-        target = configuration.install_dir / "src" / "_runtime" / "app" / "configuration.py"
+        target = (
+            configuration.install_dir
+            / "src"
+            / "lib"
+            / "configuration"
+            / "configuration.py"
+        )
 
         def write_configuration() -> None:
             self._run([str(script), "--source", str(source)])
@@ -783,6 +793,57 @@ class Installer:
             os.chown(path, uid, gid)
             os.chown(path / MARKER_NAME, uid, gid)
             journal.applied(index)
+
+    def _install_module_record(
+        self, configuration: InstallConfiguration, journal: InstallJournal, uid: int, gid: int
+    ) -> Path:
+        source = configuration.package_dir / "resources" / "agents-system.json"
+        try:
+            document = json.loads((configuration.config_dir / "app_env.json").read_text(encoding="utf-8"))
+            values = {item["name"]: item["value"] for item in document["variables"]}
+            raw_path = values["INSTALLED_MODULES_DIR"]
+            if not isinstance(raw_path, str) or not raw_path:
+                raise ValueError("INSTALLED_MODULES_DIR musi być niepustym tekstem")
+            path = Path(raw_path).expanduser()
+            for component in (path, *path.parents):
+                if component.is_symlink():
+                    raise InstallationError(f"Katalog modułów zawiera dowiązanie: {component}")
+            directory = _absolute(raw_path, "INSTALLED_MODULES_DIR")
+            record = json.loads(source.read_text(encoding="utf-8"))
+            if not isinstance(record, dict) or not isinstance(record.get("modules"), list):
+                raise ValueError("agents-system.json wymaga tablicy modules")
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise InstallationError(f"Nie można przygotować listy zainstalowanych modułów: {exc}") from exc
+        if directory.exists() and not directory.is_dir():
+            raise InstallationError(f"INSTALLED_MODULES_DIR nie jest katalogiem: {directory}")
+        target = directory / "agents-system.json"
+        if target.is_symlink() or (target.exists() and not target.is_file()):
+            raise InstallationError(f"Nieprawidłowy cel listy modułów: {target}")
+        if target.exists() and not configuration.force:
+            raise InstallationError(f"Lista modułów już istnieje; użyj --force: {target}")
+        missing = []
+        parent = directory
+        while not parent.exists():
+            missing.append(parent)
+            parent = parent.parent
+        journal.state["configuration"].update({
+            "installed_modules_dir": str(directory),
+            "installed_modules_file": str(target),
+            "installed_modules_created_parents": [str(path) for path in missing if path != directory],
+        })
+        journal._write()
+        for path in reversed(missing):
+            index = journal.prepare("created_path", path=str(path))
+            path.mkdir(mode=0o750)
+            os.chown(path, uid, gid)
+            journal.applied(index)
+
+        def write_record() -> None:
+            self._atomic_copy(source, target, mode=0o640)
+            os.chown(target, uid, gid)
+
+        self._replace(target, journal, write_record)
+        return target
 
     def _publish_commands(
         self, configuration: InstallConfiguration, journal: InstallJournal, owner_id: int, group_id: int

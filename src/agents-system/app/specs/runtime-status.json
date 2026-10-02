@@ -1,7 +1,0 @@
-{
-  "schema_version": 1, "command": "runtime-status", "mode": "read", "host_script": "host_scripts/asystem-runtime-status.sh",
-  "description": "Wyświetla stan rezydentnego runtime.", "usage": "asystem_runtime_status",
-  "target": {"application": "Application", "command_class": "RuntimeStatus", "method": "execute"},
-  "flags": [{"short": "-h", "long": "--help", "required": false, "takes_value": false, "type": "boolean", "default": false, "description": "Wyświetl pomoc."}],
-  "steps": ["read-pid-and-socket", "read-registry"], "outputs": ["runtime-status-json"]
-}

@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMPLATE = ROOT / "resources" / "agents_manager.template.service"
+TEMPLATE = ROOT / "resources" / "system.template.service"
 
 
 class ServiceTemplateTests(unittest.TestCase):
@@ -16,7 +16,7 @@ class ServiceTemplateTests(unittest.TestCase):
         content = TEMPLATE.read_text(encoding="utf-8")
 
         exec_start = [line for line in content.splitlines() if line.startswith("ExecStart=")]
-        self.assertEqual(exec_start, ["ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/runtime/main.py"])
+        self.assertEqual(exec_start, ["ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/_runtime/main.py"])
         self.assertNotIn("src/app_api/main.py", content)
         self.assertNotIn("src/agents-manager/main.py", content)
         self.assertNotIn("src/agents-system/main.py", content)

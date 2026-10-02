@@ -17,6 +17,14 @@ class Renderer:
         self.mode = mode
         self.color = mode == "human" and sys.stdout.isatty() and "NO_COLOR" not in os.environ
 
+    def runtime_status(self, available: bool) -> str:
+        if available:
+            return self._style("Application runtime and socket are OK", "32") + "\n\n"
+        return (
+            self._style("Application runtime does not working", "31")
+            + "\nRunning in local mode\n\n"
+        )
+
     def root_help(self, manifest: dict[str, Any]) -> ApiResult:
         if self.mode == "json":
             return self._json(manifest)
@@ -89,11 +97,18 @@ class Renderer:
                 lines.append(f"  {', '.join(tokens) + suffix:<32} {flag['description']}{required}")
         return ApiResult(stdout="\n".join(lines) + "\n", data=command)
 
-    def command_result(self, response: dict[str, Any]) -> ApiResult:
+    def command_result(self, response: Any) -> ApiResult:
         if self.mode in {"json", "agent"}:
             return self._json(response, compact=self.mode == "agent")
-        message = str(response.get("message", "Not implemented yet."))
-        return ApiResult(stdout=message + "\n", data=response)
+        if isinstance(response, dict) and "message" in response:
+            message = str(response["message"])
+        elif isinstance(response, str):
+            message = response
+        elif response is None:
+            message = ""
+        else:
+            message = json.dumps(response, ensure_ascii=False)
+        return ApiResult(stdout=message + "\n" if message else "", data=response)
 
     def error(self, message: str, exit_code: int = 2) -> ApiResult:
         if self.mode in {"json", "agent"}:
@@ -101,7 +116,7 @@ class Renderer:
             result = self._json(payload, compact=self.mode == "agent")
             result.exit_code = exit_code
             return result
-        return ApiResult(exit_code=exit_code, stderr=f"Błąd: {message}\n")
+        return ApiResult(exit_code=exit_code, stderr=self._style(f"Błąd: {message}", "31") + "\n")
 
     def _style(self, value: str, code: str) -> str:
         return f"\033[{code}m{value}\033[0m" if self.color else value

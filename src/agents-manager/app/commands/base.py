@@ -4,7 +4,7 @@ import argparse
 
 from abc import ABC, abstractmethod
 
-from app.context import ApplicationContext
+from ..context import ApplicationContext
 
 
 class Command(ABC):

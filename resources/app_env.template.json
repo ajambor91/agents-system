@@ -75,6 +75,12 @@
       "example": "/var/lib/agents-system"
     },
     {
+      "name": "INSTALLED_MODULES_DIR",
+      "value": "${APP_DATA_DIR}/installed_modules",
+      "description": "Directory containing installed-module JSON documents, derived from APP_DATA_DIR.",
+      "example": "/var/lib/agents-system/installed_modules"
+    },
+    {
       "name": "APP_RUNTIME_DIR",
       "value": "{{APP_RUNTIME_DIR}}",
       "description": "Exact configurable runtime directory injected by the installer.",
@@ -301,6 +307,18 @@
       "value": "${APP_RUNTIME_DIR}/communication_runtime.pid",
       "description": "Managed Agents System variable COMMUNICATION_AGENT_RUNTIME_PID.",
       "example": "/run/agents-system/communication_runtime.pid"
+    },
+    {
+      "name": "MAX_MESSAGE_BYTES_BASE",
+      "value": "1024",
+      "description": "Base byte value used to calculate the maximum runtime message size.",
+      "example": "1024"
+    },
+    {
+      "name": "MAX_MESSAGE_BYTES_MULTIPLIER",
+      "value": "1024",
+      "description": "Multiplier used with MAX_MESSAGE_BYTES_BASE to calculate the maximum runtime message size.",
+      "example": "1024"
     }
   ]
 }

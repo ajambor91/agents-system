@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import argparse
 
-from app.commands.base import Command
-from app.commands.install import InstallCommand
+from .base import Command
+from .install import InstallCommand
 
 
 class UpdateCommand(Command):

@@ -15,9 +15,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from app.context import ApplicationContext
-from app.services.process import ProcessRunner
-from app.services.wakeup import WakeupService
+from lib.configuration import Configuration
+from .context import ApplicationContext
+from .services.process import ProcessRunner
+from .services.wakeup import WakeupService
 
 
 DEFAULT_SOCKET = "/run/agents-manager/control.sock"
@@ -143,7 +144,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None, configuration: Configuration | None = None) -> int:
     args = build_parser().parse_args(argv)
     socket_path = Path(args.socket)
     if args.action != "serve":
@@ -155,7 +156,19 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(response, ensure_ascii=False))
         return 0 if response.get("ok") else 1
 
-    context = ApplicationContext.create(Path(__file__).resolve().parents[3])
+    repo_root = Path(__file__).resolve().parents[3]
+    if configuration is None:
+        configured = (
+            Path(os.environ["ABSOLUTE_CONFIG_PATH"])
+            if "ABSOLUTE_CONFIG_PATH" in os.environ
+            else repo_root / "resources" / "app_env.json"
+        )
+        document = json.loads(configured.read_text(encoding="utf-8"))
+        variables = document.get("variables")
+        if not isinstance(variables, list):
+            raise ValueError(f"{configured}: variables must be a list")
+        configuration = Configuration(variables)
+    context = ApplicationContext.create(repo_root, configuration=configuration)
     server = GatewayServer(context, socket_path)
 
     async def serve() -> None:

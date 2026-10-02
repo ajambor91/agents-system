@@ -1,31 +1,37 @@
-# Managed by agents-system installer. Do not edit the installed unit directly.
+# Agents System shared runtime unit template.
+# Render every double-brace placeholder before installing this file in systemd.
+# Only the shared runtime is a systemd process; it will own application
+# discovery and lifecycle after the JSON runtime contract is implemented.
+# Example: APP_DIR=/home/user-system/repositories/agents-system,
+# PYTHON_BIN=/usr/bin/python3, INCLUDED_APPS_FILE=/home/user-system/.agents-system/included_apps.json.
+
 [Unit]
-Description=Agents System shared runtime
-Documentation=file://{{APP_DIR}}/src/README.md
+Description=Agents System shared application runtime
+Documentation=file://{{APP_DIR}}/ARCHITECTURE.md
 Wants=network-online.target
 After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 ConditionPathExists={{APP_DIR}}/src/runtime/main.py
 
 [Service]
 Type=simple
 User={{USER_SYSTEM}}
-Group={{USER_GROUP}}
+Group={{USER_SYSTEM_GROUP}}
 WorkingDirectory={{APP_DIR}}
-UMask=0027
-Environment="INSTALL_MODE={{INSTALL_MODE}}"
-Environment="APP_NAME={{APP_NAME}}"
-Environment="APP_DIR={{APP_DIR}}"
+UMask=0007
+
 Environment="USER_SYSTEM={{USER_SYSTEM}}"
 Environment="USER_SYSTEM_HOME={{USER_SYSTEM_HOME}}"
-Environment="APP_CONFIG_DIR={{APP_CONFIG_DIR}}"
-Environment="APP_DATA_DIR={{APP_DATA_DIR}}"
-Environment="APP_RUNTIME_DIR={{APP_RUNTIME_DIR}}"
-Environment="APP_RUNTIME_PATH={{APP_RUNTIME_PATH}}"
-Environment="APP_ENV_PATH={{APP_ENV_PATH}}"
-Environment="MODULES_MANIFEST_PATH={{MODULES_MANIFEST_PATH}}"
+Environment="APP_DIR={{APP_DIR}}"
+Environment="APP_DATA_FULL_DIR={{APP_DATA_FULL_DIR}}"
+Environment="AGENT_METADATA_FULL={{AGENT_METADATA_FULL}}"
+Environment="AGENTS_SYSTEM_MODULES_PATH={{AGENTS_SYSTEM_MODULES_PATH}}"
+Environment="AGENTS_SYSTEM_APPS_PATH={{INCLUDED_APPS_FILE}}"
 Environment="PYTHONUNBUFFERED=1"
 Environment="PYTHONDONTWRITEBYTECODE=1"
-ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/runtime/main.py
+
+ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/_runtime/main.py
 Restart=on-failure
 RestartSec=2s
 TimeoutStartSec=30s
@@ -33,14 +39,15 @@ TimeoutStopSec=30s
 KillSignal=SIGTERM
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier={{APP_NAME}}
+SyslogIdentifier=agents-system-runtime
+
 NoNewPrivileges=true
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadOnlyPaths={{APP_DIR}} {{APP_CONFIG_DIR}}
-ReadWritePaths={{APP_DATA_DIR}} {{APP_RUNTIME_DIR}}
+ReadOnlyPaths={{APP_DIR}}
+ReadWritePaths={{APP_DATA_FULL_DIR}} {{AGENT_METADATA_FULL}} {{REPOSITORIES_METADATA_FULL}}
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

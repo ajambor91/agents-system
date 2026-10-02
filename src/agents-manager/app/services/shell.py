@@ -7,7 +7,7 @@ import shlex
 from pathlib import Path
 from typing import Any
 
-from app.services.state import (
+from .state import (
     AgentStatePaths,
     AgentStateService,
 )

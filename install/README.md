@@ -28,6 +28,11 @@ Istniejące cele zatrzymują instalację. `--force` pozwala zastąpić wyłączn
 cele oznaczone markerem tego instalatora; obce katalogi, jednostki i komendy są
 odrzucane.
 
+Po przygotowaniu katalogów danych instalator kopiuje `resources/agents-system.json`
+do `INSTALLED_MODULES_DIR/agents-system.json`. Ścieżkę odczytuje z wyrenderowanego
+`app_env.json`. Plik ma uprawnienia `0640` i właściciela aplikacji; zapis jest atomowy
+i objęty rollbackiem. Istniejący plik wymaga `--force`.
+
 Na samym końcu instalacji, po pozostałych mutacjach, instalator zapisuje
 `APP_DIR/src/.env`. Plik zawiera dokładnie jedną zmienną:
 

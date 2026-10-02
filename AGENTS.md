@@ -130,11 +130,11 @@ Minimalne testy zmiany obejmują parser flag, zachowanie klasy use-case, wrapper
 
 Ścieżki aplikacji są częścią kontraktu repozytorium i nie są wyliczane z
 nazwy paczki. Control plane znajduje się zawsze w
-`src/agents-system/main.py`. Wariant `src/agents_system/` z podkreśleniem jest
+`src/agents-system/__main__.py`. Wariant `src/agents_system/` z podkreśleniem jest
 niedozwolony.
 
-Wspólny, rezydentny runtime ma osobny entrypoint `src/runtime/main.py`, a jego
-silnik znajduje się w `src/runtime/service.py`. Control plane może nim
+Wspólny, rezydentny runtime ma osobny entrypoint `src/_runtime/main.py`, a jego
+silnik znajduje się w `src/_runtime/app/`. Control plane może nim
 zarządzać, ale logika utrzymywania procesu należy do katalogu `runtime`.
 
 Pozostałe stałe katalogi aplikacji to:
@@ -150,7 +150,7 @@ logiki domenowej bezpośrednio. Ładuje `asystem.app.json` oraz pliki
 `*.module.json`, scala ich widok wyłącznie w pamięci i przekazuje typowaną
 kopertę do komendy `console-dispatch` w control plane. Każda sekcja menu ma
 osobny manifest JSON. Publiczny wrapper `host_scripts/asystem.sh` prowadzi
-wyłącznie do `src/app_api/main.py`.
+wyłącznie do `src/app_api/__main__.py`.
 
 W `app_api` plik `main.py` nie wybiera runtime ani renderera. Te decyzje należą
 do `app/application.py`. Adaptery manifestów, renderowania, control plane i IPC

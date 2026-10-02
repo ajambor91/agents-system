@@ -9,6 +9,8 @@ from types import ModuleType
 from importlib.machinery import ModuleSpec
 from typing import Any
 
+from .models.managed_instance import ManagedInstance
+
 
 class ClassBuildError(RuntimeError):
     pass
@@ -16,14 +18,15 @@ class ClassBuildError(RuntimeError):
 
 class ClassBuilder:
 
-    def __init__(self, class_loader):
+    def __init__(self, class_loader, configuration=None):
         self.class_loader = class_loader
+        self.configuration = configuration
 
-        self._instances: dict[str, object] = {}
+        self._instances: dict[str, ManagedInstance] = {}
 
-    def build_class_tree(self) -> dict[str, object]:
+    def build_class_tree(self) -> dict[str, ManagedInstance]:
         """
-        Build application instances from discovered modules.
+        Build application classes and instances from discovered modules.
         """
 
         if self._instances:
@@ -31,16 +34,15 @@ class ClassBuilder:
 
         found_classes = self.class_loader.getClasses()
 
-        imported_classes = {}
+        imported_classes: dict[str, ManagedInstance] = {}
 
         for module_name, module_entry in found_classes.items():
-
             try:
-                instance = self._build_instance(
+                managed_instance = self._build_instance(
                     module_entry
                 )
 
-                imported_classes[module_name] = instance
+                imported_classes[module_name] = managed_instance
 
             except Exception as exc:
                 raise ClassBuildError(
@@ -51,18 +53,35 @@ class ClassBuilder:
 
         return self._instances.copy()
 
-    def _build_instance(self, module_entry) -> object:
+    def _build_instance(
+        self,
+        module_entry
+    ) -> ManagedInstance:
         """
-        Import and instantiate an application class.
+        Import the application class, create its instance
+        and wrap both in ManagedInstance.
         """
 
         application_class = self._load_class(
             module_entry
         )
 
-        return application_class()
+        if self.configuration is None:
+            raise ClassBuildError(
+                "Configuration is required to build application instances"
+            )
+        instance = application_class(self.configuration)
 
-    def _load_class(self, module_entry) -> type[Any]:
+        return ManagedInstance(
+            instance_class=application_class,
+            instance_object=instance,
+            class_name=module_entry.module_name,
+        )
+
+    def _load_class(
+        self,
+        module_entry
+    ) -> type[Any]:
         """
         Load the application class using module metadata.
         """
@@ -80,22 +99,19 @@ class ClassBuilder:
                 f"Module directory not found: {module_dir}"
             )
 
-        # Register the module namespace.
         namespace = self._register_namespace(
             metadata.namespace,
             module_dir
         )
 
-        # Import the application module.
         module_path = (
             f"{namespace}.{metadata.module}"
         )
-        print(f"{namespace}.{metadata.module}")
+
         imported_module = importlib.import_module(
             module_path
         )
 
-        # Retrieve the application class.
         application_class = getattr(
             imported_module,
             metadata.class_name
@@ -163,10 +179,18 @@ class ClassBuilder:
     def get_instance(
         self,
         module_name: str
-    ) -> object:
+    ) -> ManagedInstance:
+        """
+        Return managed instance for module.
+        """
 
         return self._instances[module_name]
 
-    def get_instances(self) -> dict[str, object]:
+    def get_instances(
+        self
+    ) -> dict[str, ManagedInstance]:
+        """
+        Return all managed instances.
+        """
 
         return self._instances.copy()

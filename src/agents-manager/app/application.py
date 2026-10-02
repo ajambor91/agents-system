@@ -4,80 +4,49 @@ import argparse
 import sys
 
 from pathlib import Path
-from typing import Optional
 
-from app.commands.delete import (
+from .commands.delete import (
     DeleteCommand,
 )
-from app.commands.execute import (
+from .commands.execute import (
     ExecuteCommand,
 )
-from app.commands.install import (
+from .commands.install import (
     InstallCommand,
 )
-from app.commands.list import (
+from .commands.list import (
     ListCommand,
 )
-from app.commands.status import (
+from .commands.status import (
     StatusCommand,
 )
-from app.commands.tools import (
+from .commands.tools import (
     ToolsCommand,
 )
-from app.commands.update import (
+from .commands.update import (
     UpdateCommand,
 )
-from app.commands.wakeup import WakeupCommand
-from app.context import (
+from .commands.wakeup import WakeupCommand
+from .context import (
     ApplicationContext,
 )
-from app.services.agent_catalog import (
+from .services.agent_catalog import (
     AgentCatalog,
 )
-from shared.configuration import ApplicationEnvironment
+from lib.configuration import Configuration
 
 
 class AgentApplication:
-
-    _instance: Optional[
-        "AgentApplication"
-    ] = None
-
-    _initialized = False
-
-    def __new__(
-        cls,
-    ) -> "AgentApplication":
-
-        if cls._instance is None:
-            cls._instance = (
-                super().__new__(cls)
-            )
-
-        return cls._instance
-
     def __init__(
         self,
+        configuration: Configuration,
     ) -> None:
-
-        if self._initialized:
-            return
-
-        self._initialized = True
-
+        self._configuration = configuration
         self._context: (
             ApplicationContext
             | None
         ) = None
-        self._repo_root = Path(__file__).resolve().parents[3]
-        self._configuration = ApplicationEnvironment.discover(self._repo_root)
-
-    @classmethod
-    def instance(
-        cls,
-    ) -> "AgentApplication":
-
-        return cls()
+        self._repo_root = Path(type(configuration).APP_DIR).expanduser().resolve()
 
     def run(
         self,
@@ -382,6 +351,7 @@ class AgentApplication:
                         gateway_user=(
                             args.gateway_user
                         ),
+                        configuration=self._configuration,
                     )
                 ).execute(
                     args
@@ -409,6 +379,7 @@ class AgentApplication:
                     ApplicationContext.create(
                         self._context.repo_root,
                         gateway_user=args.gateway_user,
+                        configuration=self._configuration,
                     )
                 ).execute(
                     args

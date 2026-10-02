@@ -58,7 +58,7 @@ nie powtarza tej flagi w każdym wierszu.
 | `ausers-get.sh` / `ausers_get` | `agents-system user-get` | `-u/--user`; maksymalnie jedno z `--home`, `-n/--name`, `-g/--group` | Odczytuje konto z bazy passwd/group. |
 | `ausers-list.sh` / `ausers_list` | `agents-system user-list` | brak poza help | Wypisuje konta nierootowe posiadające katalog pod `/home`. |
 | `ausers-set.sh` / `ausers_set` | `agents-system user-set` | wymagane `-u/--user`, `--yes` | Zapisuje wybrane konto do `user.json` w katalogu stanu runtime. |
-| `asystem.sh` / `asystem` | `src/app_api/main.py` | globalne `--human`, `--human-raw`, `--agent`, `--json`, `--interactive`, `-h/--help`; dalej sekcja, komenda i jej flagi | Ładuje manifesty menu, opcjonalnie próbuje wspólnego runtime, a potem przekazuje zwalidowaną kopertę do `console-dispatch`. Sekcja `agents` jest obecnie tylko kontraktem UI. |
+| `asystem.sh` / `asystem` | `src/app_api/__main__.py` | globalne `--human`, `--human-raw`, `--agent`, `--json`, `--interactive`, `-h/--help`; dalej sekcja, komenda i jej flagi | Ładuje manifesty menu, opcjonalnie próbuje wspólnego runtime, a potem przekazuje zwalidowaną kopertę do `console-dispatch`. Sekcja `agents` jest obecnie tylko kontraktem UI. |
 
 ### Uwagi do wrapperów
 

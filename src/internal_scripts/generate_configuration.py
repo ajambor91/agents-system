@@ -14,7 +14,7 @@ TYPE_MAP = {
 
 def generate(source: Path) -> None:
     SCRIPT_DIR = Path(__file__).resolve().parent
-    target = (SCRIPT_DIR / "../_runtime/app/configuration.py").resolve()
+    target = (SCRIPT_DIR / "../lib/configuration/configuration.py").resolve()
     config = json.loads(source.read_text(encoding="utf-8"))
 
     lines = [

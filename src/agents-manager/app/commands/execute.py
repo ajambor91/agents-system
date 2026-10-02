@@ -4,19 +4,19 @@ import argparse
 import json
 import sys
 
-from app.commands.base import (
+from .base import (
     Command,
 )
-from app.services.agent_executor import (
+from ..services.agent_executor import (
     AgentExecutor,
 )
-from app.services.process import (
+from ..services.process import (
     ProcessRunner,
 )
-from app.services.runtime_config import (
+from ..services.runtime_config import (
     RuntimeConfigService,
 )
-from app.services.state import (
+from ..services.state import (
     AgentStateService,
 )
 

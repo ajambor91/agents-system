@@ -66,9 +66,13 @@ class InternalRendererTests(unittest.TestCase):
             for item in rendered["children"]:
                 self.assertEqual(
                     Path(item["absolute_module_path"]),
-                    ROOT / "src" / item["module_name"],
+                    ROOT / "src" / ("_runtime" if item["module_name"] == "runtime" else item["module_name"]),
                 )
             self.assertNotIn("${", json.dumps(rendered))
+            source_system = next(item for item in read_json(template)["children"] if item["module_name"] == "agents-system")
+            rendered_system = next(item for item in rendered["children"] if item["module_name"] == "agents-system")
+            self.assertEqual(rendered_system["commands"], source_system["commands"])
+            self.assertEqual(rendered_system["commands"][0]["method"], "modules")
             with self.assertRaisesRegex(RenderError, "--force"):
                 render_modules(
                     package_dir=ROOT,
@@ -110,6 +114,7 @@ class InternalRendererTests(unittest.TestCase):
                     item["name"]: item["value"] for item in read_json(output)["variables"]
                 }
                 self.assertEqual(result["mode"], mode)
+                self.assertEqual(values["INSTALLED_MODULES_DIR"], values["APP_DATA_DIR"] + "/installed_modules")
                 self.assertFalse(set(values) & {
                     "REPOSITORIES_DIR", "REPOSITORY_HISTORY_PATH", "AGENT_METADATA",
                     "AGENT_METADATA_FULL", "APP_DATA_FULL_DIR",
@@ -221,6 +226,45 @@ class InternalRendererTests(unittest.TestCase):
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
             self.assertIn("--help", completed.stdout)
+
+
+    def test_installed_modules_directory_follows_explicit_data_directory(self) -> None:
+        account = pwd.getpwuid(os.getuid())
+        group = grp.getgrgid(account.pw_gid).gr_name
+        for mode in ("dev", "system"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                data = root / "custom-data"
+                output = root / "rendered.json"
+                render_environment(
+                    mode=mode, package_dir=ROOT, install_dir=ROOT, output=output,
+                    force=False, data_dir=str(data), user_system=account.pw_name,
+                    user_group=group, user_system_home=account.pw_dir,
+                    environment={}, value_resolver=lambda _name: None,
+                )
+                variables = {item["name"]: item for item in read_json(output)["variables"]}
+                self.assertEqual(variables["INSTALLED_MODULES_DIR"]["value"], str(data / "installed_modules"))
+                self.assertTrue(variables["INSTALLED_MODULES_DIR"]["description"])
+                self.assertTrue(variables["INSTALLED_MODULES_DIR"]["example"])
+                from lib.configuration import Configuration
+                self.assertEqual(set(variables), set(Configuration.schema()))
+
+
+    def test_modules_renderer_rejects_paths_outside_modules_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            package = base / "package"
+            (package / "resources").mkdir(parents=True)
+            document = read_json(ROOT / "resources/agents-system.module.template.json")
+            runtime = next(child for child in document["children"] if child["module_name"] == "runtime")
+            for suffix in ("../outside", "/tmp/outside", ""):
+                runtime["absolute_module_path"] = "${MODULES_DIR}/" + suffix
+                (package / "resources/agents-system.module.template.json").write_text(json.dumps(document))
+                output = base / "output.json"
+                with self.assertRaises(RenderError):
+                    render_modules(package_dir=package, app_dir=ROOT, modules_dir=ROOT / "src",
+                        manifest_path=output, output=output, force=False)
+                self.assertFalse(output.exists())
 
 
 if __name__ == "__main__":

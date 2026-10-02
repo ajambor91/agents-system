@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import copy
 import json
+import keyword
 import re
 from pathlib import Path
 from typing import Any
 
-from ..models import ApiError
+from ..exceptions import ApiError
 
 
 NAME = re.compile(r"^[a-z][a-z0-9-]*$")
+COMMAND_NAME = re.compile(r"^[a-z][a-z0-9_-]*$")
 MODULE_NAME = re.compile(r"^[a-z][a-z0-9_-]*$")
 FLAG = re.compile(r"^--[a-z][a-z0-9-]*$")
 SHORT_FLAG = re.compile(r"^-[A-Za-z0-9]$")
@@ -48,6 +50,7 @@ class ManifestCatalog:
                 "kind": "asystem-menu-manifest",
                 "absolute_path": str(self.manifest_path),
                 "module_name": child["module_name"],
+                "absolute_module_path": child["absolute_module_path"],
                 "section_name": name,
                 "menu_name": child["menu_name"],
                 "description": child["description"],
@@ -109,6 +112,8 @@ class ManifestCatalog:
             ):
                 raise ApiError(f"{path}: nieprawidłowy lub powtórzony module_name")
             modules.add(module_name)
+            if not isinstance(child.get("absolute_module_path"), str) or not child["absolute_module_path"].strip():
+                raise ApiError(f"{path}: {module_name}.absolute_module_path musi być niepustym tekstem")
             if not isinstance(child.get("is_menu_option"), bool):
                 raise ApiError(f"{path}: {module_name}.is_menu_option musi być boolean")
             if not isinstance(child.get("is_runtime"), bool):
@@ -144,9 +149,12 @@ class ManifestCatalog:
         if not isinstance(command, dict):
             raise ApiError(f"{path}: element commands musi być obiektem")
         name = command.get("name")
-        if not isinstance(name, str) or not NAME.fullmatch(name) or name in names:
+        if not isinstance(name, str) or not COMMAND_NAME.fullmatch(name) or name in names:
             raise ApiError(f"{path}: nieprawidłowa lub powtórzona komenda {name!r}")
         names.add(name)
+        method = command.get("method", name.replace("-", "_"))
+        if not isinstance(method, str) or not method.isidentifier() or method.startswith("_") or keyword.iskeyword(method):
+            raise ApiError(f"{path}: nieprawidłowa publiczna metoda {method!r}")
         for field in ("description", "usage"):
             if not isinstance(command.get(field), str) or not command[field].strip():
                 raise ApiError(f"{path}: {name}.{field} musi być niepustym tekstem")
@@ -182,6 +190,22 @@ class ManifestCatalog:
                     if token in tokens:
                         raise ApiError(f"{path}: powtórzony token flagi {token}")
                     tokens.add(token)
+
+        groups = command.get("exclusive_groups", [])
+        if not isinstance(groups, list):
+            raise ApiError(f"{path}: {name}.exclusive_groups musi być tablicą")
+        flag_names = {flag["name"] for flag in flags}
+        for group in groups:
+            if not isinstance(group, dict):
+                raise ApiError(f"{path}: {name}: nieprawidłowa grupa flag")
+            members = group.get("members")
+            if not isinstance(members, list) or not members or any(
+                not isinstance(member, str) or member not in flag_names for member in members
+            ) or len(set(members)) != len(members):
+                raise ApiError(f"{path}: {name}: nieprawidłowe members grupy flag")
+            minimum, maximum = group.get("minimum", 0), group.get("maximum", 1)
+            if type(minimum) is not int or type(maximum) is not int or not 0 <= minimum <= maximum <= len(members):
+                raise ApiError(f"{path}: {name}: nieprawidłowe limity grupy flag")
 
 
 def find_command(section: dict[str, Any], name: str) -> dict[str, Any] | None:

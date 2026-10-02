@@ -136,12 +136,14 @@ def render(
         if child["is_runtime"] and module_name != "runtime":
             runtime_ids.add(module_name)
 
-        expected_template = f"${{MODULES_DIR}}/{module_name}"
-        if child["absolute_module_path"] != expected_template:
-            raise RenderError(
-                f"{module_name}: absolute_module_path musi mieć wartość {expected_template}"
-            )
-        resolved_path = (modules / module_name).resolve(strict=False)
+        template_path = child["absolute_module_path"]
+        prefix = "${MODULES_DIR}/"
+        if not isinstance(template_path, str) or not template_path.startswith(prefix):
+            raise RenderError(f"{module_name}: absolute_module_path musi zaczynać się od {prefix}")
+        relative = Path(template_path[len(prefix):])
+        if not relative.parts or relative.is_absolute() or ".." in relative.parts:
+            raise RenderError(f"{module_name}: niebezpieczna ścieżka modułu")
+        resolved_path = (modules / relative).resolve(strict=False)
         if not resolved_path.is_dir() or not is_below(resolved_path, modules):
             raise RenderError(f"{module_name}: moduł nie istnieje w MODULES_DIR")
         normalized = str(resolved_path)

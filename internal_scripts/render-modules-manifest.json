@@ -96,8 +96,8 @@
   ],
   "render_rules": [
     "Replace top-level ${APP_DIR}, ${MODULES_DIR} and ${MODULES_MANIFEST_PATH} placeholders.",
-    "Resolve every children[].absolute_module_path below MODULES_DIR.",
-    "Preserve menu commands and module runtime assignments.",
+    "Resolve each explicitly declared children[].absolute_module_path below MODULES_DIR; the directory need not match module_name (runtime uses _runtime). Reject absolute suffixes and parent traversal.",
+    "Preserve menu commands including method, named flags, aliases, exclusive_groups and module runtime assignments.",
     "Reject duplicate modules, paths, menu sections and unknown runtime references.",
     "Reject every unresolved ${NAME} placeholder."
   ],

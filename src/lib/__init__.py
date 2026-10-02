@@ -1,0 +1,1 @@
+"""Wspólne biblioteki systemu agentów."""

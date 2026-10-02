@@ -93,9 +93,9 @@ Kanoniczne entrypointy to dokładnie:
 
 | Aplikacja | Entrypoint |
 | --- | --- |
-| Agents System | `src/agents-system/main.py` |
-| Shared Runtime | `src/runtime/main.py` |
-| Console API | `src/app_api/main.py` |
+| Agents System | `src/agents-system/__main__.py` |
+| Shared Runtime | `src/_runtime/main.py` |
+| Console API | `src/app_api/__main__.py` |
 | Agents Manager Desktop | `src/agents-manager/main.py` |
 | Agent Data | `src/agents-data/main.py` |
 | Agents Data Runtime | `src/agents-data-runtime/main.py` |
@@ -163,7 +163,7 @@ Jedyny publiczny interfejs hierarchicznej konsoli `asystem`. Odpowiada za:
 jest dozwolony jedynie wtedy, gdy runtime nie działa albo nie zna jeszcze
 modułu, czyli zanim wykonano operację domenową.
 
-`src/app_api/main.py` jest wyłącznie composition rootem: buduje `Application`,
+`src/app_api/__main__.py` jest wyłącznie composition rootem: buduje `Application`,
 przekazuje argumenty i emituje gotowy `ApiResult`. Decyzja o użyciu runtime,
 wyborze renderera, trybie interaktywnym i fallbacku należy do
 `app/application.py`. Odczyt manifestów, IPC runtime, wywołanie control plane i
@@ -267,7 +267,7 @@ Każda publiczna komenda zachowuje wspólny kontrakt:
 ```text
 /usr/local/bin/asystem
   -> host_scripts/asystem.sh
-  -> src/app_api/main.py
+  -> src/app_api/__main__.py
   -> manifest aplikacji + manifest sekcji
   -> agents-system/console-dispatch
   -> wersjonowany JSON komendy
@@ -343,7 +343,7 @@ Streams i tylko jeden właściciel mutacji danego rejestru.
 
 Wersjonowany `resources/agents_manager.template.service` jest źródłem jednostki
 systemd. Po wyrenderowaniu placeholderów jednostka uruchamia wyłącznie
-`src/runtime/main.py` jako `USER_SYSTEM`. Nie uruchamia osobnych usług dla
+`src/_runtime/main.py` jako `USER_SYSTEM`. Nie uruchamia osobnych usług dla
 `app_api`, `agents-system` ani `agents-manager`.
 
 Systemd pilnuje dostępności procesu wspólnego runtime. Runtime będzie docelowo

@@ -260,7 +260,7 @@
     {
       "order": 9,
       "id": "render-resources",
-      "description": "Render app_env.json first, then render agents-system.module.json from its MODULES_* values; publish both in package resources and APP_CONFIG_DIR."
+      "description": "Render app_env.json first, then render agents-system.module.json from its MODULES_* values; publish both in package resources and APP_CONFIG_DIR. Preserve module methods, flags and exclusive groups and resolve each explicitly declared module directory."
     },
     {
       "order": 10,
@@ -270,7 +270,7 @@
     {
       "order": 11,
       "id": "prepare-state",
-      "description": "Create mode-specific durable and runtime directories with validated ownership."
+      "description": "Create mode-specific durable and runtime directories with validated ownership. Then copy resources/agents-system.json atomically to INSTALLED_MODULES_DIR/agents-system.json from the rendered configuration and journal the mutation for rollback."
     },
     {
       "order": 12,
@@ -344,7 +344,8 @@
     "published_command_symlinks",
     "optional_accounts",
     "optional_systemd_unit",
-    "secure_install_journal"
+    "secure_install_journal",
+    "installed_modules_file"
   ],
   "failure_policy": "Validation or mutation failure stops installation and rolls back journal-proven changes. Without --force, existing targets stop installation. With --force, only targets proven to belong to this installation may be replaced.",
   "implementation_layout": {
@@ -364,5 +365,18 @@
     "modules_manifest_renderer_python": "src/internal_scripts/render_modules_manifest.py::main",
     "configuration_generator_shell": "internal_scripts/generate_configuration.sh",
     "configuration_generator_python": "src/internal_scripts/generate_configuration.py::main"
-  }
+  },
+  "copied_resources": [
+    {
+      "source": "${APPLICATION_ROOT}/resources/agents-system.json",
+      "target": "${INSTALLED_MODULES_DIR}/agents-system.json",
+      "required": true,
+      "modes": [
+        "dev",
+        "system"
+      ],
+      "atomic": true,
+      "supports_rollback": true
+    }
+  ]
 }

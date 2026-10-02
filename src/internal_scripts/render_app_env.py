@@ -158,7 +158,7 @@ def _validate_double_placeholders(values: Mapping[str, str]) -> None:
 
 
 def _validate_layout(values: Mapping[str, str], mode: str) -> None:
-    for name in ("APP_CONFIG_DIR", "APP_DATA_DIR", "APP_RUNTIME_DIR"):
+    for name in ("APP_CONFIG_DIR", "APP_DATA_DIR", "INSTALLED_MODULES_DIR", "APP_RUNTIME_DIR"):
         _normalized_absolute(values[name], name)
 
     expected_agent_paths = {

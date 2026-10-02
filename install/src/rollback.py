@@ -127,9 +127,15 @@ class InstallationRollback:
             raise InstallationError(f"Niebezpieczna ścieżka w dzienniku: {raw_path}")
         allowed_exact = {
             Path(configuration[name])
-            for name in ("install_dir", "config_dir", "data_dir", "runtime_dir", "unit_path")
+            for name in ("install_dir", "config_dir", "data_dir", "runtime_dir", "unit_path", "installed_modules_dir", "installed_modules_file")
             if isinstance(configuration.get(name), str)
         }
+        installed_dir = configuration.get("installed_modules_dir")
+        for parent in configuration.get("installed_modules_created_parents", []):
+            if isinstance(installed_dir, str) and isinstance(parent, str):
+                candidate = Path(parent)
+                if candidate in Path(installed_dir).parents and candidate != Path(candidate.anchor):
+                    allowed_exact.add(candidate)
         commands_dir = configuration.get("commands_dir")
         generated_environment_paths = {
             (Path(configuration[name]) / "src" / ".env").resolve(strict=False)

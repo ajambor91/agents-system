@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "kind": "agents-system-modules-list",
+  "type": "app",
+  "modules": [
+    {"name": "agents-system", "dir": "agents-system"},
+    {"name": "agents-manager", "dir": "agents-manager"},
+    {"name": "app_api", "dir": "app_api"}
+  ]
+}

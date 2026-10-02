@@ -4,7 +4,7 @@ Description=Agents System shared runtime
 Documentation=file://{{APP_DIR}}/src/README.md
 Wants=network-online.target
 After=network-online.target
-ConditionPathExists={{APP_DIR}}/src/runtime/main.py
+ConditionPathExists={{APP_DIR}}/src/_runtime/main.py
 
 [Service]
 Type=simple
@@ -25,7 +25,7 @@ Environment="APP_ENV_PATH={{APP_ENV_PATH}}"
 Environment="MODULES_MANIFEST_PATH={{MODULES_MANIFEST_PATH}}"
 Environment="PYTHONUNBUFFERED=1"
 Environment="PYTHONDONTWRITEBYTECODE=1"
-ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/runtime/main.py
+ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/_runtime/main.py
 Restart=on-failure
 RestartSec=2s
 TimeoutStartSec=30s

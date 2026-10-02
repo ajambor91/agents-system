@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unix-socket-client"
+version = "0.1.0"
+description = "Extensible Python Unix domain socket client with JSON framing"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.setuptools]
+package-dir = { unix_socket = ".", "lib.unix_socket" = "." }
+packages = [
+    "unix_socket",
+    "unix_socket.abstract",
+    "unix_socket.abstract.exceptions",
+    "unix_socket.abstract.models",
+    "unix_socket.exceptions",
+    "unix_socket.models",
+    "lib.unix_socket",
+    "lib.unix_socket.abstract",
+    "lib.unix_socket.abstract.exceptions",
+    "lib.unix_socket.abstract.models",
+    "lib.unix_socket.exceptions",
+    "lib.unix_socket.models",
+]
+include-package-data = false
+
+[tool.setuptools.package-data]
+unix_socket = ["py.typed"]
+"lib.unix_socket" = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+

@@ -219,6 +219,12 @@
       "description": "Mutable durable data owned by the application."
     },
     {
+      "name": "INSTALLED_MODULES_DIR",
+      "required": true,
+      "value": "${APP_DATA_DIR}/installed_modules",
+      "description": "Directory of installed-module JSON documents, derived from the selected APP_DATA_DIR."
+    },
+    {
       "name": "APP_RUNTIME_DIR",
       "required": true,
       "source": "--runtime-dir or resolved mode configuration",
@@ -429,6 +435,20 @@
       "name": "COMMUNICATION_AGENT_RUNTIME_PID",
       "required": true,
       "value": "${APP_RUNTIME_DIR}/communication_runtime.pid"
+    },
+    {
+      "name": "MAX_MESSAGE_BYTES_BASE",
+      "required": true,
+      "source": "app_env.template.json",
+      "value": "1024",
+      "description": "Base byte value used to calculate the maximum runtime message size."
+    },
+    {
+      "name": "MAX_MESSAGE_BYTES_MULTIPLIER",
+      "required": true,
+      "source": "app_env.template.json",
+      "value": "1024",
+      "description": "Multiplier used with MAX_MESSAGE_BYTES_BASE to calculate the maximum runtime message size."
     }
   ],
   "template_migration": {

@@ -5,12 +5,12 @@ from __future__ import annotations
 import argparse
 import json
 
-from app.commands.base import Command
-from app.services.agent_catalog import AgentCatalog
-from app.services.agent_registry import AgentRegistryService
-from app.services.openclaw import OpenClawService
-from app.services.process import ProcessRunner
-from app.services.state import AgentStateService
+from .base import Command
+from ..services.agent_catalog import AgentCatalog
+from ..services.agent_registry import AgentRegistryService
+from ..services.openclaw import OpenClawService
+from ..services.process import ProcessRunner
+from ..services.state import AgentStateService
 
 
 class StatusCommand(Command):

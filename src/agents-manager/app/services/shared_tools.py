@@ -7,8 +7,8 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.services.agent_config import BootstrapProcess
-from app.services.process import ProcessRunner
+from .agent_config import BootstrapProcess
+from .process import ProcessRunner
 
 
 @dataclass(frozen=True)

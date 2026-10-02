@@ -13,10 +13,10 @@ Stałe entrypointy aplikacji:
 
 | Aplikacja | Entrypoint | Stan |
 | --- | --- | --- |
-| agents-system | `src/agents-system/main.py` | zaimplementowana |
-| runtime | `src/runtime/main.py` | zaimplementowana |
+| agents-system | `src/agents-system/__main__.py` | zaimplementowana |
+| runtime | `src/_runtime/main.py` | zaimplementowana |
 | agents-data-runtime | `src/agents-data-runtime/main.py` | przeniesiony broker komunikacji |
-| app_api | `src/app_api/main.py` | zaimplementowana konsola/API |
+| app_api | `src/app_api/__main__.py` | zaimplementowana konsola/API |
 | agents-manager | `src/agents-manager/main.py` | kod przeniesiony |
 | agents-data | `src/agents-data/main.py` | kod przeniesiony |
 | agents-data-backend | `src/agents-data-backend/main.py` | szkielet migracji |
@@ -184,163 +184,49 @@ Obecnie szablony manifestów narzędzi znajdują się w `repo-manifests/template
 
 Do czasu zakończenia migracji obowiązuje istniejący schemat `repo-manifests`, a nowe repozytoria mają wzorować się na `repo-template` i niniejszym dokumencie.
 
-## 10. Rezydentne moduły aplikacji
+## 10. Moduł Agents System
 
-`agents-system` może ładować aplikacje Python zainstalowanych repozytoriów do
-jednego procesu runtime. Repozytorium może pozostawić klasyczne wrappery bez
-zmian albo wyposażyć swój entrypoint w klienta runtime-first z lokalnym
-fallbackiem:
+`src/agents-system/` jest modułem Pythona o układzie zgodnym z `app_api`:
+`app/application.py`, `app/console.py`, `app/services/`, `app/models/`
+i `app/exceptions/`. Instrukcja instalacji pakietu oraz publiczne API znajdują
+się w [src/agents-system/README.md](src/agents-system/README.md).
 
-```bash
-asystem_app_add \
-  --repo-name ai-module \
-  --start
-asystem_runtime_status
-asystem_app_call --name ai-module --payload '{"action":"health"}'
-```
+`Application` przyjmuje wyłącznie `Configuration` i udostępnia `modules()`.
+Dotychczasowy parser, rejestr komend, `run()`, `execute()`, katalog `specs`
+i wrappery dawnych komend zostały usunięte. Instalacja systemu pozostaje
+odrębną aplikacją w `install/`.
 
-Runtime przechowuje rejestr w `/home/user-system/.repos/modules.json`, ładuje
-entrypoint leniwie i przeładowuje go po zmianie pliku. Udostępnia go przez Unix
-socket. Moduł powinien eksportować `create_service()` zwracające callable albo
-funkcję `handle(payload)`. Alternatywnie może udostępnić klasę `Application`
-z metodą `handle`.
+## 11. Konsola `asystem`
 
-Runtime pobiera UID/GID klienta z `SO_PEERCRED`, nadpisuje zastrzeżone pole
-`_runtime` i przechwytuje tekst wypisany przez starsze handlery. Nowe handlery
-powinny zwracać JSON z wynikiem oraz strumieniami bez bezpośredniego drukowania.
-Brak rejestracji zwraca `error_code: module_unavailable`, co pozwala klientowi
-bezpiecznie uruchomić lokalny fallback przed rozpoczęciem operacji. Pozostałe
-błędy nie zezwalają na automatyczne powtórzenie komendy.
+Publiczna konsola jest osobną aplikacją Python w `src/app_api/`. Ładuje
+aktywny manifest modułów wygenerowany z
+`resources/agents-system.module.template.json` i buduje menu z `children`
+wyłącznie w pamięci. `src/app_api/__main__.py` deleguje start do klasy `Console`.
 
-Przy pierwszym odczycie po aktualizacji dotychczasowy plik
-`/home/user-system/.agents/modules.json` jest automatycznie przenoszony do
-nowej lokalizacji. Socket i PID runtime nadal pozostają w katalogu `.agents`.
-
-Operacje: `asystem_app_add`, `asystem_app_list`, `asystem_app_remove`,
-`asystem_runtime_start`, `asystem_runtime_stop`, `asystem_runtime_status` oraz
-`asystem_app_call`.
-
-Błędy operatorskie, na przykład próba usunięcia niezarejestrowanej nazwy,
-zwracają kod `1` i krótki komunikat na `stderr` bez tracebacka Pythona.
-
-## 11. Status i użytkownicy
-
-Raport dla człowieka:
-
-```bash
-asystem_status
-```
-
-Raport maszynowy:
-
-```bash
-asystem_status --json
-```
-
-Raport pokazuje zainstalowane repozytoria, wersję, status, ścieżkę, ostatnią
-akcję, ostatnie wpisy historii, stan runtime oraz katalogi agentów.
-
-Zarządzanie użytkownikiem systemowym:
-
-```bash
-sudo ausers_create --user user-system --yes
-ausers_get
-ausers_get --home
-ausers_list
-sudo ausers_set --user user-system --yes
-```
-
-`ausers_create` bez `--yes` tylko opisuje plan i nie zmienia systemu.
-
-## 12. Konfiguracja środowiska
-
-Bootstrap i reinstalacja także przechodzą przez klasy Pythona, a wrappery Bash
-jedynie przekazują argumenty. Obie operacje wymagają jawnego potwierdzenia:
-
-```bash
-sudo asystem_install --user user-system --yes
-sudo asystem_reinstall --user user-system --yes
-```
-
-Instalacja przygotowuje konto, checkout, publiczne linki i od razu publikuje
-domyślną konfigurację. Reinstalacja zachowuje istniejący
-`resources/app_env.json` i ponownie tworzy z niego artefakty centralne.
-
-Źródłem struktury jest wersjonowany `resources/app_env.template.json`. Każda
-zmienna ma `name`, `value`, `description` i `example`. Wartości mogą korzystać
-z placeholderów `${NAZWA}`, dlatego pełne ścieżki nie powtarzają
-`/home/user-system`. Placeholdery domenowe w postaci `{{repository_name}}` są
-zachowywane do późniejszego uzupełnienia przez aplikację.
-
-Konfigurację inicjalizuje dokładnie jeden z trybów:
-
-```bash
-sudo asystem_env_init --default
-sudo asystem_env_init --file /ścieżka/do/app_env.json
-sudo asystem_env_init --interactive
-```
-
-Po walidacji dokument jest atomowo zapisywany jako ignorowany przez Git
-`resources/app_env.json`. Następnie powstaje dowiązanie pod ścieżką wyliczoną
-pod `APP_ENV_PATH`, plik `environment.sh` oraz — przy
-uruchomieniu jako root — bezpieczna, root-owned konfiguracja
-`/etc/profile.d/agents-system.sh`. Istniejący zwykły plik centralny nie jest
-nadpisywany bez jawnego `--force`.
-
-Aplikacje odczytują konfigurację bez automatycznego eksportowania jej do procesu.
-W trybie `dev` z `BASH_SOURCE=true` obowiązuje kolejność: środowisko powłoki,
-flaga CLI, `app_env.json`; w pozostałych przypadkach: flaga CLI, `app_env.json`.
-Jawne ładowanie do środowiska przez `EnvironmentService` działa wyłącznie poza
-trybem `repo`. `asystem_env_init` generuje również integrację powłoki w
-`environment.sh` i `/etc/profile.d/agents-system.sh`. Po jej wczytaniu
-`asystem_env_export` jest funkcją wykonującą bezpieczne eksporty bezpośrednio w
-bieżącej powłoce:
-
-```bash
-asystem_env_export
-echo "$APP_DATA_DIR"
-```
-
-Pierwsza konfiguracja nie może zmienić procesu powłoki, który uruchomił
-`asystem_env_init`. Dla już otwartego terminala integrację wczytuje się raz:
-
-```bash
-source /etc/profile.d/agents-system.sh
-```
-
-Nowa sesja loginowa wczyta ją automatycznie. Wywołanie pliku wykonywalnego z
-pominięciem funkcji, np. `/usr/local/bin/asystem_env_export`, nadal wypisuje
-czyste instrukcje `export` dla automatyzacji.
-
-`asystem_env_export --local` ładuje lokalny artefakt, a `--file PATH` dowolny
-zgodny dokument. `get_var NAME` wypisuje pojedynczą wartość, `get_var` wszystkie
-wartości w formacie `NAME=value`, natomiast `get_var --local` zawsze omija
-środowisko procesu i czyta `resources/app_env.json`.
-
-Parser wykrywa nieznane placeholdery, cykle, powtórzone nazwy, błędne nazwy
-zmiennych i nieobsługiwaną wersję schematu przed pierwszym zapisem.
-
-## 13. Konsola `asystem`
-
-Publiczna konsola jest osobną aplikacją Python w `src/app_api/`. Nie importuje
-logiki domenowej Agents Managera. Ładuje główny
-`src/app_api/manifests/asystem.app.json`, pobiera wszystkie pliki
-`*.module.json` i buduje scalony katalog sekcji wyłącznie w pamięci.
-
-`main.py` jest cienkim composition rootem. `app/application.py` wybiera runtime,
-tryb i renderer, natomiast `app/services/` zawiera osobne adaptery manifestów,
-control plane, IPC runtime i prezentacji.
+Komendy są publicznymi metodami aplikacji wskazanych przez manifest i `meta.json`.
+Konsola przekazuje do runtime nazwę modułu, metodę i argumenty nazwane według
+pól `name` z manifestu. Bez połączenia z socketem ładuje tę samą klasę lokalnie.
+Pozostałe aplikacje będą dostosowywane etapami; brak metody zwraca błąd.
 
 ```bash
 asystem
-asystem agents
-asystem agents install --help
-asystem agents install -n huggin
+asystem system modules --help
+asystem system modules --installed
+asystem system modules --running
+asystem --json system modules --installed
 ```
 
-Ostatnia komenda przechodzi przez wewnętrzną komendę `console-dispatch` w
-`agents-system`. Dopóki migracja Agents Managera nie zostanie wykonana, zwraca
-`Not implemented yet.`.
+`system modules` wymaga dokładnie jednej flagi. `--installed` czyta pliki
+`*.json` bezpośrednio w `INSTALLED_MODULES_DIR` i łączy ich tablice `modules`,
+zachowując metadane rekordów. Brak katalogu daje pustą listę. Błędny JSON lub
+sprzeczne wpisy tego samego modułu zatrzymują odczyt; identyczne wpisy są scalane.
+Plik `resources/agents-system.json` pokazuje format dokumentu instalacji.
+
+`--running` wywołuje `instance-manager.get_running_modules` przez socket runtime.
+Zwraca aktualne publiczne instancje zarządzane przez runtime, w tym jego usługi;
+instancje z końcówką `_block` są pomijane. Nie korzysta z list instalacyjnych.
+Niedostępny runtime kończy komendę błędem z czerwonym komunikatem w terminalu.
+`--human-raw`, `NO_COLOR` i tryby JSON nie zawierają kolorów ANSI.
 
 Tryby prezentacji:
 
@@ -352,7 +238,5 @@ asystem --json              # pełny scalony manifest
 asystem --interactive       # interaktywna konsola terminalowa
 ```
 
-`app_api` udostępnia `create_service()` i jest rejestrowany jako wbudowany
-moduł przy starcie wspólnego runtime. Gdy runtime nie działa albo moduł nie jest
-jeszcze dostępny, CLI może bezpiecznie wykonać lokalny adapter, ponieważ przed
-fallbackiem nie zaszła operacja domenowa.
+`Application` w `app_api` udostępnia `run()` i serializowalne `run_dict()`.
+Błąd transportu po wysłaniu komendy nie powoduje jej ponownego wykonania lokalnie.

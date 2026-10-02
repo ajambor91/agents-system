@@ -6,7 +6,8 @@ import shutil
 
 from dataclasses import dataclass
 from pathlib import Path
-from shared.configuration import ApplicationEnvironment
+
+from lib.configuration import Configuration
 
 
 @dataclass(frozen=True)
@@ -28,8 +29,8 @@ class ApplicationContext:
         cls,
         repo_root: Path,
         *,
+        configuration: Configuration,
         gateway_user: str | None = None,
-        configuration: ApplicationEnvironment | None = None,
     ) -> "ApplicationContext":
 
         repo_root = repo_root.expanduser().resolve()
@@ -42,9 +43,8 @@ class ApplicationContext:
             gateway_user
         )
 
-        state_owner = str(
-            configuration.select("USER_SYSTEM") if configuration else "user-system"
-        )
+        settings = type(configuration)
+        state_owner = settings.USER_SYSTEM
 
         try:
             state_entry = pwd.getpwnam(
@@ -56,10 +56,7 @@ class ApplicationContext:
                 f"{state_owner}"
             ) from exc
 
-        state_root = Path(
-            configuration.select("APP_DATA_DIR")
-            if configuration else Path(state_entry.pw_dir) / ".agents"
-        ).expanduser()
+        state_root = Path(settings.APP_DATA_DIR).expanduser()
 
         gateway_home = Path(
             gateway_entry.pw_dir

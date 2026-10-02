@@ -1,12 +1,10 @@
 from dataclasses import dataclass, field
-from ..configuration import Configuration
-from  manifests.app.manifests_app import ManifestsApp
-
+from lib.configuration import Configuration
+from ..instance_manager import InstanceManager
 @dataclass
 class DataClass:
-    configuration: type[Configuration]
-    instances: dict[str, object]
-    manifests: ManifestsApp
+    configuration: Configuration
+    instance_manager: InstanceManager
     
     
 

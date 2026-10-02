@@ -10,20 +10,34 @@
   },
   "application": {
     "language": "python",
-    "entrypoint": "src/agents-system/main.py",
-    "resident_handler": "create_service",
-    "one_command_per_class": true
+    "entrypoint": "src/agents-system/__main__.py",
+    "resident_handler": "Application",
+    "one_command_per_class": true,
+    "public_methods": [
+      "modules"
+    ]
   },
   "applications": [
     {
       "id": "agents-system",
-      "entrypoint": "src/agents-system/main.py",
+      "entrypoint": "src/agents-system/__main__.py",
       "status": "implemented",
-      "role": "control-plane"
+      "role": "control-plane",
+      "console_commands": [
+        {
+          "section": "system",
+          "command": "modules",
+          "method": "modules",
+          "flags": [
+            "--installed",
+            "--running"
+          ]
+        }
+      ]
     },
     {
       "id": "runtime",
-      "entrypoint": "src/runtime/main.py",
+      "entrypoint": "src/_runtime/main.py",
       "status": "implemented",
       "role": "resident-runtime"
     },
@@ -35,7 +49,7 @@
     },
     {
       "id": "app_api",
-      "entrypoint": "src/app_api/main.py",
+      "entrypoint": "src/app_api/__main__.py",
       "status": "implemented",
       "role": "console-api"
     },
@@ -67,23 +81,6 @@
   },
   "system": true,
   "commands": [
-    "asystem",
-    "asystem_install",
-    "asystem_reinstall",
-    "asystem_app_add",
-    "asystem_app_call",
-    "asystem_app_list",
-    "asystem_app_remove",
-    "asystem_env_init",
-    "asystem_env_export",
-    "get_var",
-    "asystem_runtime_start",
-    "asystem_runtime_status",
-    "asystem_runtime_stop",
-    "asystem_status",
-    "ausers_create",
-    "ausers_get",
-    "ausers_list",
-    "ausers_set"
+    "asystem"
   ]
 }
