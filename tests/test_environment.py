@@ -37,7 +37,7 @@ class ConfigurationContractTests(unittest.TestCase):
         return ClassBuilder(None)._load_class(entry)
 
     def test_main_classes_accept_only_configuration(self) -> None:
-        for index, app in enumerate(("app_api", "agents-system", "agents-manager")):
+        for index, app in enumerate(("agents_system_cli", "agents_system", "agents_manager")):
             with self.subTest(app=app):
                 application_class = self.load_application_class(
                     app,
@@ -50,11 +50,11 @@ class ConfigurationContractTests(unittest.TestCase):
 
     def test_obsolete_configuration_services_are_removed(self) -> None:
         self.assertFalse(
-            (SOURCE_ROOT / "app_api" / "app" / "services" / "runtime.py").exists()
+            (SOURCE_ROOT / "agents_system_cli" / "app" / "services" / "runtime.py").exists()
         )
         for name in ("environment.py", "installation.py", "status.py", "system.py"):
             self.assertFalse(
-                (SOURCE_ROOT / "agents-system" / "app" / "services" / name).exists()
+                (SOURCE_ROOT / "agents_system" / "app" / "services" / name).exists()
             )
 
 

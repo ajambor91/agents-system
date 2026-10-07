@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from lib.configuration import Configuration
-from shared.json_loader import JsonLoader
+from lib.json_loader import JsonLoader
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

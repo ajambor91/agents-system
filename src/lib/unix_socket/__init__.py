@@ -2,11 +2,10 @@
 
 from .abstract import (
     AbstractMessageCodec,
-    AbstractSocketConfiguration,
     AbstractUnixSocketClient,
     AbstractUnixSocketTransport,
 )
-from .models import Request, Response
+from .models import Request, Response, SocketConfiguration, CheckStatus
 from .socket_client import SocketClient
 
 __all__ = [
@@ -17,7 +16,9 @@ __all__ = [
     "Request",
     "Response",
     "SocketClient",
-    "SocketClientBuilder"
+    "SocketClientBuilder",
+    "SocketConfiguration",
+    "CheckStatus"
 ]
 
 

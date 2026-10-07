@@ -12,15 +12,15 @@ powłoki odbywał się przez funkcję załadowaną poleceniem `source`.
 
 Najważniejsze ustalenia:
 
-1. `src/agents-system` jest faktycznie obsługiwany przez wrappery i ma
+1. `src/agents_system` jest faktycznie obsługiwany przez wrappery i ma
    kontrakty flag w plikach JSON.
-2. `src/app_api` obsługuje konsolę `asystem`, ale wszystkie komendy sekcji
+2. `src/agents_system_cli` obsługuje konsolę `asystem`, ale wszystkie komendy sekcji
    `agents` nadal kończą się wynikiem `Not implemented yet.`. Nie wywołują
-   jeszcze przeniesionego `src/agents-manager`.
-3. `src/agents-manager`, `src/agents-data` i `src/agents-data-runtime` mają
+   jeszcze przeniesionego `src/agents_manager`.
+3. `src/agents_manager`, `src/agents_data` i `src/agents_data_runtime` mają
    własne parsery CLI, lecz nie mają jeszcze bezpośrednich wrapperów w
    `host_scripts/`.
-4. `src/agents-data-backend` jest wyłącznie szkieletem i nie przyjmuje flag.
+4. `src/agents_data_backend` jest wyłącznie szkieletem i nie przyjmuje flag.
 5. Kontrakt `resources/app_env.template.json` jest zsynchronizowany z
    `internal_scripts/render-app-env.json` i obejmuje 49 zmiennych wraz z
    przełącznikiem `BASH_SOURCE`.
@@ -58,7 +58,7 @@ nie powtarza tej flagi w każdym wierszu.
 | `ausers-get.sh` / `ausers_get` | `agents-system user-get` | `-u/--user`; maksymalnie jedno z `--home`, `-n/--name`, `-g/--group` | Odczytuje konto z bazy passwd/group. |
 | `ausers-list.sh` / `ausers_list` | `agents-system user-list` | brak poza help | Wypisuje konta nierootowe posiadające katalog pod `/home`. |
 | `ausers-set.sh` / `ausers_set` | `agents-system user-set` | wymagane `-u/--user`, `--yes` | Zapisuje wybrane konto do `user.json` w katalogu stanu runtime. |
-| `asystem.sh` / `asystem` | `src/app_api/__main__.py` | globalne `--human`, `--human-raw`, `--agent`, `--json`, `--interactive`, `-h/--help`; dalej sekcja, komenda i jej flagi | Ładuje manifesty menu, opcjonalnie próbuje wspólnego runtime, a potem przekazuje zwalidowaną kopertę do `console-dispatch`. Sekcja `agents` jest obecnie tylko kontraktem UI. |
+| `asystem.sh` / `asystem` | `src/agents_system_cli/__main__.py` | globalne `--human`, `--human-raw`, `--agent`, `--json`, `--interactive`, `-h/--help`; dalej sekcja, komenda i jej flagi | Ładuje manifesty menu, opcjonalnie próbuje wspólnego runtime, a potem przekazuje zwalidowaną kopertę do `console-dispatch`. Sekcja `agents` jest obecnie tylko kontraktem UI. |
 
 ### Uwagi do wrapperów
 
@@ -67,25 +67,25 @@ nie powtarza tej flagi w każdym wierszu.
 - Wrappery nie parsują domenowych flag i nie zmieniają granic argumentów.
 - Komentarz `asystem-env-export.sh` nie wymienia publicznych `--local/--file`,
   choć implementacja je obsługuje.
-- Nie istnieją jeszcze wrappery dla standalone `agents-manager`,
-  `agents-data` ani `agents-data-runtime`.
+- Nie istnieją jeszcze wrappery dla standalone `agents_manager`,
+  `agents_data` ani `agents_data_runtime`.
 
 ## 3. Aplikacje pod `src/*`
 
 | Aplikacja | Stan i odpowiedzialność | Czy przyjmuje flagi z powłoki? |
 | --- | --- | --- |
-| `src/agents-system` | Działający control plane. Parser jest generowany z `app/specs/*.json`; wykonuje środowisko, użytkowników, instalację, rejestr modułów i lifecycle wspólnego runtime. | Tak, przez komendę jako pierwszy argument i flagi opisane w tabeli wrapperów. Żaden spec nie deklaruje obecnie fallbacku `env` ani `var` dla pojedynczej flagi. |
-| `src/runtime` | Wspólny rezydentny runtime aplikacji Python, rejestr modułów i Unix socket. `main.py` uruchamia bezpośrednio `serve()`. | Nie. Bezpośredni entrypoint nie ma parsera CLI; ścieżki bierze ze środowiska. Start/status/stop są wystawione przez control plane. |
-| `src/app_api` | Hierarchiczna konsola manifest-driven, runtime-first z bezpiecznym fallbackiem lokalnym. | Tak: globalne tryby wyjścia, sekcja, komenda i flagi z manifestu. `--interactive` wymaga TTY. |
-| `src/agents-manager` | Przeniesiona aplikacja desktopowa z własnym `argparse`. Nie jest jeszcze podłączona do `asystem agents`. | Tak, pełny zestaw opisano niżej. |
-| `src/agents-data` | CLI wiadomości oraz placeholdery memory/sync. | Tak. `messege_send` ma rozbudowane flagi; pozostałe podkomendy są placeholderami. |
-| `src/agents-data-runtime` | Osobny broker Unix socket ↔ Redis Streams ↔ backend HTTP. | Tak: wymagany positional `action` i opcjonalne flagi transportu. |
-| `src/agents-data-backend` | Szkielet wypisujący opis JSON. | Nie. |
+| `src/agents_system` | Działający control plane. Parser jest generowany z `app/specs/*.json`; wykonuje środowisko, użytkowników, instalację, rejestr modułów i lifecycle wspólnego runtime. | Tak, przez komendę jako pierwszy argument i flagi opisane w tabeli wrapperów. Żaden spec nie deklaruje obecnie fallbacku `env` ani `var` dla pojedynczej flagi. |
+| `src/runtime` | Wspólny rezydentny runtime aplikacji Python, rejestr modułów i Unix socket. `__main__.py` uruchamia bezpośrednio `serve()`. | Nie. Bezpośredni entrypoint nie ma parsera CLI; ścieżki bierze ze środowiska. Start/status/stop są wystawione przez control plane. |
+| `src/agents_system_cli` | Hierarchiczna konsola manifest-driven, runtime-first z bezpiecznym fallbackiem lokalnym. | Tak: globalne tryby wyjścia, sekcja, komenda i flagi z manifestu. `--interactive` wymaga TTY. |
+| `src/agents_manager` | Przeniesiona aplikacja desktopowa z własnym `argparse`. Nie jest jeszcze podłączona do `asystem agents`. | Tak, pełny zestaw opisano niżej. |
+| `src/agents_data` | CLI wiadomości oraz placeholdery memory/sync. | Tak. `messege_send` ma rozbudowane flagi; pozostałe podkomendy są placeholderami. |
+| `src/agents_data_runtime` | Osobny broker Unix socket ↔ Redis Streams ↔ backend HTTP. | Tak: wymagany positional `action` i opcjonalne flagi transportu. |
+| `src/agents_data_backend` | Szkielet wypisujący opis JSON. | Nie. |
 | `src/internal_scripts` | Dwa renderery instalatora: środowisko oraz manifest modułów. | Tak, ale są to komendy wewnętrzne, niepublikowane do `/usr/local/bin`. |
 
 ## 4. Flagi aplikacji niewystawionych bezpośrednio przez `host_scripts`
 
-### `src/agents-manager`
+### `src/agents_manager`
 
 | Podkomenda | Flagi |
 | --- | --- |
@@ -101,7 +101,7 @@ nie powtarza tej flagi w każdym wierszu.
 Manager buduje parser dopiero po utworzeniu `ApplicationContext`, więc nawet
 `--help` wymaga poprawnego użytkownika stanu i znalezionego programu OpenClaw.
 
-### `src/agents-data`
+### `src/agents_data`
 
 `messege_send` przyjmuje:
 
@@ -116,7 +116,7 @@ Nazwa `messege_send` nadal zawiera historyczną literówkę. `memory_write`,
 `memory_get`, `memory_find`, `drive_sync` i `sync` nie mają jeszcze flag i
 zwracają placeholder.
 
-### `src/agents-data-runtime`
+### `src/agents_data_runtime`
 
 - wymagany positional `action`: `start`, `status`, `stop` albo `clients`;
 - `--socket`;
@@ -125,7 +125,7 @@ zwracają placeholder.
 - `--consumer-group`;
 - `--retry-seconds`.
 
-### `src/app_api`
+### `src/agents_system_cli`
 
 Globalnie przyjmuje jeden z trybów `--human`, `--human-raw`, `--agent`,
 `--json`, `--interactive`. Dalej oczekuje `SECTION COMMAND [FLAGS]`.
@@ -154,10 +154,10 @@ aktywny pozostaje lokalny artefakt repozytorium.
 | Aplikacja | Kanoniczne wartości |
 | --- | --- |
 | `src/runtime` i control plane | `APP_DATA_DIR`, `APP_RUNTIME_PATH`, `SYSTEM_AGENT_RUNTIME_PID`, `USER_SYSTEM`, `USER_SYSTEM_HOME` |
-| `src/app_api` | `APP_RUNTIME_PATH` |
-| `src/agents-manager` | `USER_SYSTEM`, `APP_DATA_DIR`; `SUDO_USER` pozostaje kontekstem wywołania |
-| `src/agents-data` | `AGENTS_DATA_COMMUNICATION_APP`, `USER_SYSTEM_HOME`; `AGENT_NAME`, `AGENT_HOME`, `HOME` i `SUDO_USER` pozostają kontekstem procesu |
-| `src/agents-data-runtime` | `AGENTS_DATA_RUNTIME_PATH`, `AGENTS_DATA_COMMUNICATION_APP` |
+| `src/agents_system_cli` | `APP_RUNTIME_PATH` |
+| `src/agents_manager` | `USER_SYSTEM`, `APP_DATA_DIR`; `SUDO_USER` pozostaje kontekstem wywołania |
+| `src/agents_data` | `AGENTS_DATA_COMMUNICATION_APP`, `USER_SYSTEM_HOME`; `AGENT_NAME`, `AGENT_HOME`, `HOME` i `SUDO_USER` pozostają kontekstem procesu |
+| `src/agents_data_runtime` | `AGENTS_DATA_RUNTIME_PATH`, `AGENTS_DATA_COMMUNICATION_APP` |
 
 `COMM_REDIS_URL` i `COMM_RUNTIME_GROUP` nie zostały przemianowane na sztuczne
 odpowiedniki. Ponieważ nie występują w odświeżonym kontrakcie, są odpowiednio
@@ -190,9 +190,9 @@ Oba szablony systemd używają obecnie tych samych nazw: `INSTALL_MODE`,
 ## 8. Nadal otwarte kwestie
 
 1. `asystem agents ...` nadal zwraca placeholder i nie uruchamia jeszcze
-   przeniesionego `src/agents-manager`.
-2. `agents-data-runtime` nadal nie ma osobnej publicznej jednostki systemd.
-3. `agents-data` zachowuje historyczną nazwę komendy `messege_send`.
+   przeniesionego `src/agents_manager`.
+2. `agents_data_runtime` nadal nie ma osobnej publicznej jednostki systemd.
+3. `agents_data` zachowuje historyczną nazwę komendy `messege_send`.
 4. URL Redis Streams i nazwa consumer group nie są częścią globalnego
    `app_env.json`; przed wdrożeniem produkcyjnym trzeba zdecydować, czy należą
    do kontraktu aplikacji, czy do sekretnej konfiguracji usługi.

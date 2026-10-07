@@ -1,1 +1,0 @@
-"""Agents System installation application."""

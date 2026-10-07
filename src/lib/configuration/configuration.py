@@ -12,6 +12,7 @@ class Configuration(ConfigurationAbstract):
     PLUGINS_DIR: ClassVar[str]
     BASH_SOURCE: ClassVar[str]
     APP_NAME: ClassVar[str]
+    MAIN_APP_NAME: ClassVar[str]
     INSTALL_DIR: ClassVar[str]
     APP_DIR: ClassVar[str]
     USER_SYSTEM: ClassVar[str]
@@ -69,6 +70,7 @@ class Configuration(ConfigurationAbstract):
             'PLUGINS_DIR': str,
             'BASH_SOURCE': str,
             'APP_NAME': str,
+            'MAIN_APP_NAME': str,
             'INSTALL_DIR': str,
             'APP_DIR': str,
             'USER_SYSTEM': str,

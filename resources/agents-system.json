@@ -3,8 +3,17 @@
   "kind": "agents-system-modules-list",
   "type": "app",
   "modules": [
-    {"name": "agents-system", "dir": "agents-system"},
-    {"name": "agents-manager", "dir": "agents-manager"},
-    {"name": "app_api", "dir": "app_api"}
+    {
+      "name": "agents_system",
+      "dir": "agents_system"
+    },
+    {
+      "name": "agents_manager",
+      "dir": "agents_manager"
+    },
+    {
+      "name": "agents_system_cli",
+      "dir": "agents_system_cli"
+    }
   ]
 }

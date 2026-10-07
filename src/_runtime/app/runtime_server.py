@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .main_runtime import MainRuntime
+    from . import MainRuntime
 
 import socketserver
 
-from .runtime_request_handler import RuntimeRequestHandler
+from . import RuntimeRequestHandler
 
 class RuntimeServer(
     socketserver.ThreadingUnixStreamServer

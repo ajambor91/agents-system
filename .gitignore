@@ -8,3 +8,5 @@ repo_data/
 resources/app_env.json
 resources/default_install.json
 resources/agents-system.module.json
+# Local copy of the installer package; source lives in install/src/.
+src/install/

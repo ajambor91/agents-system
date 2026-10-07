@@ -24,7 +24,7 @@ Nie wolno wymyślać logiki biznesowej na podstawie samej nazwy projektu.
 - `repo-template` pokazuje minimalne drzewo nowego repozytorium.
 - `repo-manager` wykonuje lifecycle i publikuje wrappery.
 - `repo-manifests` zapisuje trwałe dane oraz generuje katalog narzędzi agentów.
-- `agents-manager` zarządza procesami i konfiguracją agentów.
+- `agents_manager` zarządza procesami i konfiguracją agentów.
 
 Nie przenoś logiki Git do `repo-manifests`. Nie zapisuj rejestru ani historii bezpośrednio z aplikacji repozytorium, jeżeli dostępne jest API `manifests_*`.
 
@@ -130,33 +130,33 @@ Minimalne testy zmiany obejmują parser flag, zachowanie klasy use-case, wrapper
 
 Ścieżki aplikacji są częścią kontraktu repozytorium i nie są wyliczane z
 nazwy paczki. Control plane znajduje się zawsze w
-`src/agents-system/__main__.py`. Wariant `src/agents_system/` z podkreśleniem jest
-niedozwolony.
+`src/agents_system/__main__.py`. Nazwy pakietów Pythona używają
+podkreśleń zamiast myślników.
 
-Wspólny, rezydentny runtime ma osobny entrypoint `src/_runtime/main.py`, a jego
+Wspólny, rezydentny runtime ma osobny entrypoint `src/_runtime/__main__.py`, a jego
 silnik znajduje się w `src/_runtime/app/`. Control plane może nim
 zarządzać, ale logika utrzymywania procesu należy do katalogu `runtime`.
 
 Pozostałe stałe katalogi aplikacji to:
 
-- `src/app_api/` — manifest-driven konsola i API interfejsu `asystem`,
-- `src/agents-manager/` — wyłącznie desktopowa aplikacja Pythona,
-- `src/agents-data/` — lokalny klient danych i wiadomości agenta,
-- `src/agents-data-runtime/` — osobny runtime komunikacji i dostarczania wiadomości,
-- `src/agents-data-backend/` — backend trwałych danych, cache i streamów.
+- `src/agents_system_cli/` — manifest-driven konsola i API interfejsu `asystem`,
+- `src/agents_manager/` — wyłącznie desktopowa aplikacja Pythona,
+- `src/agents_data/` — lokalny klient danych i wiadomości agenta,
+- `src/agents_data_runtime/` — osobny runtime komunikacji i dostarczania wiadomości,
+- `src/agents_data_backend/` — backend trwałych danych, cache i streamów.
 
-`app_api` jest zaimplementowanym adapterem interfejsu i nigdy nie wykonuje
+`agents_system_cli` jest zaimplementowanym adapterem interfejsu i nigdy nie wykonuje
 logiki domenowej bezpośrednio. Ładuje `asystem.app.json` oraz pliki
 `*.module.json`, scala ich widok wyłącznie w pamięci i przekazuje typowaną
 kopertę do komendy `console-dispatch` w control plane. Każda sekcja menu ma
 osobny manifest JSON. Publiczny wrapper `host_scripts/asystem.sh` prowadzi
-wyłącznie do `src/app_api/__main__.py`.
+wyłącznie do `src/agents_system_cli/__main__.py`.
 
-W `app_api` plik `main.py` nie wybiera runtime ani renderera. Te decyzje należą
+W `agents_system_cli` plik `__main__.py` nie wybiera runtime ani renderera. Te decyzje należą
 do `app/application.py`. Adaptery manifestów, renderowania, control plane i IPC
 runtime muszą pozostać w `app/services/`; nie dodawaj ponownie płaskich modułów
 `application.py`, `manifests.py`, `renderer.py` lub `control_plane.py` obok
-`main.py`.
+`__main__.py`.
 
 Pozostałe trzy aplikacje są obecnie szkieletami migracji. Nie przenoś do nich
 kodu produkcyjnego bez zachowania etapów i testów opisanych w
@@ -181,3 +181,12 @@ Wrapper może działać runtime-first, ale fallback do lokalnego CLI jest
 dozwolony wyłącznie przy braku socketu/modułu albo jawnej odpowiedzi
 `handled: false` sprzed wykonania. Po wysłaniu żądania błąd transportu nie może
 powodować ponownego wykonania operacji mutującej.
+
+## Biblioteki odczytu
+
+`src/lib/json_loader` jest wspólnym czytnikiem JSON.
+`src/lib/manifests_loader.ManifestsLoader` wyłącznie odczytuje manifesty
+przez `JsonLoader`; nie wywołuje walidatora ani modeli.
+`ManifestsApp` woła loader i koordynuje walidację oraz rozwiązywanie referencji.
+Modele oraz wybór strategii walidacji według `kind` należą do `src/manifests`.
+Entry point każdego pakietu aplikacji jest w `__main__.py`.

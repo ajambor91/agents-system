@@ -23,7 +23,7 @@ class CommandEntryModuleManifest(ManifestModel):
     usage: str
     implementation_status: str
     flags: list[FlagEntryModuleManifest]
-    input: CommandEntryModuleManifest | None = None
+    input: CommandInputModuleManifest | None = None
 
     def _validate_content(self) -> None:
         self._str("name", self.name)

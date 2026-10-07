@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "command": "asystem-uninstall",
+  "mode": "write",
+  "steps_scope": "implemented_behavior_contract",
+  "description": "Usuwa zarządzaną instalację; zachowuje dane i konta.",
+  "host_script": "${APPLICATION_ROOT}/install/uninstall.sh",
+  "target": {
+    "application": "install/src/__main__.py",
+    "command_class": "Uninstaller",
+    "module": "install/src/uninstaller.py",
+    "method": "execute",
+    "runtime": false
+  },
+  "flags": [
+    {
+      "name": "help",
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false,
+      "description": "Wyświetla pomoc z manifestu JSON; nie wykonuje operacji."
+    },
+    {
+      "name": "yes",
+      "short": null,
+      "long": "--yes",
+      "required": true,
+      "takes_value": false,
+      "description": "Potwierdza wykonanie operacji. Bez tej flagi komenda nie wykonuje zmian."
+    },
+    {
+      "name": "journal",
+      "short": null,
+      "long": "--journal",
+      "required": true,
+      "takes_value": true,
+      "description": "Absolutna ścieżka dziennika ostatniej udanej instalacji lub operacji lifecycle."
+    },
+    {
+      "name": "purge_data",
+      "short": null,
+      "long": "--purge-data",
+      "required": false,
+      "takes_value": false,
+      "description": "Usuwa także oznaczony katalog danych. Domyślnie dane i konta zostają."
+    },
+    {
+      "name": "verbose",
+      "short": "-v",
+      "long": "--verbose",
+      "required": false,
+      "takes_value": false,
+      "description": "Wyświetla szczegóły wykonywanych kroków."
+    }
+  ],
+  "execution": {
+    "requires_sudo": true,
+    "requires_confirmation": true,
+    "interactive": false,
+    "supports_dry_run": false,
+    "idempotent": false,
+    "network": false,
+    "timeout_seconds": null,
+    "timeout_policy": "caller-managed"
+  },
+  "failure_policy": "Validate provenance and owned paths before mutation. Persist backups and intent before replacement; attempt journal rollback on failure.",
+  "kind": "installer-help",
+  "operation": "uninstall",
+  "usage": "asystem-uninstall --yes --journal PATH [--purge-data]",
+  "executable": "host_scripts/asystem-uninstall.sh",
+  "python_target": "install/src/__main__.py",
+  "flag_names": [
+    "-h",
+    "--help",
+    "--yes",
+    "--journal",
+    "--purge-data",
+    "-v",
+    "--verbose"
+  ]
+}

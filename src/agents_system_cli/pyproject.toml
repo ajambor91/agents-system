@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agents_system_cli"
+version = "0.1.0"
+description = "Installable Python API for the Agents System console"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "manifests-loader==0.1.0",
+    "json-loader==0.1.0",
+    "agents-system-modules-catalog==0.1.0",
+    "unix-socket-client==0.1.0",
+]
+
+[project.scripts]
+asystem = "agents_system_cli.__main__:main"
+
+[tool.setuptools]
+package-dir = { agents_system_cli = ".", lib = "../lib", shared = "../shared" }
+packages = [
+    "agents_system_cli",
+    "agents_system_cli.app",
+    "agents_system_cli.app.services",
+    "agents_system_cli.app.models",
+    "agents_system_cli.app.exceptions",
+    "lib",
+    "lib.configuration",
+    "shared",
+    "shared.exceptions",
+]
+include-package-data = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+
+[tool.setuptools.package-data]
+agents_system_cli = ["meta.json", "resources/*.json"]

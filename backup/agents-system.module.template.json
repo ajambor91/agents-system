@@ -2,20 +2,20 @@
   "schema_version": 1,
   "version": 1,
   "kind": "agents-system-modules-manifest",
-  "app_module_name": "agents-system",
+  "app_module_name": "agents_system",
   "manifest_absolute_path": "${MODULES_MANIFEST_PATH}",
   "absolute_path": "${MODULES_DIR}",
   "app_dir": "${APP_DIR}",
   "children": [
     {
       "section_name": "agents",
-      "absolute_module_path": "${MODULES_DIR}/agents-manager",
+      "absolute_module_path": "${MODULES_DIR}/agents_manager",
       "is_menu_option": true,
       "is_runtime": false,
       "runtime": [
         "main"
       ],
-      "module_name": "agents-manager",
+      "module_name": "agents_manager",
       "menu_name": "Agents Manager",
       "description": "Instalacja, aktualizacja, wykonanie, stan i narzędzia lokalnych agentów OpenClaw.",
       "commands": [
@@ -208,7 +208,7 @@
         },
         {
           "name": "delete",
-          "description": "Usuwa agenta; operacja pozostaje placeholderem w agents-manager.",
+          "description": "Usuwa agenta; operacja pozostaje placeholderem w agents_manager.",
           "usage": "asystem agents delete -n NAME",
           "implementation_status": "not-implemented",
           "flags": [
@@ -368,28 +368,28 @@
         },
         {
           "name": "gateway-start",
-          "description": "Uruchamia gateway wiadomości agents-manager.",
+          "description": "Uruchamia gateway wiadomości agents_manager.",
           "usage": "asystem agents gateway-start",
           "implementation_status": "not-implemented",
           "flags": []
         },
         {
           "name": "gateway-status",
-          "description": "Pokazuje stan gatewaya wiadomości agents-manager.",
+          "description": "Pokazuje stan gatewaya wiadomości agents_manager.",
           "usage": "asystem agents gateway-status",
           "implementation_status": "not-implemented",
           "flags": []
         },
         {
           "name": "gateway-stop",
-          "description": "Zatrzymuje gateway wiadomości agents-manager.",
+          "description": "Zatrzymuje gateway wiadomości agents_manager.",
           "usage": "asystem agents gateway-stop",
           "implementation_status": "not-implemented",
           "flags": []
         },
         {
           "name": "gateway-restart",
-          "description": "Restartuje gateway wiadomości agents-manager.",
+          "description": "Restartuje gateway wiadomości agents_manager.",
           "usage": "asystem agents gateway-restart",
           "implementation_status": "not-implemented",
           "flags": []
@@ -397,22 +397,22 @@
       ]
     },
     {
-      "module_name": "agents-data",
+      "module_name": "agents_data",
       "section_name": null,
-      "absolute_module_path": "${MODULES_DIR}/agents-data",
+      "absolute_module_path": "${MODULES_DIR}/agents_data",
       "is_menu_option": false,
       "is_runtime": false,
       "runtime": [
-        "agents-data-runtime"
+        "agents_data_runtime"
       ],
       "menu_name": null,
-      "description": "Lokalny klient danych i wiadomości agenta, obsługiwany przez agents-data-runtime.",
+      "description": "Lokalny klient danych i wiadomości agenta, obsługiwany przez agents_data_runtime.",
       "commands": []
     },
     {
-      "module_name": "agents-data-backend",
+      "module_name": "agents_data_backend",
       "section_name": null,
-      "absolute_module_path": "${MODULES_DIR}/agents-data-backend",
+      "absolute_module_path": "${MODULES_DIR}/agents_data_backend",
       "is_menu_option": false,
       "is_runtime": false,
       "runtime": [],
@@ -421,9 +421,9 @@
       "commands": []
     },
     {
-      "module_name": "agents-system",
+      "module_name": "agents_system",
       "section_name": "system",
-      "absolute_module_path": "${MODULES_DIR}/agents-system",
+      "absolute_module_path": "${MODULES_DIR}/agents_system",
       "is_menu_option": true,
       "is_runtime": false,
       "runtime": [
@@ -1112,9 +1112,9 @@
       ]
     },
     {
-      "module_name": "app_api",
+      "module_name": "agents_system_cli",
       "section_name": null,
-      "absolute_module_path": "${MODULES_DIR}/app_api",
+      "absolute_module_path": "${MODULES_DIR}/agents_system_cli",
       "is_menu_option": false,
       "is_runtime": false,
       "runtime": [
@@ -1125,13 +1125,13 @@
       "commands": []
     },
     {
-      "module_name": "agents-data-runtime",
+      "module_name": "agents_data_runtime",
       "section_name": null,
-      "absolute_module_path": "${MODULES_DIR}/agents-data-runtime",
+      "absolute_module_path": "${MODULES_DIR}/agents_data_runtime",
       "is_menu_option": false,
       "is_runtime": true,
       "runtime": [
-        "agents-data-runtime"
+        "agents_data_runtime"
       ],
       "menu_name": null,
       "description": "Osobny runtime komunikacji i dostarczania wiadomości agentom.",

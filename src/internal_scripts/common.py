@@ -8,6 +8,8 @@ import re
 import tempfile
 from pathlib import Path
 from typing import Any
+from lib.json_loader import JsonLoader
+from manifests import ManifestsApp
 
 
 SHELL_REFERENCE = re.compile(r"\$\{([A-Z][A-Z0-9_]*)\}")
@@ -22,19 +24,17 @@ class RenderError(RuntimeError):
 
 def load_object(path: Path) -> dict[str, Any]:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError as exc:
-        raise RenderError(f"Brak pliku: {path}") from exc
-    except (OSError, json.JSONDecodeError) as exc:
+        value = ManifestsApp().load_manifest(path)
+        if not isinstance(value, dict):
+            raise ValueError(f"Dokument musi być obiektem JSON: {path}")
+        return value
+    except (OSError, ValueError) as exc:
         raise RenderError(f"Nie można odczytać JSON {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise RenderError(f"Dokument musi być obiektem JSON: {path}")
-    return value
 
 
 def load_name_values(path: Path) -> dict[str, str | None]:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        value = JsonLoader.load(path)
     except FileNotFoundError as exc:
         raise RenderError(f"Brak pliku wartości domyślnych: {path}") from exc
     except (OSError, json.JSONDecodeError) as exc:

@@ -1,0 +1,12 @@
+{
+    "name": "agents_system_cli",
+    "namespace": "agents_system_cli",
+    "entrypoint": "__main__.py",
+    "application": {
+        "module": "app.application",
+        "class": "AgentsSystemCLI"
+    },
+    "service": {
+        "factory": "create_service"
+    }
+}

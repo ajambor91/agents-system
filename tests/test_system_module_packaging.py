@@ -13,9 +13,9 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-package = importlib.import_module("agents-system")
-entrypoint = importlib.import_module("agents-system.__main__")
-console_module = importlib.import_module("agents-system.app.console")
+package = importlib.import_module("agents_system")
+entrypoint = importlib.import_module("agents_system.__main__")
+console_module = importlib.import_module("agents_system.app.console")
 
 
 class SystemModulePackagingTests(unittest.TestCase):
@@ -42,25 +42,25 @@ class SystemModulePackagingTests(unittest.TestCase):
         self.assertEqual(result.data["mode"], "installed")
 
     def test_retired_architecture_files_are_removed(self):
-        source = ROOT / "src/agents-system/app"
+        source = ROOT / "src/agents_system/app"
         for path in ("command.py", "errors.py", "commands", "specs", "services/users.py", "models/command_request.py", "models/command_result.py"):
             self.assertFalse((source / path).exists(), path)
 
     def test_template_lists_only_the_public_modules_method(self):
         document = json.loads((ROOT / "resources/agents-system.module.template.json").read_text())
-        system = next(child for child in document["children"] if child["module_name"] == "agents-system")
+        system = json.loads((ROOT / "src/agents_system/resources/agents_system.module.json").read_text())
         self.assertEqual([command["name"] for command in system["commands"]], ["modules"])
         self.assertTrue(hasattr(package.Application, system["commands"][0]["method"]))
 
     def test_package_layout_keeps_the_fixed_source_directory(self):
-        configuration = tomllib.loads((ROOT / "src/agents-system/pyproject.toml").read_text())
+        configuration = tomllib.loads((ROOT / "src/agents_system/pyproject.toml").read_text())
         self.assertEqual(configuration["tool"]["setuptools"]["package-dir"]["agents_system"], ".")
         self.assertIn("agents_system.app.models", configuration["tool"]["setuptools"]["packages"])
         self.assertIn("agents_system.app.exceptions", configuration["tool"]["setuptools"]["packages"])
-        self.assertFalse((ROOT / "src/agents_system").exists())
+        self.assertTrue((ROOT / "src/agents_system").is_dir())
 
     def test_public_wrapper_menu_matches_manifest(self):
         manifest = json.loads((ROOT / "manifest.json").read_text())
-        commands = [path.stem.replace("-", "_") for path in (ROOT / "host_scripts").glob("*.sh")]
+        commands = [path.stem.replace("_", "-") for path in (ROOT / "host_scripts").glob("*.sh")]
         self.assertEqual(sorted(manifest["commands"]), sorted(commands))
-        self.assertEqual(commands, ["asystem"])
+        self.assertEqual(sorted(commands), ["asystem", "asystem-reconfigure", "asystem-reinstall", "asystem-uninstall"])

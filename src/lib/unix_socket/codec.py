@@ -21,7 +21,10 @@ class MessageCodec(AbstractMessageCodec[Request, Response]):
         except (ValueError, UnicodeError) as exc:
             raise UnixSocketSerializationException(str(exc)) from exc
         if not isinstance(document, dict) or type(document.get("successful")) is not bool or not isinstance(document.get("request_id"), str):
+            print("DOCUMENT")
+            print(document)
             raise UnixSocketProtocolException("Response requires request_id and boolean successful")
+     
         error = document.get("error")
         if error is not None and not isinstance(error, dict):
             raise UnixSocketProtocolException("Response error must be an object")

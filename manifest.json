@@ -10,7 +10,7 @@
   },
   "application": {
     "language": "python",
-    "entrypoint": "src/agents-system/__main__.py",
+    "entrypoint": "src/agents_system/__main__.py",
     "resident_handler": "Application",
     "one_command_per_class": true,
     "public_methods": [
@@ -19,8 +19,8 @@
   },
   "applications": [
     {
-      "id": "agents-system",
-      "entrypoint": "src/agents-system/__main__.py",
+      "id": "agents_system",
+      "entrypoint": "src/agents_system/__main__.py",
       "status": "implemented",
       "role": "control-plane",
       "console_commands": [
@@ -37,37 +37,37 @@
     },
     {
       "id": "runtime",
-      "entrypoint": "src/_runtime/main.py",
+      "entrypoint": "src/_runtime/__main__.py",
       "status": "implemented",
       "role": "resident-runtime"
     },
     {
-      "id": "agents-data-runtime",
-      "entrypoint": "src/agents-data-runtime/main.py",
+      "id": "agents_data_runtime",
+      "entrypoint": "src/agents_data_runtime/__main__.py",
       "status": "migrated",
       "role": "agent-communication-runtime"
     },
     {
-      "id": "app_api",
-      "entrypoint": "src/app_api/__main__.py",
+      "id": "agents_system_cli",
+      "entrypoint": "src/agents_system_cli/__main__.py",
       "status": "implemented",
       "role": "console-api"
     },
     {
-      "id": "agents-manager",
-      "entrypoint": "src/agents-manager/main.py",
+      "id": "agents_manager",
+      "entrypoint": "src/agents_manager/__main__.py",
       "status": "migrated",
       "role": "desktop"
     },
     {
-      "id": "agents-data",
-      "entrypoint": "src/agents-data/main.py",
+      "id": "agents_data",
+      "entrypoint": "src/agents_data/__main__.py",
       "status": "migrated",
       "role": "local-data-client"
     },
     {
-      "id": "agents-data-backend",
-      "entrypoint": "src/agents-data-backend/main.py",
+      "id": "agents_data_backend",
+      "entrypoint": "src/agents_data_backend/__main__.py",
       "status": "scaffold",
       "role": "data-backend"
     }
@@ -81,6 +81,30 @@
   },
   "system": true,
   "commands": [
-    "asystem"
-  ]
+    "asystem",
+    "asystem-uninstall",
+    "asystem-reinstall",
+    "asystem-reconfigure"
+  ],
+  "lifecycle": {
+    "entrypoint": "src/install/__main__.py",
+    "source": "install/src",
+    "parent": "InstallerParent",
+    "confirmation_flag": "--yes",
+    "help_manifests": "install/src/resources/*.json",
+    "commands": {
+      "asystem-uninstall": {
+        "wrapper": "host_scripts/asystem-uninstall.sh",
+        "contract": "install/src/resources/uninstaller.json"
+      },
+      "asystem-reinstall": {
+        "wrapper": "host_scripts/asystem-reinstall.sh",
+        "contract": "install/src/resources/reinstaller.json"
+      },
+      "asystem-reconfigure": {
+        "wrapper": "host_scripts/asystem-reconfigure.sh",
+        "contract": "install/src/resources/reconfigure.json"
+      }
+    }
+  }
 }

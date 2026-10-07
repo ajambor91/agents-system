@@ -1,7 +1,7 @@
 # Agents System
 
 Instalator systemu jest osobną aplikacją opisaną przez
-[`install/install.json`](install/install.json). Instrukcja użycia, tryby
+[`install/src/resources/installer.json`](install/src/resources/installer.json). Instrukcja użycia, tryby
 `repo`/`system` i rollback znajdują się w [`install/README.md`](install/README.md).
 
 Repozytorium jest docelowym monorepo systemu agentów. Kanoniczny opis
@@ -13,16 +13,19 @@ Stałe entrypointy aplikacji:
 
 | Aplikacja | Entrypoint | Stan |
 | --- | --- | --- |
-| agents-system | `src/agents-system/__main__.py` | zaimplementowana |
-| runtime | `src/_runtime/main.py` | zaimplementowana |
-| agents-data-runtime | `src/agents-data-runtime/main.py` | przeniesiony broker komunikacji |
-| app_api | `src/app_api/__main__.py` | zaimplementowana konsola/API |
-| agents-manager | `src/agents-manager/main.py` | kod przeniesiony |
-| agents-data | `src/agents-data/main.py` | kod przeniesiony |
-| agents-data-backend | `src/agents-data-backend/main.py` | szkielet migracji |
+| agents-system | `src/agents_system/__main__.py` | zaimplementowana |
+| runtime | `src/_runtime/__main__.py` | zaimplementowana |
+| agents_data_runtime | `src/agents_data_runtime/__main__.py` | przeniesiony broker komunikacji |
+| agents_system_cli | `src/agents_system_cli/__main__.py` | zaimplementowana konsola/API |
+| agents_manager | `src/agents_manager/__main__.py` | kod przeniesiony |
+| agents_data | `src/agents_data/__main__.py` | kod przeniesiony |
+| agents_data_backend | `src/agents_data_backend/__main__.py` | szkielet migracji |
 
-Ścieżki te są jawne i stabilne; repozytorium nie używa katalogu
-`src/agents_system/`.
+Ścieżki te są jawne; nazwy pakietów używają podkreśleń.
+
+Shared runtime jest pakietem Pythona `_runtime`. Z katalogu `src/` można go
+uruchomić przez `python3 -m _runtime`. Bootstrap znajduje się w
+`src/_runtime/__main__.py`. Jednostka systemd wskazuje ten sam entrypoint.
 
 `agents-system` jest repozytorium nadrzędnym dla lokalnego systemu agentów AI. Opisuje wspólne zasady, strukturę repozytoriów, bezpieczeństwo, lifecycle i kontrakty danych. Konkretne aplikacje oraz narzędzia są dostarczane przez osobne repozytoria.
 
@@ -34,7 +37,7 @@ Stałe entrypointy aplikacji:
 | `repo-manager` | clone, instalacja, aktualizacja, rejestracja, usuwanie i publikacja komend repozytoriów |
 | `repo-manifests` | trwały rejestr, pełne dokumenty, historia JSONL i manifesty narzędzi agentów |
 | `repo-template` | wzorcowe drzewo nowego repozytorium i instrukcje generatora |
-| `agents-manager` | tworzenie, uruchamianie i monitorowanie agentów |
+| `agents_manager` | tworzenie, uruchamianie i monitorowanie agentów |
 | moduły AI | konkretne runtime'y i aplikacje, np. Ollama |
 
 Zależności są jednokierunkowe: repozytorium aplikacji korzysta ze standardu, Repo Managera i opcjonalnie API manifestów. `repo-manifests` nie zarządza Git ani użytkownikami, a `repo-manager` nie definiuje formatów manifestów narzędzi.
@@ -70,7 +73,7 @@ project/
 agent lub człowiek
   -> /usr/local/bin/<command>
   -> host_scripts/<command>.sh
-  -> src/<package>/main.py
+  -> src/<package>/__main__.py
   -> router i jedna klasa komendy
   -> serwisy domenowe
   -> system plików, Git albo API repo-manifests
@@ -186,10 +189,10 @@ Do czasu zakończenia migracji obowiązuje istniejący schemat `repo-manifests`,
 
 ## 10. Moduł Agents System
 
-`src/agents-system/` jest modułem Pythona o układzie zgodnym z `app_api`:
+`src/agents_system/` jest modułem Pythona o układzie zgodnym z `agents_system_cli`:
 `app/application.py`, `app/console.py`, `app/services/`, `app/models/`
 i `app/exceptions/`. Instrukcja instalacji pakietu oraz publiczne API znajdują
-się w [src/agents-system/README.md](src/agents-system/README.md).
+się w [src/agents_system/README.md](src/agents_system/README.md).
 
 `Application` przyjmuje wyłącznie `Configuration` i udostępnia `modules()`.
 Dotychczasowy parser, rejestr komend, `run()`, `execute()`, katalog `specs`
@@ -198,10 +201,10 @@ odrębną aplikacją w `install/`.
 
 ## 11. Konsola `asystem`
 
-Publiczna konsola jest osobną aplikacją Python w `src/app_api/`. Ładuje
+Publiczna konsola jest osobną aplikacją Python w `src/agents_system_cli/`. Ładuje
 aktywny manifest modułów wygenerowany z
 `resources/agents-system.module.template.json` i buduje menu z `children`
-wyłącznie w pamięci. `src/app_api/__main__.py` deleguje start do klasy `Console`.
+wyłącznie w pamięci. `src/agents_system_cli/__main__.py` deleguje start do klasy `Console`.
 
 Komendy są publicznymi metodami aplikacji wskazanych przez manifest i `meta.json`.
 Konsola przekazuje do runtime nazwę modułu, metodę i argumenty nazwane według
@@ -238,5 +241,45 @@ asystem --json              # pełny scalony manifest
 asystem --interactive       # interaktywna konsola terminalowa
 ```
 
-`Application` w `app_api` udostępnia `run()` i serializowalne `run_dict()`.
+`AgentsSystemCLI` w `agents_system_cli` udostępnia `run()` i serializowalne `run_dict()`.
 Błąd transportu po wysłaniu komendy nie powoduje jej ponownego wykonania lokalnie.
+
+## Manifesty modułów
+
+`MODULES_MANIFEST_PATH` w `app_env.json` wskazuje główny, generowany
+`agents-system.module.json`. Jego źródłem jest
+`resources/agents-system.module.template.json`. Lista `children` zawiera
+nazwy, ścieżki aplikacji, sekcje menu, przypisania runtime oraz `manifest_path`.
+
+Każdy moduł ma wersjonowany plik `resources/<module_name>.module.json` we
+własnym katalogu aplikacji. Dokument `kind: "module-manifest"` zawiera
+`schema_version: 1`, `version`, `module_name`, `menu_name`, `description`,
+`usage` i pełną listę `commands` z flagami, przykładami użycia oraz pozostałymi
+polami komend. Pomocy nie należy powielać w `children`.
+
+Generator rozwiązuje jawne ścieżki manifestów i sprawdza ich zawartość przed
+zapisem głównej listy. Instalator kopiuje manifesty razem z drzewem `src/`;
+weryfikacja instalacji sprawdza ich dostępność i tożsamość. Runtime i konsola
+ładują je przez wspólny loader katalogu i scalają wyłącznie w pamięci.
+Brak pliku, niezgodna nazwa, nieobsługiwana wersja schematu lub powtórzone
+komendy przerywają ładowanie. Starsze manifesty z pomocą wpisaną bezpośrednio
+w `children` pozostają czytelne podczas migracji.
+
+Operacje instalacji, reinstalacji, rekonfiguracji i odinstalowania mają
+wrappery w `install/`; argumenty oraz zasady zachowania danych opisuje
+[instalator](install/README.md). Walidator manifestów wybiera model według
+`kind` przez strategię; walidacja pól i zagnieżdżonych obiektów należy do
+samych modeli.
+
+Instalacja kopiuje także paczkę lifecycle do `MODULES_DIR/install`
+(`APP_DIR/src/install`) i publikuje `asystem-uninstall`, `asystem-reinstall`
+oraz `asystem-reconfigure` jako dowiązania w `/usr/local/bin`. Komendy wymagają
+`--yes`; `--help` czyta pomoc z JSON-ów zainstalowanej paczki przez
+`InstallerParent.help()` i działa bez wykonywania operacji.
+
+`src/lib/json_loader` odczytuje JSON. `ManifestsLoader` w
+`src/lib/manifests_loader` ładuje dokumenty bez walidacji. `ManifestsApp`
+woła loader, uruchamia walidację przez modele wybrane strategią według
+`kind` i rozwiązuje referencje modułów. Dokument można sprawdzić przez
+`PYTHONPATH=src python3 -m manifests PATH`. Wszystkie entrypointy aplikacji
+są plikami `__main__.py`.

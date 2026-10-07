@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "command": "asystem-reinstall",
+  "mode": "write",
+  "steps_scope": "implemented_behavior_contract",
+  "description": "Odtwarza aplikację, zachowując aktywną konfigurację i dane.",
+  "host_script": "${APPLICATION_ROOT}/install/reinstall.sh",
+  "target": {
+    "application": "install/src/__main__.py",
+    "command_class": "Reinstaller",
+    "module": "install/src/reinstaller.py",
+    "method": "execute",
+    "runtime": false
+  },
+  "flags": [
+    {
+      "name": "help",
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false,
+      "description": "Wyświetla pomoc z manifestu JSON; nie wykonuje operacji."
+    },
+    {
+      "name": "yes",
+      "short": null,
+      "long": "--yes",
+      "required": true,
+      "takes_value": false,
+      "description": "Potwierdza wykonanie operacji. Bez tej flagi komenda nie wykonuje zmian."
+    },
+    {
+      "name": "journal",
+      "short": null,
+      "long": "--journal",
+      "required": true,
+      "takes_value": true,
+      "description": "Absolutna ścieżka dziennika ostatniej udanej instalacji lub operacji lifecycle."
+    },
+    {
+      "name": "source",
+      "short": null,
+      "long": "--source",
+      "required": false,
+      "takes_value": true,
+      "description": "Absolutna ścieżka lokalnego checkoutu używanego do reinstalacji."
+    },
+    {
+      "name": "verbose",
+      "short": "-v",
+      "long": "--verbose",
+      "required": false,
+      "takes_value": false,
+      "description": "Wyświetla szczegóły wykonywanych kroków."
+    }
+  ],
+  "execution": {
+    "requires_sudo": true,
+    "requires_confirmation": true,
+    "interactive": false,
+    "supports_dry_run": false,
+    "idempotent": false,
+    "network": false,
+    "timeout_seconds": null,
+    "timeout_policy": "caller-managed"
+  },
+  "failure_policy": "Validate provenance and owned paths before mutation. Persist backups and intent before replacement; attempt journal rollback on failure.",
+  "kind": "installer-help",
+  "operation": "reinstall",
+  "usage": "asystem-reinstall --yes --journal PATH [--source CHECKOUT]",
+  "executable": "host_scripts/asystem-reinstall.sh",
+  "python_target": "install/src/__main__.py",
+  "flag_names": [
+    "-h",
+    "--help",
+    "--yes",
+    "--journal",
+    "--source",
+    "-v",
+    "--verbose"
+  ]
+}

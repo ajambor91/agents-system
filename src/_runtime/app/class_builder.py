@@ -9,7 +9,7 @@ from types import ModuleType
 from importlib.machinery import ModuleSpec
 from typing import Any
 
-from .models.managed_instance import ManagedInstance
+from .models import ManagedInstance, ModuleEntry
 
 
 class ClassBuildError(RuntimeError):
@@ -55,7 +55,7 @@ class ClassBuilder:
 
     def _build_instance(
         self,
-        module_entry
+        module_entry: ModuleEntry
     ) -> ManagedInstance:
         """
         Import the application class, create its instance
@@ -70,12 +70,13 @@ class ClassBuilder:
             raise ClassBuildError(
                 "Configuration is required to build application instances"
             )
-        instance = application_class(self.configuration)
+        instance = application_class(self.configuration,module_entry.manifests)
 
         return ManagedInstance(
             instance_class=application_class,
             instance_object=instance,
             class_name=module_entry.module_name,
+            absolute_path=module_entry.absolute_module_path
         )
 
     def _load_class(

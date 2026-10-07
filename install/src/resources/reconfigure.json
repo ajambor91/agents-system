@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "command": "asystem-reconfigure",
+  "mode": "write",
+  "steps_scope": "implemented_behavior_contract",
+  "description": "Waliduje i stosuje nową konfigurację bez migracji ścieżek i kont.",
+  "host_script": "${APPLICATION_ROOT}/install/reconfigure.sh",
+  "target": {
+    "application": "install/src/__main__.py",
+    "command_class": "Reconfigure",
+    "module": "install/src/reconfigure.py",
+    "method": "execute",
+    "runtime": false
+  },
+  "flags": [
+    {
+      "name": "help",
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false,
+      "description": "Wyświetla pomoc z manifestu JSON; nie wykonuje operacji."
+    },
+    {
+      "name": "yes",
+      "short": null,
+      "long": "--yes",
+      "required": true,
+      "takes_value": false,
+      "description": "Potwierdza wykonanie operacji. Bez tej flagi komenda nie wykonuje zmian."
+    },
+    {
+      "name": "journal",
+      "short": null,
+      "long": "--journal",
+      "required": true,
+      "takes_value": true,
+      "description": "Absolutna ścieżka dziennika ostatniej udanej instalacji lub operacji lifecycle."
+    },
+    {
+      "name": "envs",
+      "short": null,
+      "long": "--envs",
+      "required": true,
+      "takes_value": true,
+      "description": "Absolutna ścieżka pełnego, nowego app_env.json. Walidacja następuje przed zmianami."
+    },
+    {
+      "name": "verbose",
+      "short": "-v",
+      "long": "--verbose",
+      "required": false,
+      "takes_value": false,
+      "description": "Wyświetla szczegóły wykonywanych kroków."
+    }
+  ],
+  "execution": {
+    "requires_sudo": true,
+    "requires_confirmation": true,
+    "interactive": false,
+    "supports_dry_run": false,
+    "idempotent": false,
+    "network": false,
+    "timeout_seconds": null,
+    "timeout_policy": "caller-managed"
+  },
+  "failure_policy": "Validate provenance and owned paths before mutation. Persist backups and intent before replacement; attempt journal rollback on failure.",
+  "environment_contract": {
+    "kind": "agents-system-environment",
+    "schema_version": 1,
+    "complete_document": true,
+    "immutable_variables": "install/src/consts/consts.py::LIFECYCLE_IDENTITY_VARIABLES",
+    "validation": "strategy selected by kind creates EnvironmentManifest, then the model validates itself and nested variables"
+  },
+  "kind": "installer-help",
+  "operation": "reconfigure",
+  "usage": "asystem-reconfigure --yes --journal PATH --envs CONFIG_JSON",
+  "executable": "host_scripts/asystem-reconfigure.sh",
+  "python_target": "install/src/__main__.py",
+  "flag_names": [
+    "-h",
+    "--help",
+    "--yes",
+    "--journal",
+    "--envs",
+    "-v",
+    "--verbose"
+  ]
+}

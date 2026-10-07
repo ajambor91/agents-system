@@ -1,11 +1,17 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import inspect
 import threading
-from .models.managed_instance import ManagedInstance
-
+from .models import ManagedInstance
+if TYPE_CHECKING:
+    from agents_system import Application as AgentsSystem
+from .runtime_api_wrapper import RuntimeApiWrapper
+from lib.configuration import Configuration
 
 class InstanceManager:
     """Hold references to class objects, not instances."""
     _instances: dict[str, ManagedInstance] = None
+    _main_app: AgentsSystem | None = None
     def __init__(self, instances: dict[str, ManagedInstance] = None) -> None:
         self._instances = instances if instances is not None else {}
         self._lock = threading.RLock()
@@ -31,6 +37,16 @@ class InstanceManager:
     def list_managed_instances(self) -> list[ManagedInstance]:
         with self._lock:
             return list(self._instances.values())
+        
+    def initialize_main_application(self, configuration: Configuration, runtime_api: RuntimeApiWrapper):
+        # self._main_app = self._instances[type(configuration).MAIN_APP_NAME].instance_object
+        self._main_app = self._instances['agents_system'].instance_object
+
+        if self._main_app is None:
+            raise Exception("APP MAIN IS NONE")
+        self._main_app.initialize(runtime_api)
+
+    
          
 
     

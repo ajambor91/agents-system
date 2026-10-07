@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+from lib.manifests_loader import ManifestsLoader
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -31,7 +31,7 @@ class ModulesManifestModuleManifest(Manifest):
         self._str("absolute_path", self.absolute_path)
         self._str("app_dir", self.app_dir)
         self._nested_list("children", self.children, ModuleEntryModuleManifest)
-
+        
         if type(self.children) is list:
             seen: dict[str, int] = {}
             for index, item in enumerate(self.children):
@@ -72,6 +72,4 @@ class ModulesManifestModuleManifest(Manifest):
     @classmethod
     def from_json(cls, path: str | Path) -> ModulesManifestModuleManifest:
         """Parsing errors (JSON syntax/I/O) surface immediately; schema errors wait."""
-        with Path(path).open("r", encoding="utf-8") as source:
-            data = json.load(source)
-        return cls.from_dict(data)
+        return cls.from_dict(ManifestsLoader.load_manifest(path))

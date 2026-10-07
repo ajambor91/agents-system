@@ -1,0 +1,7 @@
+install/install.sh --yes [--mode system|dev] [paths/accounts] [--force] [--verbose]
+install/reinstall.sh --yes --journal PATH [--source CHECKOUT] [--verbose]
+install/reconfigure.sh --yes --journal PATH --envs CONFIG_JSON [--verbose]
+install/uninstall.sh --yes --journal PATH [--purge-data] [--verbose]
+install/rollback.sh --yes --journal PATH
+
+Każda komenda: --help lub -h pokazuje opcje bez wykonywania zmian.

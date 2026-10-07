@@ -4,12 +4,12 @@
 
 Rozdzielić obecne `communication_stack` pomiędzy:
 
-- `src/agents-data/` — lokalną aplikację Pythona dla nadawcy i odbiorcy;
-- `src/agents-data-backend/` — trwały backend danych i streamów;
-- `src/agents-data-runtime/` — osobny broker dostarczający zdarzenia do receiverów.
+- `src/agents_data/` — lokalną aplikację Pythona dla nadawcy i odbiorcy;
+- `src/agents_data_backend/` — trwały backend danych i streamów;
+- `src/agents_data_runtime/` — osobny broker dostarczający zdarzenia do receiverów.
 
 Po migracji żadna zwykła aplikacja nie łączy się ze starym runtime. Adapter
-zgodności może należeć tylko do `src/agents-data-runtime/` i działa wyłącznie
+zgodności może należeć tylko do `src/agents_data_runtime/` i działa wyłącznie
 do cutover.
 
 ## Stan źródłowy
@@ -19,7 +19,7 @@ Repozytorium zawiera obecnie:
 - `src/comm/` — Python CLI `messege_send` i placeholdery sync/memory;
 - `agents_scripts/shared/` — `message.py`, `message_listening.py`,
   `message_receive.py`;
-- `src/runtime/main.py` — broker Unix socket ↔ Redis Streams z ACK;
+- `src/runtime/__main__.py` — broker Unix socket ↔ Redis Streams z ACK;
 - `src/stack/app-comm` — TypeScript HTTP ingress, zapis przed publikacją;
 - `src/stack/app-data` — TypeScript MongoDB + Redis Cache;
 - `src/stack/app-sync` — szkielet przyszłego sync;
@@ -29,14 +29,14 @@ Repozytorium zawiera obecnie:
 
 | Źródło | Cel | Decyzja |
 | --- | --- | --- |
-| `src/comm/main.py`, `commands/message.py` | `src/agents-data/app/` | przenieść do JSON-driven CLI |
+| `src/comm/__main__.py`, `commands/message.py` | `src/agents_data/app/` | przenieść do JSON-driven CLI |
 | `src/comm/services/app_comm.py` | klient backendu Agent Data | zachować timeouty i błędy |
-| `agents_scripts/shared/message*.py` | `src/agents-data/app/receiver/` | scalić w jeden klient/listener |
-| `src/runtime/main.py` | `src/agents-data-runtime/service.py` | przenieść broker i ACK |
-| `stack/app-comm` | `src/agents-data-backend/` | przepisać zachowanie do Pythona |
-| `stack/app-data` | `src/agents-data-backend/` | przepisać Mongo/cache do Pythona |
-| `stack/app-sync` | `src/agents-data/app/sync/` + API backendu | rozdzielić lokalne pliki od backendu |
-| Docker Compose | `deploy/agents-data/` | zachować Redis×2 i Mongo, usunąć node_modules/dist |
+| `agents_scripts/shared/message*.py` | `src/agents_data/app/receiver/` | scalić w jeden klient/listener |
+| `src/runtime/__main__.py` | `src/agents_data_runtime/service.py` | przenieść broker i ACK |
+| `stack/app-comm` | `src/agents_data_backend/` | przepisać zachowanie do Pythona |
+| `stack/app-data` | `src/agents_data_backend/` | przepisać Mongo/cache do Pythona |
+| `stack/app-sync` | `src/agents_data/app/sync/` + API backendu | rozdzielić lokalne pliki od backendu |
+| Docker Compose | `deploy/agents_data/` | zachować Redis×2 i Mongo, usunąć node_modules/dist |
 
 ## Docelowe API
 

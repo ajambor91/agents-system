@@ -5,10 +5,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from ..abstract.models import AbstractRequest, AbstractResponse
+from ..models import Request, Response
 
-RequestT = TypeVar("RequestT", bound=AbstractRequest)
-ResponseT = TypeVar("ResponseT", bound=AbstractResponse)
+RequestT = TypeVar("RequestT", bound=Request)
+ResponseT = TypeVar("ResponseT", bound=Response)
 
 
 class AbstractMessageCodec(ABC, Generic[RequestT, ResponseT]):

@@ -6,4 +6,4 @@ SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")/.." && pwd)"
 PYTHONPATH="$ROOT_DIR/src:$ROOT_DIR/src/lib${PYTHONPATH:+:$PYTHONPATH}"
 export PYTHONPATH
-exec python3 -m app_api "$@"
+exec python3 -m agents_system_cli "$@"

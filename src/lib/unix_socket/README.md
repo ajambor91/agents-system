@@ -32,6 +32,12 @@ Każdy builder ma własne komponenty i wynik; `get()` przed `create()` zgłasza
 
 ## Własne implementacje
 
+`SocketClient.socket_exists()` sprawdza, czy skonfigurowana ścieżka wskazuje
+socket, bez otwierania połączenia. Fasada deleguje przez klienta do
+`UnixSocketTransport.socket_exists(configuration)`. Istnienie socketu nie
+potwierdza działania serwera; błędy `connect()` nadal wymagają obsługi.
+Własne implementacje klienta i transportu muszą udostępniać te metody.
+
 Import abstrakcji klienta, kodeka i transportu jest potrzebny tylko przy
 zastępowaniu implementacji domyślnych:
 

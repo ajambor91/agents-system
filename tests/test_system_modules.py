@@ -15,9 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "src/lib"))
 
-from app_api.app.application import Application as ConsoleApplication
-from app_api.app.services.module_loader import ModuleLoader
-from app_api.app.services.flag_parser import FlagParser
+from agents_system_cli.app.application import AgentsSystemCLI as ConsoleApplication
+from agents_system_cli.app.services.module_loader import ModuleLoader
+from agents_system_cli.app.services.flag_parser import FlagParser
 from _runtime.app.instance_manager import InstanceManager
 from _runtime.app.instance_manager_wrapper import InstanceManagerWrapper
 from internal_scripts.render_modules_manifest import render
@@ -43,7 +43,7 @@ class SystemModulesTests(unittest.TestCase):
             USER_SYSTEM = "test-user"
         self.configuration = Configuration()
         self.installed = installed
-        section = {"module_name": "agents-system", "absolute_module_path": str(ROOT / "src/agents-system")}
+        section = {"module_name": "agents_system", "absolute_module_path": str(ROOT / "src/agents_system")}
         self.application = ModuleLoader(self.configuration).load(section)
         self.errors = importlib.import_module(self.application.__class__.__module__.rsplit(".", 1)[0] + ".exceptions")
         self.runtime_module = importlib.import_module(self.application.__class__.__module__.rsplit(".", 1)[0] + ".services.runtime_modules")
@@ -140,7 +140,7 @@ class SystemModulesTests(unittest.TestCase):
         for options in ({}, {"installed": True, "running": True}):
             with self.assertRaises(self.errors.InputError):
                 self.application.modules(**options)
-        from app_api.app.exceptions import ApiError as ParserError
+        from agents_system_cli.app.exceptions import ApiError as ParserError
         console = importlib.import_module(self.application.__class__.__module__.rsplit(".", 1)[0] + ".console").Console
         for argv in ([], ["--installed", "--running"], ["--unknown"]):
             with self.assertRaises(ParserError):

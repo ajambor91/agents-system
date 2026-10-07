@@ -1,0 +1,9 @@
+{
+  "name": "agents_manager",
+  "namespace": "agents_manager",
+  "entrypoint": "__main__.py",
+  "application": {
+    "module": "app.application",
+    "class": "AgentsApplication"
+  }
+}

@@ -16,9 +16,9 @@ from pathlib import Path
 from typing import Any
 
 from lib.configuration import Configuration
-from .instance_manager import InstanceManager
-from .runtime_dispatcher import RuntimeDispatcher
-from .runtime_server import RuntimeServer
+from . import InstanceManager
+from . import RuntimeDispatcher
+from . import RuntimeServer
 
 
 LOGGER = logging.getLogger(__name__)

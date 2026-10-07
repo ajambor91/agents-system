@@ -6,10 +6,12 @@ class ManagedInstance:
         instance_object: object,
         instance_class: type,
         class_name: str,
+        absolute_path: str | None = None
     ) -> None:
         self._instance_object = instance_object
         self._instance_class = instance_class
         self._class_name = class_name
+        self._absolute_path = absolute_path
         self._check_self()
 
     @property
@@ -24,6 +26,10 @@ class ManagedInstance:
     def class_name(self) -> str:
         return self._class_name
 
+    @property
+    def absolute_path(self) -> str | None:
+        return self._absolute_path
+    
     def get_class_name(self) -> str:
         return self._class_name
 

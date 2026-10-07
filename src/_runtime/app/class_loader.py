@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from shared.json_loader import JsonLoader
+from manifests import ManifestsApp
 
-from .models.meta_data_class import MetaDataClass
-from .models.module_entry import ModuleEntry
+from .models import MetaDataClass
+from .models import ModuleEntry
 
 
 class ClassLoader:
@@ -38,7 +38,7 @@ class ClassLoader:
             metadata_path = module_dir / self._META_FILE_NAME
             if not metadata_path.is_file():
                 continue
-            metadata = JsonLoader.getJsonFileContent(metadata_path)
+            metadata = ManifestsApp().load_module_metadata(module_dir)
             application = metadata.get("application")
             if not isinstance(application, dict):
                 raise ValueError(f"{module_dir}: missing application metadata")
@@ -55,6 +55,7 @@ class ClassLoader:
                 meta_data=meta_class,
                 runtime=[str(method) for method in runtime_methods],
                 module_name=module_name,
+                manifests=module
             )
 
         return extracted

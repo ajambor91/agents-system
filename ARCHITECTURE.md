@@ -25,7 +25,7 @@ Docelowo repozytorium obejmuje:
 1. control plane Agents System;
 2. wspólny rezydentny runtime aplikacji systemowych;
 3. osobny runtime komunikacji Agents Data;
-4. konsolę i API interfejsu `app_api`;
+4. konsolę i API interfejsu `agents_system_cli`;
 5. desktopowy Agents Manager;
 6. lokalną aplikację Agents Data;
 7. backend Agents Data z Redis i MongoDB.
@@ -49,66 +49,68 @@ agents-system/
 ├── internal_scripts/
 ├── tests/
 └── src/
-    ├── agents-system/
-    │   ├── main.py
+    ├── lib/
+    │   ├── json_loader/
+    │   ├── manifests_loader/
+    │   ├── modules_catalog/
+    │   └── unix_socket/
+    ├── manifests/
+    │   ├── __main__.py
+    │   ├── pyproject.toml
     │   └── app/
-    │       ├── application.py
-    │       ├── command.py
-    │       ├── commands/
-    │       ├── services/
-    │       └── specs/
-    ├── runtime/
-    │   ├── main.py
-    │   └── service.py
-    ├── app_api/
-    │   ├── main.py
+    │       ├── helpers/manifest_validator.py
+    │       └── models/
+    ├── agents_system/
+    │   ├── __main__.py
+    │   └── app/
+    ├── _runtime/
+    │   ├── __main__.py
+    │   └── app/
+    ├── agents_system_cli/
+    │   ├── __main__.py
     │   ├── app/
     │   │   ├── application.py
-    │   │   ├── models.py
+    │   │   ├── models/
     │   │   └── services/
-    │   │       ├── control_plane.py
-    │   │       ├── manifests.py
+    │   │       ├── module_dispatcher.py
+    │   │       ├── module_loader.py
     │   │       ├── renderer.py
     │   │       └── runtime.py
-    │   └── manifests/
-    │       ├── asystem.app.json
-    │       └── agents.module.json
-    ├── agents-manager/
-    │   ├── main.py
-    │   └── README.md
-    ├── agents-data/
-    │   ├── main.py
-    │   ├── app/
-    │   └── README.md
-    ├── agents-data-runtime/
-    │   ├── main.py
-    │   ├── service.py
-    │   └── README.md
-    └── agents-data-backend/
-        ├── main.py
-        └── README.md
+    │   └── resources/agents_system_cli.module.json
+    ├── agents_manager/
+    │   ├── __main__.py
+    │   ├── pyproject.toml
+    │   └── app/
+    ├── agents_data/
+    │   ├── __main__.py
+    │   └── app/
+    ├── agents_data_runtime/
+    │   ├── __main__.py
+    │   └── service.py
+    └── agents_data_backend/
+        └── __main__.py
 ```
 
 Kanoniczne entrypointy to dokładnie:
 
 | Aplikacja | Entrypoint |
 | --- | --- |
-| Agents System | `src/agents-system/__main__.py` |
-| Shared Runtime | `src/_runtime/main.py` |
-| Console API | `src/app_api/__main__.py` |
-| Agents Manager Desktop | `src/agents-manager/main.py` |
-| Agent Data | `src/agents-data/main.py` |
-| Agents Data Runtime | `src/agents-data-runtime/main.py` |
-| Agent Data Backend | `src/agents-data-backend/main.py` |
+| Agents System | `src/agents_system/__main__.py` |
+| Shared Runtime | `src/_runtime/__main__.py` |
+| Console API | `src/agents_system_cli/__main__.py` |
+| Agents Manager Desktop | `src/agents_manager/__main__.py` |
+| Agent Data | `src/agents_data/__main__.py` |
+| Agents Data Runtime | `src/agents_data_runtime/__main__.py` |
+| Agent Data Backend | `src/agents_data_backend/__main__.py` |
 
-Katalog z myślnikiem nie jest nazwą importowalnego pakietu Python. Kod
-wewnętrzny może leżeć w poprawnie nazwanym podpakiecie, np. `app/`, ale wrapper,
-manifest i narzędzia wskazują zawsze powyższą, sztywną ścieżkę `main.py`.
-Nie tworzymy równoległego `src/agents_system/`.
+Nazwy katalogów aplikacji są nazwami importowalnych pakietów Pythona
+z podkreśleniami. Wrappery i manifesty wskazują jawne entrypointy podane
+w tabeli. `agents_manager` ma `pyproject.toml`, `__init__.py` i
+`__main__.py`; konsola `agents_system_cli` eksportuje klasę `AgentsSystemCLI`.
 
 ## 3. Odpowiedzialności aplikacji
 
-### `src/agents-system/`
+### `src/agents_system/`
 
 Control plane i publiczne CLI całego repozytorium. Odpowiada za:
 
@@ -132,9 +134,9 @@ Wspólny proces rezydentny dla aplikacji systemowych. Odpowiada za:
 - przechwytywanie stdout/stderr starszych adapterów.
 
 Nie obsługuje transportu wiadomości agentów. Ta odpowiedzialność należy do
-osobnego `src/agents-data-runtime/`.
+osobnego `src/agents_data_runtime/`.
 
-### `src/agents-data-runtime/`
+### `src/agents_data_runtime/`
 
 Osobny proces rezydentny transportu Agents Data. Odpowiada za:
 
@@ -144,10 +146,10 @@ Osobny proces rezydentny transportu Agents Data. Odpowiada za:
 - dostarczenie wiadomości oraz ACK po zapisie po stronie odbiorcy;
 - utrzymanie tylko jednego aktywnego brokera dla danego socketu.
 
-Kod brokera jest w `service.py`, a `main.py` pozostaje cienkim composition
+Kod brokera jest w `service.py`, a `__main__.py` pozostaje cienkim composition
 rootem zgodnym z układem `src/runtime/`.
 
-### `src/app_api/`
+### `src/agents_system_cli/`
 
 Jedyny publiczny interfejs hierarchicznej konsoli `asystem`. Odpowiada za:
 
@@ -156,20 +158,20 @@ Jedyny publiczny interfejs hierarchicznej konsoli `asystem`. Odpowiada za:
 - scalenie menu wyłącznie w pamięci procesu;
 - widoki `human`, `human-raw`, `agent`, `json` i `interactive`;
 - walidację ścieżki sekcja → komenda → flagi;
-- przekazanie typowanej koperty do `agents-system/console-dispatch`.
+- przekazanie typowanej koperty do `agents_system/console-dispatch`.
 
-`app_api` nie instaluje agentów ani nie zapisuje ich stanu. Udostępnia
+`agents_system_cli` nie instaluje agentów ani nie zapisuje ich stanu. Udostępnia
 `create_service()` i jest wbudowanym modułem wspólnego runtime. Lokalny fallback
 jest dozwolony jedynie wtedy, gdy runtime nie działa albo nie zna jeszcze
 modułu, czyli zanim wykonano operację domenową.
 
-`src/app_api/__main__.py` jest wyłącznie composition rootem: buduje `Application`,
+`src/agents_system_cli/__main__.py` jest wyłącznie composition rootem: buduje `AgentsSystemCLI`,
 przekazuje argumenty i emituje gotowy `ApiResult`. Decyzja o użyciu runtime,
 wyborze renderera, trybie interaktywnym i fallbacku należy do
 `app/application.py`. Odczyt manifestów, IPC runtime, wywołanie control plane i
 renderowanie są osobnymi serwisami pod `app/services/`.
 
-### `src/agents-manager/`
+### `src/agents_manager/`
 
 Wyłącznie aplikacja Pythona działająca na desktopie. Odpowiada za interakcję
 operatora z agentami: instalację, aktualizację, listę, status, narzędzia i
@@ -179,19 +181,19 @@ Operacje uprzywilejowane wykonuje przez wąski interfejs control plane lub
 zweryfikowany executor. Integracja OpenClaw, ACL, sudoers i definicje agentów
 zostaną przeniesione według `AGENT_MANAGER_MERGE.md`.
 
-### `src/agents-data/`
+### `src/agents_data/`
 
 Lokalna aplikacja Pythona dla agentów i użytkowników. Odpowiada za:
 
 - wysyłanie i odbieranie wiadomości;
 - lokalną historię i inbox;
-- klienta nasłuchującego `agents-data-runtime`;
+- klienta nasłuchującego `agents_data_runtime`;
 - jawne potwierdzenia dostarczenia;
 - lokalny sync plików i bazy przez przyszłe API synchronizacji.
 
 Nie posiada MongoDB, Redis ani publicznego backendu HTTP.
 
-### `src/agents-data-backend/`
+### `src/agents_data_backend/`
 
 Backend trwałych danych i transportu. Odpowiada za:
 
@@ -209,28 +211,28 @@ nieobsłużonych zdarzeń przez politykę LRU.
 ## 4. Dozwolone zależności
 
 ```text
-operator/agent -> app_api ------┐
-agents-manager (desktop) -------+
+operator/agent -> agents_system_cli ------┐
+agents_manager (desktop) -------+
                                 v
                          agents-system (control plane)
                                 |
                                 v
                            shared runtime
 
-agents-data (local receiver) <-> agents-data-runtime
+agents_data (local receiver) <-> agents_data_runtime
         |                              |
         v                              v
-agents-data-backend ------------> Redis Streams
+agents_data_backend ------------> Redis Streams
         |                         Redis Cache
         +-----------------------> MongoDB
 ```
 
 Reguły:
 
-- `app_api` nie wykonuje logiki domenowej i nie importuje prywatnych serwisów
+- `agents_system_cli` nie wykonuje logiki domenowej i nie importuje prywatnych serwisów
   control plane;
-- `agents-manager` nie importuje prywatnych serwisów runtime;
-- `agents-data` nie czyta MongoDB ani Redis bezpośrednio;
+- `agents_manager` nie importuje prywatnych serwisów runtime;
+- `agents_data` nie czyta MongoDB ani Redis bezpośrednio;
 - backend nie zapisuje plików w katalogach domowych agentów;
 - runtime nie staje się właścicielem danych domenowych;
 - aplikacje wymieniają typowane obiekty JSON, nigdy polecenia shellowe;
@@ -242,18 +244,18 @@ Reguły:
 Docelowy przepływ:
 
 ```text
-agents-data/message_send
-  -> HTTP agents-data-backend
+agents_data/message_send
+  -> HTTP agents_data_backend
   -> walidacja
   -> zapis MongoDB
   -> zapis/odświeżenie Redis Cache
   -> publikacja do stream:<receiver>
-  -> agents-data-runtime konsumuje zdarzenie
+  -> agents_data_runtime konsumuje zdarzenie
   -> pobiera pełny dokument przez backend API
-  -> dostarcza do zarejestrowanego receivera agents-data
+  -> dostarcza do zarejestrowanego receivera agents_data
   -> receiver zapisuje lokalny JSONL/inbox
   -> receiver odsyła ACK
-  -> agents-data-runtime wykonuje XACK
+  -> agents_data_runtime wykonuje XACK
 ```
 
 Zdarzenie w streamie zawiera identyfikator wiadomości, a nie pełny mutable
@@ -267,9 +269,9 @@ Każda publiczna komenda zachowuje wspólny kontrakt:
 ```text
 /usr/local/bin/asystem
   -> host_scripts/asystem.sh
-  -> src/app_api/__main__.py
+  -> src/agents_system_cli/__main__.py
   -> manifest aplikacji + manifest sekcji
-  -> agents-system/console-dispatch
+  -> agents_system/console-dispatch
   -> wersjonowany JSON komendy
   -> Command
   -> CommandRequest
@@ -292,7 +294,7 @@ kolizja flag albo niepoprawny target kończą działanie przed skutkiem ubocznym
 Wersjonowane źródła:
 
 - `resources/app_env.template.json` — model wspólnego środowiska;
-- `src/agents-system/app/specs/*.json` — kontrakty komend control plane;
+- `src/agents_system/app/specs/*.json` — kontrakty komend control plane;
 - `internal_scripts/manifests/*.json` — źródłowe manifesty narzędzi;
 - przyszłe schematy komunikacji w katalogach właściwych aplikacji.
 
@@ -343,8 +345,8 @@ Streams i tylko jeden właściciel mutacji danego rejestru.
 
 Wersjonowany `resources/agents_manager.template.service` jest źródłem jednostki
 systemd. Po wyrenderowaniu placeholderów jednostka uruchamia wyłącznie
-`src/_runtime/main.py` jako `USER_SYSTEM`. Nie uruchamia osobnych usług dla
-`app_api`, `agents-system` ani `agents-manager`.
+`src/_runtime/__main__.py` jako `USER_SYSTEM`. Nie uruchamia osobnych usług dla
+`agents_system_cli`, `agents-system` ani `agents_manager`.
 
 Systemd pilnuje dostępności procesu wspólnego runtime. Runtime będzie docelowo
 czytał manifest aplikacji wskazany przez `AGENTS_SYSTEM_APPS_PATH` i odpowiadał
@@ -369,9 +371,16 @@ Konsolidacja jest ukończona dopiero, gdy:
 
 - wszystkie entrypointy używają siedmiu stałych ścieżek;
 - nie istnieje `src/agents_system/`;
-- wspólny runtime obsługuje aplikacje systemowe, a `agents-data-runtime` wyłącznie transport wiadomości;
+- wspólny runtime obsługuje aplikacje systemowe, a `agents_data_runtime` wyłącznie transport wiadomości;
 - desktop Agents Manager nie działa jako daemon;
 - Agent Data nie łączy się bezpośrednio z Redis/Mongo;
 - backend zapisuje przed publikacją;
 - migracje zachowują dane, historie, workspace i kompatybilne wrappery;
 - stare repozytoria są read-only lub zarchiwizowane dopiero po testach cutover.
+
+`ManifestsApp` woła `lib.manifests_loader.ManifestsLoader`, który odczytuje
+dokumenty przez `lib.json_loader.JsonLoader`. Loader zwraca dane bez
+walidacji. Aplikacja koordynuje rozwiązywanie referencji i walidację modeli
+wybranych przez `ManifestValidator` według `kind`. `ManifestCatalog` w
+`manifests.app` buduje menu w pamięci; adapter control plane sprawdza rekordy
+instalacji po odczycie przez aplikację manifestów.

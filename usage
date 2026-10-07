@@ -9,8 +9,8 @@ Konsola:
   asystem --json system modules --installed
 
 Moduł Agents System:
-  PYTHONPATH=src python3 -m agents-system [--json] modules --installed
-  PYTHONPATH=src python3 -m agents-system [--json] modules --running
+  PYTHONPATH=src python3 -m agents_system [--json] modules --installed
+  PYTHONPATH=src python3 -m agents_system [--json] modules --running
   python3 -m agents_system modules --installed  # po instalacji pakietu
 
 Application(configuration) udostępnia publiczną metodę modules(installed=False,
@@ -18,3 +18,11 @@ running=False). Wymagana jest dokładnie jedna flaga. --installed czyta pliki
 JSON z INSTALLED_MODULES_DIR; --running wymaga działającego runtime i socketu.
 
 Instalacja systemu ma osobny entrypoint opisany w install/README.md.
+
+Lifecycle (każda komenda obsługuje --help):
+  asystem-uninstall --yes --journal PATH [--purge-data] [--verbose]
+  asystem-reinstall --yes --journal PATH [--source CHECKOUT] [--verbose]
+  asystem-reconfigure --yes --journal PATH --envs CONFIG_JSON [--verbose]
+
+Walidacja manifestu: PYTHONPATH=src python3 -m manifests PATH
+Pomoc walidatora: PYTHONPATH=src python3 -m manifests --help

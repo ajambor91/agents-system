@@ -11,7 +11,7 @@ ponownie startować interpretera ani importować aplikacji.
 ```bash
 asystem_app_add \
     --repo-name ai-module \
-  --entrypoint src/ai-module/main.py \
+  --entrypoint src/ai-module/__main__.py \
   --start
 ```
 
@@ -19,7 +19,7 @@ Domyślna ścieżka repozytorium to
 `/home/user-system/repositories/<repo-name>`. Można ją nadpisać przez
 `--repository-path`. `--entrypoint` jest opcjonalny, gdy repozytorium ma
 `manifest.json` z `application.entrypoint`. W przeciwnym razie runtime
-zaakceptuje dokładnie jeden plik `src/**/main.py`.
+zaakceptuje dokładnie jeden plik `src/**/__main__.py`.
 
 ## Kontrakt aplikacji
 

@@ -1,0 +1,448 @@
+{
+  "schema_version": 1,
+  "command": "./install/install.sh",
+  "mode": "write",
+  "steps_scope": "implemented_behavior_contract",
+  "host_script": "${APPLICATION_ROOT}/install/install.sh",
+  "target": {
+    "application": "install/src/__main__.py",
+    "command_class": "Installer",
+    "module": "install/src/installer.py",
+    "method": "execute",
+    "runtime": false
+  },
+  "bootstrap": {
+    "package_root_resolution": "Resolve the physical application root from ../install and never from cwd or configuration.",
+    "defaults_file": "resources/default_install.json when present, otherwise install/src/resources/default_install.json",
+    "defaults_format": "array_of_name_value_objects",
+    "known_default_names": [
+      "APP_NAME",
+      "USER_SYSTEM",
+      "USER_GROUP",
+      "USER_HOME",
+      "SYSTEM_INSTALL_ROOT",
+      "CONFIG_ROOT",
+      "COMMANDS_DIR"
+    ],
+    "value_precedence": [
+      "cli_flag",
+      "default_install.json",
+      "mode_default"
+    ]
+  },
+  "flags": [
+    {
+      "name": "help",
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false,
+      "description": "Wyświetla pomoc z manifestu JSON; nie wykonuje operacji."
+    },
+    {
+      "name": "yes",
+      "short": null,
+      "long": "--yes",
+      "required": true,
+      "takes_value": false,
+      "description": "Potwierdza wykonanie operacji. Bez tej flagi komenda nie wykonuje zmian."
+    },
+    {
+      "name": "mode",
+      "short": "-m",
+      "long": "--mode",
+      "required": false,
+      "takes_value": true,
+      "description": "Tryb instalacji: system lub dev; domyślnie system.",
+      "choices": [
+        "system",
+        "dev"
+      ]
+    },
+    {
+      "name": "system_user",
+      "short": null,
+      "long": "--system-user",
+      "required": false,
+      "takes_value": true,
+      "description": "Nazwa konta aplikacji w trybie system."
+    },
+    {
+      "name": "system_group",
+      "short": null,
+      "long": "--system-group",
+      "required": false,
+      "takes_value": true,
+      "description": "Nazwa grupy aplikacji w trybie system."
+    },
+    {
+      "name": "target",
+      "short": null,
+      "long": "--target",
+      "required": false,
+      "takes_value": true,
+      "description": "Docelowy katalog instalacji.",
+      "aliases": [
+        "--install-dir"
+      ]
+    },
+    {
+      "name": "config_root",
+      "short": null,
+      "long": "--config-root",
+      "required": false,
+      "takes_value": true,
+      "description": "Docelowy katalog konfiguracji.",
+      "aliases": [
+        "--config-dir"
+      ]
+    },
+    {
+      "name": "data_dir",
+      "short": null,
+      "long": "--data-dir",
+      "required": false,
+      "takes_value": true,
+      "description": "Docelowy katalog trwałych danych."
+    },
+    {
+      "name": "runtime_dir",
+      "short": null,
+      "long": "--runtime-dir",
+      "required": false,
+      "takes_value": true,
+      "description": "Docelowy katalog socketów i stanu runtime."
+    },
+    {
+      "name": "bash_source",
+      "short": null,
+      "long": "--bash-source",
+      "required": false,
+      "takes_value": true,
+      "description": "Polityka środowiska w dev: true lub false.",
+      "choices": [
+        "true",
+        "false"
+      ]
+    },
+    {
+      "name": "commands_dir",
+      "short": null,
+      "long": "--commands-dir",
+      "required": false,
+      "takes_value": true,
+      "description": "Katalog publikacji wrapperów w dev; domyślnie /usr/local/bin."
+    },
+    {
+      "name": "clone_repo",
+      "short": null,
+      "long": "--clone-repo",
+      "required": false,
+      "takes_value": false,
+      "description": "Kopiuje checkout do katalogu konta aplikacji w trybie dev."
+    },
+    {
+      "name": "user_system",
+      "short": null,
+      "long": "--user-system",
+      "required": false,
+      "takes_value": true,
+      "description": "Dedykowane konto dla dev --clone-repo."
+    },
+    {
+      "name": "user_group",
+      "short": null,
+      "long": "--user-group",
+      "required": false,
+      "takes_value": true,
+      "description": "Dedykowana grupa dla dev --clone-repo."
+    },
+    {
+      "name": "invoker",
+      "short": "-i",
+      "long": "--invoker",
+      "required": false,
+      "takes_value": true,
+      "description": "Użytkownik dodawany na końcu instalacji do grupy USER_SYSTEM; domyślnie SUDO_USER, a w trybie system bez sudo użytkownik wywołujący."
+    },
+    {
+      "name": "force",
+      "short": "-f",
+      "long": "--force",
+      "required": false,
+      "takes_value": false,
+      "description": "Zastępuje wyłącznie cele należące do tej instalacji."
+    },
+    {
+      "name": "verbose",
+      "short": "-v",
+      "long": "--verbose",
+      "required": false,
+      "takes_value": false,
+      "description": "Wyświetla szczegóły wykonywanych kroków."
+    }
+  ],
+  "implicit_inputs": [
+    "effective_uid",
+    "SUDO_USER",
+    "argv",
+    "utc_timestamp",
+    "secure_random_suffix",
+    "passwd_uid_gid_home_group_shell",
+    "default_install_json",
+    "filesystem_package_paths",
+    "filesystem_existing_installation_paths",
+    "systemd_current_unit_state"
+  ],
+  "paths": {
+    "application_root": "resolved physically from ../install",
+    "system_install_dir": "${SYSTEM_INSTALL_ROOT:-/opt}/${APP_NAME}",
+    "dev_link_dir": "--target, else ${SYSTEM_INSTALL_ROOT}/${APP_NAME}, else ${INVOKER_HOME}/${APP_NAME}",
+    "dev_clone_dir": "${USER_SYSTEM_HOME}/${APP_NAME}",
+    "system_config_dir": "--config-dir, APP_CONFIG_DIR, CONFIG_ROOT or /etc/${APP_NAME}",
+    "dev_config_dir": "--config-dir, APP_CONFIG_DIR, CONFIG_ROOT or ${USER_SYSTEM_HOME}/.${APP_NAME}/config",
+    "commands_dir": "${COMMANDS_DIR:-/usr/local/bin}",
+    "journal_pattern": "/tmp/${APP_NAME}-install_${UTC_TIMESTAMP}_${SECURE_RANDOM_SUFFIX}",
+    "system_unit": "/etc/systemd/system/${APP_NAME}.service",
+    "system_data_dir": "--data-dir, APP_DATA_DIR or /var/lib/${APP_NAME}",
+    "dev_data_dir": "--data-dir, APP_DATA_DIR or ${USER_SYSTEM_HOME}/.${APP_NAME}/data",
+    "system_runtime_dir": "--runtime-dir, APP_RUNTIME_DIR or /run/${APP_NAME}",
+    "dev_runtime_dir": "--runtime-dir, APP_RUNTIME_DIR or ${USER_SYSTEM_HOME}/.${APP_NAME}/run"
+  },
+  "templates": [
+    {
+      "source": "${APPLICATION_ROOT}/resources/app_env.template.json",
+      "rendered_name": "app_env.json",
+      "required": true
+    },
+    {
+      "source": "${APPLICATION_ROOT}/resources/agents-system.module.template.json",
+      "rendered_name": "agents-system.module.json",
+      "required": true
+    },
+    {
+      "source": "${APPLICATION_ROOT}/resources/system.template.service",
+      "rendered_name": "${APP_NAME}.service",
+      "required_in_modes": [
+        "system"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "order": 1,
+      "id": "resolve-application-root",
+      "description": "Resolve the physical application root relative to ../install, load defaults and validate required source files."
+    },
+    {
+      "order": 2,
+      "id": "parse-input",
+      "description": "Parse system|dev mode (system by default) and reject flags unavailable in the selected mode."
+    },
+    {
+      "order": 3,
+      "id": "resolve-accounts",
+      "description": "System uses --system-user/--system-group or USER_SYSTEM/USER_GROUP defaults. Dev without --clone-repo uses the invoker. Dev --clone-repo uses --user-system/--user-group or defaults."
+    },
+    {
+      "order": 4,
+      "id": "resolve-paths",
+      "description": "System falls back to /opt, /etc/agents-system and /usr/local/bin. Dev resolves target and configuration from CLI, defaults and invoker or USER_SYSTEM home according to clone mode."
+    },
+    {
+      "order": 5,
+      "id": "preflight",
+      "description": "Require root, validate source and account contracts, and refuse unrelated existing targets even with --force."
+    },
+    {
+      "order": 6,
+      "id": "create-journal",
+      "description": "Create a root-owned transactional journal before mutations."
+    },
+    {
+      "order": 7,
+      "id": "prepare-account",
+      "description": "Create or validate the application account and primary USER_GROUP. Prepare the shared access group named USER_SYSTEM and grant the application account membership."
+    },
+    {
+      "order": 8,
+      "id": "install-payload",
+      "description": "System copies the system payload. Dev without --clone-repo copies no repository files and creates only an install-directory symlink to the current checkout. Dev --clone-repo copies the full repository exclusively to USER_SYSTEM_HOME/APP_NAME."
+    },
+    {
+      "order": 9,
+      "id": "render-resources",
+      "description": "Render app_env.json first, then render agents-system.module.json from its MODULES_* values; publish both in package resources and APP_CONFIG_DIR. Preserve module methods, flags and exclusive groups and resolve each explicitly declared module directory."
+    },
+    {
+      "id": "install-installer-module",
+      "description": "Copy install/src to MODULES_DIR/install from the validated app_env.json, including per-operation help JSON files; journal replacement for rollback.",
+      "order": 10
+    },
+    {
+      "order": 11,
+      "id": "generate-configuration",
+      "description": "After app_env.json and the modules manifest are published to APP_CONFIG_DIR, run the installed internal_scripts/generate_configuration.sh with APP_ENV_PATH."
+    },
+    {
+      "order": 12,
+      "id": "prepare-state",
+      "description": "Create mode-specific durable and runtime directories with validated ownership. Then copy resources/agents-system.json atomically to INSTALLED_MODULES_DIR/agents-system.json from the rendered configuration and journal the mutation for rollback."
+    },
+    {
+      "order": 13,
+      "id": "publish-commands",
+      "description": "Publish asystem, asystem-uninstall, asystem-reinstall and asystem-reconfigure symlinks in the configured commands directory (system: /usr/local/bin)."
+    },
+    {
+      "order": 14,
+      "id": "install-service",
+      "description": "Only system mode renders, verifies and installs the systemd unit; activation occurs after the environment pointer is written."
+    },
+    {
+      "order": 15,
+      "id": "write-source-env",
+      "description": "As the final filesystem mutation, write APP_DIR/src/.env with only ABSOLUTE_CONFIG_PATH from APP_ENV_PATH; only then enable and start the system runtime."
+    },
+    {
+      "order": 16,
+      "id": "verify",
+      "description": "Verify installed resources, command links and optional service, then add the invoker to the USER_SYSTEM group as the final installation action. Shared directories use 2770, files 0660 and executables 0770."
+    },
+    {
+      "order": 17,
+      "id": "rollback-on-failure",
+      "description": "Rollback journal-proven changes in reverse order after any failure."
+    },
+    {
+      "order": 18,
+      "id": "finalize",
+      "description": "Record successful outputs and retain the journal path for manual rollback."
+    }
+  ],
+  "rollback": {
+    "automatic_on_failure": true,
+    "reverse_mutation_order": true,
+    "journal_required": true,
+    "journal_security": {
+      "owner": "root",
+      "mode": "0700",
+      "reject_symlink_components": true,
+      "validate_operation_id": true
+    },
+    "host_script": "${APPLICATION_ROOT}/install/rollback.sh",
+    "target": {
+      "application": "install/src/__main__.py",
+      "command_class": "InstallationRollback",
+      "module": "install/src/rollback.py",
+      "method": "execute"
+    },
+    "manual_usage": "install/rollback.sh --journal <exact-journal-directory>",
+    "actions": [
+      "stop and disable only the service state introduced by this installation",
+      "restore the previous systemd unit and run daemon-reload when a backup exists",
+      "remove newly created command links and restore installer-owned previous links",
+      "restore backed-up configuration and application files",
+      "remove paths created by this installation after validating them against the journal",
+      "remove group membership added by this installation",
+      "remove a user or group only when the journal proves this installation created it",
+      "restore prior ownership, permissions and systemd activation state",
+      "record rollback completion and any item that could not be safely reverted"
+    ],
+    "retention": "Keep the journal after a successful install for manual rollback; it is temporary data under /tmp and may disappear after reboot or cleanup."
+  },
+  "outputs": [
+    "resolved_install_configuration",
+    "system_payload_or_dev_link_or_user_system_clone",
+    "rendered_app_env.json",
+    "rendered_agents-system.module.json",
+    "generated_runtime_configuration",
+    "source_env_pointer",
+    "published_command_symlinks",
+    "optional_accounts",
+    "optional_systemd_unit",
+    "secure_install_journal",
+    "installed_modules_file"
+  ],
+  "failure_policy": "Validation or mutation failure stops installation and rolls back journal-proven changes. Without --force, existing targets stop installation. With --force, only targets proven to belong to this installation may be replaced.",
+  "implementation_layout": {
+    "shell_entrypoint": "install/install.sh",
+    "python_entrypoint": "install/src/__main__.py",
+    "installer": "install/src/installer.py::Installer.execute",
+    "app_env_renderer_shell": "internal_scripts/render-app-env.sh",
+    "app_env_renderer_python": "src/internal_scripts/render_app_env.py::main",
+    "rollback_shell_entrypoint": "install/rollback.sh",
+    "rollback": "install/src/rollback.py::InstallationRollback.execute",
+    "optional_directories": [
+      "install/src/models",
+      "install/src/services"
+    ],
+    "documentation_requirement": "Public classes, non-obvious safety decisions, configuration resolution, side effects and rollback behavior must be documented. Create models or services only when they own a distinct responsibility.",
+    "modules_manifest_renderer_shell": "internal_scripts/render-modules-manifest.sh",
+    "modules_manifest_renderer_python": "src/internal_scripts/render_modules_manifest.py::main",
+    "configuration_generator_shell": "internal_scripts/generate_configuration.sh",
+    "configuration_generator_python": "src/internal_scripts/generate_configuration.py::main"
+  },
+  "copied_resources": [
+    {
+      "source": "${APPLICATION_ROOT}/resources/agents-system.json",
+      "target": "${INSTALLED_MODULES_DIR}/agents-system.json",
+      "required": true,
+      "modes": [
+        "dev",
+        "system"
+      ],
+      "atomic": true,
+      "supports_rollback": true
+    }
+  ],
+  "lifecycle": {
+    "uninstall": {
+      "class": "Uninstaller",
+      "contract": "install/src/resources/uninstaller.json",
+      "executable": "install/uninstall.sh"
+    },
+    "reinstall": {
+      "class": "Reinstaller",
+      "contract": "install/src/resources/reinstaller.json",
+      "executable": "install/reinstall.sh"
+    },
+    "reconfigure": {
+      "class": "Reconfigure",
+      "contract": "install/src/resources/reconfigure.json",
+      "executable": "install/reconfigure.sh"
+    }
+  },
+  "kind": "installer-help",
+  "operation": "install",
+  "description": "Instaluje Agents System i publikuje komendy lifecycle.",
+  "usage": "./install/install.sh --yes [--mode system|dev] [OPTIONS]",
+  "executable": "install/install.sh",
+  "python_target": "install/src/__main__.py",
+  "flag_names": [
+    "-h",
+    "--help",
+    "--yes",
+    "-m",
+    "--mode",
+    "--system-user",
+    "--system-group",
+    "--target",
+    "--install-dir",
+    "--config-root",
+    "--config-dir",
+    "--data-dir",
+    "--runtime-dir",
+    "--bash-source",
+    "--commands-dir",
+    "--clone-repo",
+    "--user-system",
+    "--user-group",
+    "-i",
+    "--invoker",
+    "-f",
+    "--force",
+    "-v",
+    "--verbose"
+  ]
+}

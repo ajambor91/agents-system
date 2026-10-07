@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from ..abstract.models import AbstractSocketConfiguration
+from ..models import SocketConfiguration
 
 
 class AbstractUnixSocketTransport(ABC):
@@ -24,7 +24,11 @@ class AbstractUnixSocketTransport(ABC):
         """Return whether this transport owns an open socket."""
 
     @abstractmethod
-    def connect(self, configuration: AbstractSocketConfiguration) -> None:
+    def socket_exists(self, configuration: SocketConfiguration) -> bool:
+        """Return whether the configured path currently identifies a socket."""
+
+    @abstractmethod
+    def connect(self, configuration: SocketConfiguration) -> None:
         """Open a connection using the supplied immutable configuration."""
 
     @abstractmethod
@@ -34,4 +38,3 @@ class AbstractUnixSocketTransport(ABC):
     @abstractmethod
     def close(self) -> None:
         """Release the socket and any transport-owned resources."""
-

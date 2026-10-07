@@ -2,506 +2,72 @@
   "schema_version": 1,
   "version": 1,
   "kind": "agents-system-modules-manifest",
-  "app_module_name": "agents-system",
+  "app_module_name": "agents_system",
   "manifest_absolute_path": "${MODULES_MANIFEST_PATH}",
   "absolute_path": "${MODULES_DIR}",
   "app_dir": "${APP_DIR}",
   "children": [
     {
       "section_name": "agents",
-      "absolute_module_path": "${MODULES_DIR}/agents-manager",
+      "absolute_module_path": "${MODULES_DIR}/agents_manager",
       "is_menu_option": true,
       "is_runtime": false,
       "runtime": [
         "main"
       ],
-      "module_name": "agents-manager",
-      "menu_name": "Agents Manager",
-      "description": "Instalacja, aktualizacja, wykonanie, stan i narzędzia lokalnych agentów OpenClaw.",
-      "commands": [
-        {
-          "name": "install",
-          "description": "Instaluje agenta z wersjonowanej definicji i przygotowuje jego runtime.",
-          "usage": "asystem agents install [-n NAME] [-u USER] [-m MODEL] [-g GATEWAY_USER] [--force] [--dry-run] [-v]",
-          "implementation_status": "not-implemented",
-          "flags": [
-            {
-              "name": "name",
-              "short": "-n",
-              "long": "--name",
-              "aliases": [],
-              "description": "Nazwa definicji agenta; bez flagi wybierany jest config.json z default=true.",
-              "usage": "-n NAME",
-              "takes_value": true,
-              "type": "agent-name",
-              "required": false
-            },
-            {
-              "name": "user",
-              "short": "-u",
-              "long": "--user",
-              "aliases": [],
-              "description": "Dedykowany użytkownik Linux agenta.",
-              "usage": "-u USER",
-              "takes_value": true,
-              "type": "linux-user",
-              "required": false
-            },
-            {
-              "name": "model",
-              "short": "-m",
-              "long": "--model",
-              "aliases": [],
-              "description": "Model przypisany agentowi w OpenClaw.",
-              "usage": "-m MODEL",
-              "takes_value": true,
-              "type": "string",
-              "required": false
-            },
-            {
-              "name": "gateway_user",
-              "short": "-g",
-              "long": "--gateway-user",
-              "aliases": [
-                "--gateway"
-              ],
-              "description": "Użytkownik uruchamiający gateway OpenClaw.",
-              "usage": "-g USER",
-              "takes_value": true,
-              "type": "linux-user",
-              "required": false
-            },
-            {
-              "name": "force",
-              "short": null,
-              "long": "--force",
-              "aliases": [],
-              "description": "Odświeża zarządzane pliki bez usuwania workspace.",
-              "usage": "--force",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            },
-            {
-              "name": "dry_run",
-              "short": null,
-              "long": "--dry-run",
-              "aliases": [],
-              "description": "Pokazuje plan bez zmiany stanu.",
-              "usage": "--dry-run",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            },
-            {
-              "name": "verbose",
-              "short": "-v",
-              "long": "--verbose",
-              "aliases": [],
-              "description": "Pokazuje wykonywane polecenia systemowe.",
-              "usage": "-v",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            }
-          ]
-        },
-        {
-          "name": "update",
-          "description": "Odświeża pliki, narzędzia, bootstrap i konfigurację istniejącego agenta.",
-          "usage": "asystem agents update -n NAME [-g GATEWAY_USER] [--dry-run] [-v]",
-          "implementation_status": "not-implemented",
-          "flags": [
-            {
-              "name": "name",
-              "short": "-n",
-              "long": "--name",
-              "aliases": [],
-              "description": "Nazwa agenta.",
-              "usage": "-n NAME",
-              "takes_value": true,
-              "type": "agent-name",
-              "required": true
-            },
-            {
-              "name": "gateway_user",
-              "short": "-g",
-              "long": "--gateway-user",
-              "aliases": [
-                "--gateway"
-              ],
-              "description": "Użytkownik uruchamiający gateway OpenClaw.",
-              "usage": "-g USER",
-              "takes_value": true,
-              "type": "linux-user",
-              "required": false
-            },
-            {
-              "name": "dry_run",
-              "short": null,
-              "long": "--dry-run",
-              "aliases": [],
-              "description": "Pokazuje plan bez zmiany stanu.",
-              "usage": "--dry-run",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            },
-            {
-              "name": "verbose",
-              "short": "-v",
-              "long": "--verbose",
-              "aliases": [],
-              "description": "Pokazuje wykonywane polecenia systemowe.",
-              "usage": "-v",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            }
-          ]
-        },
-        {
-          "name": "exec",
-          "description": "Uruchamia polecenie przez AgentExecutor w środowisku wskazanego agenta.",
-          "usage": "asystem agents exec -n NAME -c COMMAND [-r REQUESTER]",
-          "implementation_status": "not-implemented",
-          "flags": [
-            {
-              "name": "name",
-              "short": "-n",
-              "long": "--name",
-              "aliases": [],
-              "description": "Nazwa agenta.",
-              "usage": "-n NAME",
-              "takes_value": true,
-              "type": "agent-name",
-              "required": true
-            },
-            {
-              "name": "command",
-              "short": "-c",
-              "long": "--command",
-              "aliases": [],
-              "description": "Polecenie przekazywane AgentExecutorowi.",
-              "usage": "-c COMMAND",
-              "takes_value": true,
-              "type": "string",
-              "required": true
-            },
-            {
-              "name": "requested_by",
-              "short": "-r",
-              "long": "--requested-by",
-              "aliases": [],
-              "description": "Tożsamość żądająca wykonania.",
-              "usage": "-r REQUESTER",
-              "takes_value": true,
-              "type": "string",
-              "required": false
-            }
-          ]
-        },
-        {
-          "name": "delete",
-          "description": "Usuwa agenta; operacja pozostaje placeholderem w agents-manager.",
-          "usage": "asystem agents delete -n NAME",
-          "implementation_status": "not-implemented",
-          "flags": [
-            {
-              "name": "name",
-              "short": "-n",
-              "long": "--name",
-              "aliases": [],
-              "description": "Nazwa agenta.",
-              "usage": "-n NAME",
-              "takes_value": true,
-              "type": "agent-name",
-              "required": true
-            }
-          ]
-        },
-        {
-          "name": "list",
-          "description": "Wyświetla zsynchronizowany rejestr agentów.",
-          "usage": "asystem agents list [--json]",
-          "implementation_status": "not-implemented",
-          "flags": [
-            {
-              "name": "json",
-              "short": null,
-              "long": "--json",
-              "aliases": [],
-              "description": "Zwraca JSON; w konsoli asystem jest również globalnym trybem wyjścia.",
-              "usage": "--json",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            }
-          ]
-        },
-        {
-          "name": "status",
-          "description": "Pokazuje stan, OpenClaw i zadania jednego agenta.",
-          "usage": "asystem agents status -n NAME [--json]",
-          "implementation_status": "not-implemented",
-          "flags": [
-            {
-              "name": "name",
-              "short": "-n",
-              "long": "--name",
-              "aliases": [],
-              "description": "Nazwa agenta.",
-              "usage": "-n NAME",
-              "takes_value": true,
-              "type": "agent-name",
-              "required": true
-            },
-            {
-              "name": "json",
-              "short": null,
-              "long": "--json",
-              "aliases": [],
-              "description": "Zwraca JSON; w konsoli asystem jest również globalnym trybem wyjścia.",
-              "usage": "--json",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            }
-          ]
-        },
-        {
-          "name": "tools",
-          "description": "Pokazuje politykę narzędzi zapisaną dla agenta w OpenClaw.",
-          "usage": "asystem agents tools -n NAME [--json]",
-          "implementation_status": "not-implemented",
-          "flags": [
-            {
-              "name": "name",
-              "short": "-n",
-              "long": "--name",
-              "aliases": [],
-              "description": "Nazwa agenta.",
-              "usage": "-n NAME",
-              "takes_value": true,
-              "type": "agent-name",
-              "required": true
-            },
-            {
-              "name": "json",
-              "short": null,
-              "long": "--json",
-              "aliases": [],
-              "description": "Zwraca JSON; w konsoli asystem jest również globalnym trybem wyjścia.",
-              "usage": "--json",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            }
-          ]
-        },
-        {
-          "name": "wakeup",
-          "description": "Budzi agenta i przekazuje kopertę wiadomości przez standardowe wejście.",
-          "usage": "asystem agents wakeup -n NAME [-g GATEWAY_USER] [--timeout SECONDS] [-v]",
-          "implementation_status": "not-implemented",
-          "input": {
-            "source": "stdin",
-            "type": "message-envelope-json",
-            "maximum_bytes": 1048576
-          },
-          "flags": [
-            {
-              "name": "name",
-              "short": "-n",
-              "long": "--name",
-              "aliases": [],
-              "description": "Nazwa agenta.",
-              "usage": "-n NAME",
-              "takes_value": true,
-              "type": "agent-name",
-              "required": true
-            },
-            {
-              "name": "gateway_user",
-              "short": "-g",
-              "long": "--gateway-user",
-              "aliases": [],
-              "description": "Użytkownik gatewaya OpenClaw.",
-              "usage": "-g USER",
-              "takes_value": true,
-              "type": "linux-user",
-              "required": false
-            },
-            {
-              "name": "timeout",
-              "short": null,
-              "long": "--timeout",
-              "aliases": [],
-              "description": "Limit czasu wybudzenia w sekundach.",
-              "usage": "--timeout SECONDS",
-              "takes_value": true,
-              "type": "integer",
-              "required": false,
-              "default": 600
-            },
-            {
-              "name": "verbose",
-              "short": "-v",
-              "long": "--verbose",
-              "aliases": [],
-              "description": "Pokazuje diagnostykę gatewaya.",
-              "usage": "-v",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            }
-          ]
-        },
-        {
-          "name": "gateway-start",
-          "description": "Uruchamia gateway wiadomości agents-manager.",
-          "usage": "asystem agents gateway-start",
-          "implementation_status": "not-implemented",
-          "flags": []
-        },
-        {
-          "name": "gateway-status",
-          "description": "Pokazuje stan gatewaya wiadomości agents-manager.",
-          "usage": "asystem agents gateway-status",
-          "implementation_status": "not-implemented",
-          "flags": []
-        },
-        {
-          "name": "gateway-stop",
-          "description": "Zatrzymuje gateway wiadomości agents-manager.",
-          "usage": "asystem agents gateway-stop",
-          "implementation_status": "not-implemented",
-          "flags": []
-        },
-        {
-          "name": "gateway-restart",
-          "description": "Restartuje gateway wiadomości agents-manager.",
-          "usage": "asystem agents gateway-restart",
-          "implementation_status": "not-implemented",
-          "flags": []
-        }
-      ]
+      "module_name": "agents_manager",
+      "manifest_path": "${MODULES_DIR}/agents_manager/resources/agents_manager.module.json"
     },
     {
-      "module_name": "agents-data",
+      "module_name": "agents_data",
       "section_name": null,
-      "absolute_module_path": "${MODULES_DIR}/agents-data",
+      "absolute_module_path": "${MODULES_DIR}/agents_data",
       "is_menu_option": false,
       "is_runtime": false,
       "runtime": [
-        "agents-data-runtime"
+        "agents_data_runtime"
       ],
-      "menu_name": null,
-      "description": "Lokalny klient danych i wiadomości agenta, obsługiwany przez agents-data-runtime.",
-      "commands": []
+      "manifest_path": "${MODULES_DIR}/agents_data/resources/agents_data.module.json"
     },
     {
-      "module_name": "agents-data-backend",
+      "module_name": "agents_data_backend",
       "section_name": null,
-      "absolute_module_path": "${MODULES_DIR}/agents-data-backend",
+      "absolute_module_path": "${MODULES_DIR}/agents_data_backend",
       "is_menu_option": false,
       "is_runtime": false,
       "runtime": [],
-      "menu_name": null,
-      "description": "Backend trwałych danych, cache i streamów systemu agentów.",
-      "commands": []
+      "manifest_path": "${MODULES_DIR}/agents_data_backend/resources/agents_data_backend.module.json"
     },
     {
-      "module_name": "agents-system",
+      "module_name": "agents_system",
       "section_name": "system",
-      "absolute_module_path": "${MODULES_DIR}/agents-system",
+      "absolute_module_path": "${MODULES_DIR}/agents_system",
       "is_menu_option": true,
       "is_runtime": false,
       "runtime": [
         "main"
       ],
-      "menu_name": "Agents System",
-      "description": "Publiczne API Agents System: lista modułów zainstalowanych i działających w runtime.",
-      "commands": [
-        {
-          "name": "modules",
-          "method": "modules",
-          "description": "Wyświetla moduły zainstalowane albo działające w runtime.",
-          "usage": "asystem system modules (--installed | --running)",
-          "implementation_status": "implemented",
-          "flags": [
-            {
-              "name": "installed",
-              "long": "--installed",
-              "short": null,
-              "aliases": [],
-              "description": "Czyta listy modules z plików JSON w INSTALLED_MODULES_DIR.",
-              "usage": "--installed",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            },
-            {
-              "name": "running",
-              "long": "--running",
-              "short": null,
-              "aliases": [],
-              "description": "Odpytuje runtime o załadowane publiczne instancje modułów; wymaga działającego socketu.",
-              "usage": "--running",
-              "takes_value": false,
-              "type": "boolean",
-              "required": false,
-              "default": false
-            }
-          ],
-          "exclusive_groups": [
-            {
-              "members": [
-                "installed",
-                "running"
-              ],
-              "minimum": 1,
-              "maximum": 1
-            }
-          ]
-        }
-      ]
+      "manifest_path": "${MODULES_DIR}/agents_system/resources/agents_system.module.json"
     },
     {
-      "module_name": "app_api",
+      "module_name": "agents_system_cli",
       "section_name": null,
-      "absolute_module_path": "${MODULES_DIR}/app_api",
+      "absolute_module_path": "${MODULES_DIR}/agents_system_cli",
       "is_menu_option": false,
       "is_runtime": false,
-      "runtime": [
-        "main"
-      ],
-      "menu_name": null,
-      "description": "Adapter konsoli i API interfejsu asystem.",
-      "commands": []
+      "runtime": [],
+      "manifest_path": "${MODULES_DIR}/agents_system_cli/resources/agents_system_cli.module.json"
     },
     {
-      "module_name": "agents-data-runtime",
+      "module_name": "agents_data_runtime",
       "section_name": null,
-      "absolute_module_path": "${MODULES_DIR}/agents-data-runtime",
+      "absolute_module_path": "${MODULES_DIR}/agents_data_runtime",
       "is_menu_option": false,
       "is_runtime": true,
       "runtime": [
-        "agents-data-runtime"
+        "agents_data_runtime"
       ],
-      "menu_name": null,
-      "description": "Osobny runtime komunikacji i dostarczania wiadomości agentom.",
-      "commands": []
+      "manifest_path": "${MODULES_DIR}/agents_data_runtime/resources/agents_data_runtime.module.json"
     },
     {
       "module_name": "runtime",
@@ -512,9 +78,7 @@
       "runtime": [
         "main"
       ],
-      "menu_name": null,
-      "description": "Główny rezydentny runtime modułów Agents System.",
-      "commands": []
+      "manifest_path": "${MODULES_DIR}/_runtime/resources/runtime.module.json"
     }
   ]
 }

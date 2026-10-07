@@ -33,6 +33,12 @@
       "example": "agents-system"
     },
     {
+      "name": "MAIN_APP_NAME",
+      "value": "agents_system",
+      "description": "Name of the main app module.",
+      "example": "agents-system"
+    },
+    {
       "name": "INSTALL_DIR",
       "value": "{{INSTALL_DIR}}",
       "description": "Exact installation directory injected by the installer.",

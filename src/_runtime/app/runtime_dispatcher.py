@@ -3,9 +3,9 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from .instance_manager import InstanceManager
-from .exceptions.runtime_dispatch_error import RuntimeDispatchError
-
+from . import InstanceManager
+from .exceptions import RuntimeDispatchError
+from .models import Request
 
 class RuntimeDispatcher:
     """
@@ -95,33 +95,19 @@ class RuntimeDispatcher:
 
     def dispatch(
         self,
-        request: dict[str, Any],
+        request_obj: Request,
     ) -> Any:
+        print("REQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSS")
+        instance_name = request_obj.payload['module_name']
 
-        instance_name = request.get(
-            "service"
-        )
+        method_name = request_obj.payload['method']
 
-        method_name = request.get(
-            "method"
-        )
 
-        args = request.get(
-            "args",
-            [],
-        )
 
-        kwargs = request.get(
-            "kwargs",
-            {},
-        )
+        kwargs = request_obj.payload['kwargs']
 
-        self._validate_request(
-            instance_name,
-            method_name,
-            args,
-            kwargs,
-        )
+        
+
         if instance_name.endswith("_block"):
             raise RuntimeDispatchError(
                 "SERVICE_BLOCKED",
@@ -185,10 +171,10 @@ class RuntimeDispatcher:
             )
 
         try:
-
+            print(kwargs)
+            print("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
             future = executor.submit(
                 action,
-                *args,
                 **kwargs,
             )
 

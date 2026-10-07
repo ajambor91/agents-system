@@ -1,21 +1,26 @@
 from __future__ import annotations
 
 import socket
-from .abstract import AbstractSocketConfiguration, AbstractUnixSocketTransport
+from pathlib import Path
+from .abstract import AbstractUnixSocketTransport
 from .exceptions import UnixSocketConnectionException, UnixSocketProtocolException, UnixSocketTimeoutException
-
+from .models import SocketConfiguration
 
 class UnixSocketTransport(AbstractUnixSocketTransport):
     def __init__(self) -> None:
         self._buffer = bytearray()
         self._socket: socket.socket | None = None
-        self._configuration: AbstractSocketConfiguration | None = None
+        self._configuration: SocketConfiguration | None = None
 
     @property
     def is_connected(self) -> bool:
         return self._socket is not None
 
-    def connect(self, configuration: AbstractSocketConfiguration) -> None:
+    def socket_exists(self, configuration: SocketConfiguration) -> bool:
+        """Inspect the filesystem without connecting or checking server health."""
+        return Path(configuration.socket_path).is_socket()
+
+    def connect(self, configuration: SocketConfiguration) -> None:
         if configuration.maximum_response_bytes <= 0:
             raise ValueError("maximum_response_bytes must be positive")
         for value in (configuration.connect_timeout, configuration.request_timeout):
@@ -23,6 +28,8 @@ class UnixSocketTransport(AbstractUnixSocketTransport):
                 raise ValueError("timeouts cannot be negative")
         self.close()
         connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        print("SOCKETPATH")
+        print(configuration.socket_path)
         try:
             connection.settimeout(configuration.connect_timeout)
             connection.connect(str(configuration.socket_path))
@@ -56,6 +63,7 @@ class UnixSocketTransport(AbstractUnixSocketTransport):
                 raise UnixSocketProtocolException("Socket response is too large")
             frame = bytes(self._buffer[:end])
             del self._buffer[:end]
+            print("EXCHANGE")
             return frame
         except UnixSocketProtocolException:
             self.close()
@@ -64,6 +72,8 @@ class UnixSocketTransport(AbstractUnixSocketTransport):
             self.close()
             raise UnixSocketTimeoutException(str(exc)) from exc
         except OSError as exc:
+            print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+            print(exc)
             self.close()
             raise UnixSocketConnectionException(str(exc)) from exc
 

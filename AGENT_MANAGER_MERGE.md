@@ -2,8 +2,8 @@
 
 ## Cel
 
-Przenieść działającą aplikację Pythona z repozytorium `agents-manager` do
-`src/agents-manager/` jako aplikację desktopową. Nie przenosić do niej wspólnego
+Przenieść działającą aplikację Pythona z repozytorium `agents_manager` do
+`src/agents_manager/` jako aplikację desktopową. Nie przenosić do niej wspólnego
 runtime ani nie tworzyć drugiego daemona.
 
 ## Stan źródłowy
@@ -25,8 +25,8 @@ Istotne zasoby po migracji:
 ## Docelowa granica
 
 ```text
-src/agents-manager/
-|-- main.py
+src/agents_manager/
+|-- __main__.py
 `-- app/
     |-- application.py
     |-- commands/
@@ -47,10 +47,10 @@ zostaje adapterem OpenClaw zarządzanym przez runtime.
 
 ## Mapa przeniesienia
 
-| Źródło `agents-manager` | Cel | Decyzja |
+| Źródło `agents_manager` | Cel | Decyzja |
 | --- | --- | --- |
-| `src/agents_manager/application.py` | `src/agents-manager/app/application.py` | przeniesiono |
-| `src/agents_manager/commands/` | `src/agents-manager/app/commands/` | przeniesiono klasy use-case |
+| `src/agents_manager/application.py` | `src/agents_manager/app/application.py` | przeniesiono |
+| `src/agents_manager/commands/` | `src/agents_manager/app/commands/` | przeniesiono klasy use-case |
 | `services/agent_config.py`, `agent_catalog.py` | `app/services/` | przeniesiono |
 | `services/agent_registry.py`, `state.py` | `app/services/` | przeniesiono; pozniejszy podzial |
 | `services/linux_user.py`, `sudo_policy.py`, `symlink.py` | `app/services/` | przeniesiono; do dalszego wydzielenia |

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "version": 1,
+  "kind": "module-manifest",
+  "module_name": "runtime",
+  "menu_name": null,
+  "description": "Główny rezydentny runtime modułów Agents System.",
+  "commands": [],
+  "usage": ""
+}

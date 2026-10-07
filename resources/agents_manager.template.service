@@ -12,7 +12,7 @@ Wants=network-online.target
 After=network-online.target
 StartLimitIntervalSec=60
 StartLimitBurst=5
-ConditionPathExists={{APP_DIR}}/src/runtime/main.py
+ConditionPathExists={{APP_DIR}}/src/_runtime/__main__.py
 
 [Service]
 Type=simple
@@ -31,7 +31,7 @@ Environment="AGENTS_SYSTEM_APPS_PATH={{INCLUDED_APPS_FILE}}"
 Environment="PYTHONUNBUFFERED=1"
 Environment="PYTHONDONTWRITEBYTECODE=1"
 
-ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/_runtime/main.py
+ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/_runtime/__main__.py
 Restart=on-failure
 RestartSec=2s
 TimeoutStartSec=30s

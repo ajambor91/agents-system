@@ -1,7 +1,12 @@
-import json
 import argparse
 
 from pathlib import Path
+import sys
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from lib.json_loader import JsonLoader
 
 
 TYPE_MAP = {
@@ -15,7 +20,7 @@ TYPE_MAP = {
 def generate(source: Path) -> None:
     SCRIPT_DIR = Path(__file__).resolve().parent
     target = (SCRIPT_DIR / "../lib/configuration/configuration.py").resolve()
-    config = json.loads(source.read_text(encoding="utf-8"))
+    config = JsonLoader.load(source)
 
     lines = [
         "# AUTO-GENERATED. DO NOT EDIT.",

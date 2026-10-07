@@ -1,14 +1,14 @@
-"""The installation use-case defined by install/install.json."""
+"""The installation use-case defined by install/src/resources/installer.json."""
 
 from __future__ import annotations
 
 import argparse
 import grp
+import hashlib
 import json
 import os
 import pwd
 import re
-import secrets
 import shutil
 import stat
 import subprocess
@@ -19,112 +19,35 @@ from typing import Any, Callable, Mapping
 from .errors import InstallationError
 from .journal import InstallJournal
 from .models import Account, InstallConfiguration
-from .rollback import InstallationRollback
+from .parent import InstallerParent
+from .enums import InstallerMode
+from .shared import (
+    load_defaults,
+    default,
+    configured_path,
+    remove,
+    is_below,
+    absolute,
+    install_parser,
+)
+from .shared.operations import atomic_copy, atomic_link, atomic_json, atomic_text, replace_path, prepare_path_change, run_command, copy_payload_tree
+from .shared.lifecycle import validate_environment, validate_environment_identity, transaction, renderer_process_environment
+from .consts import  (
+    UNIT_ROOT,
+    SAFE_APP_NAME,
+    SAFE_NAME,
+    MARKER_NAME,
+    INSTALLER_MODULE_NAME, INSTALLER_SOURCE_RELATIVE_PATH, INSTALLER_MODULE_RELATIVE_PATH,
+    HELP_MANIFEST_FILES,
+    APPLICATION_DIRECTORY_MODE, APPLICATION_FILE_MODE, APPLICATION_EXECUTABLE_MODE,
+)
 
 
-SAFE_NAME = re.compile(r"^[a-z_][a-z0-9_-]*$")
-SAFE_APP_NAME = re.compile(r"^[a-z][a-z0-9-]*$")
-REQUIRED_DEFAULTS: set[str] = set()
-MARKER_NAME = ".agents-system-install.json"
-UNIT_ROOT = Path("/etc/systemd/system")
 
-
-def install_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="install")
-    parser.add_argument("-m", "--mode", choices=("system", "dev"), default="system")
-    parser.add_argument("--system-user")
-    parser.add_argument("--system-group")
-    parser.add_argument("--target", "--install-dir", dest="target")
-    parser.add_argument("--config-root", "--config-dir", dest="config_root")
-    parser.add_argument("--data-dir")
-    parser.add_argument("--runtime-dir")
-    parser.add_argument("--bash-source", choices=("true", "false"))
-    parser.add_argument("--commands-dir")
-    parser.add_argument("--clone-repo", action="store_true")
-    parser.add_argument("--user-system")
-    parser.add_argument("--user-group")
-    parser.add_argument("-i", "--invoker")
-    parser.add_argument("-f", "--force", action="store_true")
-    parser.add_argument("-v", "--verbose", action="store_true")
-    return parser
-
-
-def _load_defaults(path: Path) -> dict[str, str | None]:
-    try:
-        document = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError as exc:
-        raise InstallationError(f"Brak pliku wartości domyślnych: {path}") from exc
-    except (OSError, json.JSONDecodeError) as exc:
-        raise InstallationError(f"Nie można odczytać {path}: {exc}") from exc
-    if not isinstance(document, list):
-        raise InstallationError("default_install.json musi być tablicą name/value")
-    result: dict[str, str | None] = {}
-    for offset, item in enumerate(document):
-        if not isinstance(item, dict) or not isinstance(item.get("name"), str):
-            raise InstallationError(f"default_install.json[{offset}] musi być obiektem name/value")
-        name, value = item["name"], item.get("value")
-        if name in result or (value is not None and (not isinstance(value, str) or not value)):
-            raise InstallationError(f"Nieprawidłowa lub powtórzona wartość domyślna: {name}")
-        result[name] = value
-    missing = sorted(REQUIRED_DEFAULTS - result.keys())
-    if missing:
-        raise InstallationError("Brak wartości domyślnych: " + ", ".join(missing))
-    return result
-
-
-def _absolute(value: str, name: str, *, must_exist: bool = False) -> Path:
-    path = Path(value).expanduser()
-    if not path.is_absolute() or ".." in path.parts:
-        raise InstallationError(f"{name} musi być bezpieczną ścieżką absolutną")
-    resolved = path.resolve(strict=False)
-    if must_exist and not resolved.is_dir():
-        raise InstallationError(f"{name} nie jest istniejącym katalogiem: {resolved}")
-    return resolved
-
-
-def _default(defaults: Mapping[str, str | None], name: str, fallback: str) -> str:
-    value = defaults.get(name)
-    return value if isinstance(value, str) and value else fallback
-
-
-def _configured_path(
-    value: str,
-    name: str,
-    home: Path,
-    placeholders: Mapping[str, str] | None = None,
-) -> Path:
-    variables = placeholders or {}
-
-    def replace(match: re.Match[str]) -> str:
-        variable = match.group(1)
-        if variable not in variables:
-            raise InstallationError(f"{name}: nieznany placeholder {variable}")
-        return variables[variable]
-
-    value = re.sub(r"\$\{([A-Z][A-Z0-9_]*)\}", replace, value)
-    if value == "~":
-        value = str(home)
-    elif value.startswith("~/"):
-        value = str(home / value[2:])
-    return _absolute(value, name)
-
-def _is_below(path: Path, root: Path) -> bool:
-    try:
-        path.relative_to(root)
-    except ValueError:
-        return False
-    return True
-
-
-def _remove(path: Path) -> None:
-    if path.is_symlink() or path.is_file():
-        path.unlink(missing_ok=True)
-    elif path.is_dir():
-        shutil.rmtree(path)
-
-
-class Installer:
+class Installer(InstallerParent):
     """Install the package transactionally, with journal-proven rollback."""
+
+    operation = InstallerMode.INSTALL
 
     def __init__(
         self,
@@ -143,25 +66,37 @@ class Installer:
         self.verbose = False
 
     def execute(self, arguments: argparse.Namespace) -> dict[str, Any]:
+        self.require_yes(arguments)
         configuration = self.resolve(arguments)
+        return self.install_configuration(configuration)
+
+    def install_configuration(self, configuration: InstallConfiguration, *, environment_document: dict[str, Any] | None = None, operation: str = "install", previous_journal: str | None = None) -> dict[str, Any]:
+        if environment_document is not None:
+            validate_environment(environment_document)
+            validate_environment_identity(environment_document, configuration)
         if self.effective_uid != 0:
             raise InstallationError("Instalator wymaga uprawnień root")
         self.verbose = configuration.verbose
         journal_configuration = configuration.public_dict()
+        journal_configuration["operation"] = operation
+        if previous_journal is not None:
+            journal_configuration["previous_journal"] = previous_journal
         journal_configuration["unit_path"] = str(
             self.unit_root / f"{configuration.app_name}.service"
         )
-        journal = InstallJournal.create(configuration.app_name, journal_configuration)
-        try:
+        def apply(journal: InstallJournal) -> dict[str, Any]:
             self._log(f"journal: {journal.root}")
             self._preflight(configuration)
             self._log("preflight: ok")
-            uid, gid = self._prepare_account(configuration, journal)
+            self._quiesce_service(configuration, journal)
+            uid, primary_gid = self._prepare_account(configuration, journal)
+            gid = self._prepare_access_group(configuration, journal, primary_gid)
             self._log(f"account: {configuration.user_system}:{configuration.user_group}")
             self._install_payload(configuration, journal)
             self._log(f"payload: {configuration.install_dir}")
-            self._render_resources(configuration, journal)
+            self._render_resources(configuration, journal, environment_document=environment_document)
             self._log("resources: rendered")
+            installer_module = self._install_installer_module(configuration, journal)
             self._generate_configuration(configuration, journal)
             self._log("configuration class: generated")
             self._prepare_state_directories(configuration, journal, uid, gid)
@@ -170,6 +105,8 @@ class Installer:
             self._log("installed modules: recorded")
             if configuration.mode == "system" or configuration.clone_repo:
                 self._set_ownership(configuration.install_dir, uid, gid, configuration.mode)
+            else:
+                self._set_checkout_permissions(configuration, journal, uid, gid)
             self._set_ownership(configuration.config_dir, uid, gid, configuration.mode)
             self._publish_commands(configuration, journal, uid, gid)
             self._log("commands: published")
@@ -180,20 +117,20 @@ class Installer:
                 configuration, journal, owner_id=uid, group_id=gid
             )
             self._log("src/.env: ready")
+            if configuration.mode == "system":
+                self._activate_service(configuration, journal)
             outputs = self._verify(configuration)
+            self._add_invoker_to_access_group(configuration, journal, gid)
+            self._log(f"group access: {configuration.invoker.name} -> {configuration.user_system}")
+            if operation == "reinstall":
+                outputs["status"] = "reinstalled"
             outputs["installed_modules_file"] = str(module_record)
-            outputs["journal"] = str(journal.root)
-            journal.finish("success", outputs=outputs)
+            outputs["installer_module_dir"] = str(installer_module)
             return outputs
-        except Exception as exc:
-            journal.finish("failed", error=str(exc))
-            try:
-                InstallationRollback(runner=self.runner).execute(journal.root)
-            except InstallationError as rollback_error:
-                raise InstallationError(f"{exc}; {rollback_error}") from exc
-            if isinstance(exc, InstallationError):
-                raise
-            raise InstallationError(str(exc)) from exc
+        return transaction(
+            configuration, journal_configuration, apply,
+            runner=self.runner, effective_uid=self.effective_uid,
+        )
 
     def _log(self, message: str) -> None:
         if self.verbose:
@@ -202,9 +139,9 @@ class Installer:
     def resolve(self, arguments: argparse.Namespace) -> InstallConfiguration:
         defaults_path = self.package_dir / "resources" / "default_install.json"
         if not defaults_path.is_file():
-            defaults_path = self.package_dir / "install" / "default_install.json"
-        defaults = _load_defaults(defaults_path)
-        app_name = _default(defaults, "APP_NAME", "agents-system")
+            defaults_path = self.package_dir / "install" / "src" / "resources" / "default_install.json"
+        defaults = load_defaults(defaults_path)
+        app_name = default(defaults, "APP_NAME", "agents-system")
         if not SAFE_APP_NAME.fullmatch(app_name):
             raise InstallationError(f"Nieprawidłowy APP_NAME: {app_name!r}")
         self._validate_sources(arguments.mode)
@@ -242,7 +179,7 @@ class Installer:
                 raise InstallationError(
                     "Tryb dev uruchomiony bez sudo wymaga --invoker wskazującego użytkownika innego niż root"
                 )
-            invoker_name = "root"
+            invoker_name = pwd.getpwuid(os.getuid()).pw_name
         invoker = self._account(invoker_name, "INVOKER")
         if arguments.mode == "dev" and invoker.uid == 0:
             raise InstallationError("INVOKER w trybie dev musi być użytkownikiem innym niż root")
@@ -250,11 +187,11 @@ class Installer:
         clone_repo = arguments.mode == "dev" and arguments.clone_repo
         dedicated = arguments.mode == "system" or clone_repo
         if arguments.mode == "system":
-            user_system = arguments.system_user or _default(defaults, "USER_SYSTEM", "user-system")
-            user_group = arguments.system_group or _default(defaults, "USER_GROUP", "user-system")
+            user_system = arguments.system_user or default(defaults, "USER_SYSTEM", "user-system")
+            user_group = arguments.system_group or default(defaults, "USER_GROUP", "user-system")
         elif clone_repo:
-            user_system = arguments.user_system or _default(defaults, "USER_SYSTEM", "user-system")
-            user_group = arguments.user_group or _default(defaults, "USER_GROUP", "user-system")
+            user_system = arguments.user_system or default(defaults, "USER_SYSTEM", "user-system")
+            user_group = arguments.user_group or default(defaults, "USER_GROUP", "user-system")
         else:
             user_system = invoker.name
             try:
@@ -266,12 +203,12 @@ class Installer:
             raise InstallationError("USER_SYSTEM lub USER_GROUP ma nieprawidłową nazwę")
 
         if dedicated:
-            configured_user = _default(defaults, "USER_SYSTEM", "user-system")
+            configured_user = default(defaults, "USER_SYSTEM", "user-system")
             fallback_home = f"/home/{user_system}"
-            configured_home = _default(defaults, "USER_HOME", fallback_home)
+            configured_home = default(defaults, "USER_HOME", fallback_home)
             if user_system != configured_user and "USER_HOME" in defaults:
                 configured_home = fallback_home
-            user_home = _configured_path(configured_home, "USER_HOME", invoker.home)
+            user_home = configured_path(configured_home, "USER_HOME", invoker.home)
         else:
             user_home = invoker.home
 
@@ -288,12 +225,12 @@ class Installer:
 
         if arguments.mode == "system":
             if arguments.target:
-                install_dir = _configured_path(
-                    arguments.target, "TARGET", invoker.home, path_variables
+                install_dir = configured_path(
+                    arguments.target, "TARGET", invoker.home, path_variables, preserve_symlinks=True
                 )
             else:
-                install_root = _configured_path(
-                    _default(defaults, "SYSTEM_INSTALL_ROOT", "/opt"),
+                install_root = configured_path(
+                    default(defaults, "SYSTEM_INSTALL_ROOT", "/opt"),
                     "SYSTEM_INSTALL_ROOT", invoker.home, path_variables,
                 )
                 install_dir = install_root / app_name
@@ -304,11 +241,11 @@ class Installer:
             if clone_repo:
                 install_dir = user_home / app_name
             elif arguments.target:
-                install_dir = _configured_path(
-                    arguments.target, "TARGET", invoker.home, path_variables
+                install_dir = configured_path(
+                    arguments.target, "TARGET", invoker.home, path_variables, preserve_symlinks=True
                 )
             elif isinstance(defaults.get("SYSTEM_INSTALL_ROOT"), str):
-                install_dir = _configured_path(
+                install_dir = configured_path(
                     str(defaults["SYSTEM_INSTALL_ROOT"]),
                     "SYSTEM_INSTALL_ROOT", invoker.home, path_variables,
                 ) / app_name
@@ -319,28 +256,28 @@ class Installer:
             default_data = str(dev_root / "data")
             default_runtime = str(dev_root / "run")
 
-        config_value = arguments.config_root or _default(
-            defaults, "APP_CONFIG_DIR", _default(defaults, "CONFIG_ROOT", default_config)
+        config_value = arguments.config_root or default(
+            defaults, "APP_CONFIG_DIR", default(defaults, "CONFIG_ROOT", default_config)
         )
-        data_value = arguments.data_dir or _default(defaults, "APP_DATA_DIR", default_data)
-        runtime_value = arguments.runtime_dir or _default(
+        data_value = arguments.data_dir or default(defaults, "APP_DATA_DIR", default_data)
+        runtime_value = arguments.runtime_dir or default(
             defaults, "APP_RUNTIME_DIR", default_runtime
         )
-        config_dir = _configured_path(
+        config_dir = configured_path(
             config_value, "APP_CONFIG_DIR", user_home, path_variables
         )
-        data_dir = _configured_path(
+        data_dir = configured_path(
             data_value, "APP_DATA_DIR", user_home, path_variables
         )
-        runtime_dir = _configured_path(
+        runtime_dir = configured_path(
             runtime_value, "APP_RUNTIME_DIR", user_home, path_variables
         )
-        commands_dir = _configured_path(
-            arguments.commands_dir or _default(defaults, "COMMANDS_DIR", "/usr/local/bin"),
+        commands_dir = configured_path(
+            arguments.commands_dir or default(defaults, "COMMANDS_DIR", "/usr/local/bin"),
             "COMMANDS_DIR", invoker.home, path_variables,
         )
-        install_dir = install_dir.resolve(strict=False)
-        if install_dir == self.package_dir or _is_below(install_dir, self.package_dir):
+        install_dir = install_dir.absolute()
+        if install_dir == self.package_dir or is_below(install_dir, self.package_dir):
             raise InstallationError("Katalog instalacji nie może znajdować się wewnątrz pakietu źródłowego")
         return InstallConfiguration(
             mode=arguments.mode,
@@ -372,6 +309,7 @@ class Installer:
             self.package_dir / "internal_scripts" / "generate_configuration.sh",
             self.package_dir / "src",
             self.package_dir / "host_scripts",
+            self._installer_source(self.package_dir),
         ]
         if mode == "system":
             required.append(self.package_dir / "resources" / "system.template.service")
@@ -380,7 +318,7 @@ class Installer:
             raise InstallationError("Brak wymaganych źródeł instalacji: " + ", ".join(missing))
         for path in required:
             resolved = path.resolve(strict=True)
-            if not _is_below(resolved, self.package_dir):
+            if not is_below(resolved, self.package_dir):
                 raise InstallationError(f"Źródło wychodzi poza katalog aplikacji: {path}")
 
     def _account(self, name: str, label: str) -> Account:
@@ -390,7 +328,7 @@ class Installer:
             item = pwd.getpwnam(name)
         except KeyError as exc:
             raise InstallationError(f"Nie istnieje użytkownik {label}={name}") from exc
-        home = _absolute(item.pw_dir, f"{label}_HOME")
+        home = absolute(item.pw_dir, f"{label}_HOME")
         return Account(item.pw_name, item.pw_uid, item.pw_gid, home, item.pw_shell)
 
     def _marker(self, root: Path) -> dict[str, Any] | None:
@@ -487,7 +425,7 @@ class Installer:
                     raise InstallationError(f"Odmowa nadpisania obcej komendy: {path}")
                 target = path.resolve(strict=False)
                 owned_root = configuration.install_dir.resolve(strict=False)
-                if not _is_below(target, owned_root):
+                if not is_below(target, owned_root):
                     raise InstallationError(f"Odmowa nadpisania obcego dowiązania: {path}")
             elif path == unit:
                 if path.is_symlink():
@@ -502,14 +440,17 @@ class Installer:
                 if f"WorkingDirectory={configuration.install_dir}" not in content:
                     raise InstallationError(f"Usługa nie należy do tej instalacji: {path}")
 
-    def _run(self, arguments: list[str], *, allowed: set[int] | None = None) -> subprocess.CompletedProcess[str]:
+    def _run(self, arguments: list[str], *, allowed: set[int] | None = None, environment: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
         if self.verbose:
             print("+ " + " ".join(arguments), file=sys.stderr)
-        completed = self.runner(arguments, check=False, capture_output=True, text=True)
-        if completed.returncode not in (allowed or {0}):
-            message = completed.stderr.strip() or completed.stdout.strip()
-            raise InstallationError(message or f"Polecenie nie powiodło się: {arguments[0]}")
-        return completed
+        return run_command(self.runner, arguments, allowed=allowed, environment=environment)
+
+    def _quiesce_service(self, configuration: InstallConfiguration, journal: InstallJournal) -> None:
+        unit = self.unit_root / f"{configuration.app_name}.service"
+        if configuration.mode == "system" and unit.exists():
+            name = unit.name
+            journal.record("service_state", unit=name, **self._service_state(name))
+            self._run(["systemctl", "stop", name])
 
     def _prepare_account(self, configuration: InstallConfiguration, journal: InstallJournal) -> tuple[int, int]:
         if not configuration.dedicated_user:
@@ -551,28 +492,38 @@ class Installer:
             raise InstallationError("Konto dev --clone-repo musi mieć zwykłą powłokę logowania")
         if account.pw_gid != group.gr_gid:
             raise InstallationError("Główna grupa USER_SYSTEM nie odpowiada USER_GROUP")
-        if configuration.mode == "dev":
-            memberships = set(os.getgrouplist(configuration.invoker.name, configuration.invoker.gid))
-            if group.gr_gid not in memberships:
-                self._run(["usermod", "-a", "-G", configuration.user_group, configuration.invoker.name])
-                journal.record(
-                    "added_membership", user=configuration.invoker.name, group=configuration.user_group
-                )
         return account.pw_uid, group.gr_gid
 
-    def _replace(self, path: Path, journal: InstallJournal, writer: Callable[[], None]) -> None:
-        exists = path.exists() or path.is_symlink()
-        if exists:
-            backup, metadata = journal.backup(path)
-            index = journal.prepare(
-                "replaced_path", path=str(path), backup=backup, metadata=metadata
-            )
-            _remove(path)
-        else:
-            index = journal.prepare("created_path", path=str(path))
-        path.parent.mkdir(parents=True, exist_ok=True)
-        writer()
+    def _prepare_access_group(self, configuration: InstallConfiguration, journal: InstallJournal, primary_gid: int) -> int:
+        try:
+            group = grp.getgrnam(configuration.user_system)
+        except KeyError:
+            arguments = ["groupadd"]
+            if configuration.mode == "system":
+                arguments.append("--system")
+            self._run([*arguments, configuration.user_system])
+            journal.record("created_group", name=configuration.user_system)
+            group = grp.getgrnam(configuration.user_system)
+        # USER_GROUP remains the account's primary group; USER_SYSTEM owns shared files.
+        self._add_group_membership(configuration.user_system, primary_gid, group.gr_gid,
+                                   configuration.user_system, journal)
+        return group.gr_gid
+
+    def _add_group_membership(self, username: str, primary_gid: int, group_gid: int,
+                              group_name: str, journal: InstallJournal) -> None:
+        if group_gid in os.getgrouplist(username, primary_gid):
+            return
+        index = journal.prepare("added_membership", user=username, group=group_name)
+        self._run(["usermod", "-a", "-G", group_name, username])
         journal.applied(index)
+
+    def _add_invoker_to_access_group(self, configuration: InstallConfiguration,
+                                     journal: InstallJournal, gid: int) -> None:
+        self._add_group_membership(configuration.invoker.name, configuration.invoker.gid,
+                                   gid, configuration.user_system, journal)
+
+    def _replace(self, path: Path, journal: InstallJournal, writer: Callable[[], None]) -> None:
+        replace_path(path, journal, writer)
 
     def _write_marker(self, root: Path, configuration: InstallConfiguration) -> None:
         marker = {
@@ -583,40 +534,44 @@ class Installer:
             "package_dir": str(configuration.package_dir),
             "mode": configuration.mode,
         }
-        target = root / MARKER_NAME
-        temporary = target.with_name(f".{target.name}.{secrets.token_hex(4)}.tmp")
-        try:
-            temporary.write_text(
-                json.dumps(marker, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-            )
-            temporary.chmod(0o640)
-            os.replace(temporary, target)
-        finally:
-            temporary.unlink(missing_ok=True)
+        atomic_json(root / MARKER_NAME, marker)
+
+    _atomic_copy = staticmethod(atomic_copy)
+    _atomic_link = staticmethod(atomic_link)
 
     @staticmethod
-    def _atomic_copy(source: Path, target: Path, *, mode: int | None = None) -> None:
-        temporary = target.with_name(f".{target.name}.{secrets.token_hex(4)}.tmp")
-        try:
-            shutil.copy2(source, temporary)
-            if mode is not None:
-                temporary.chmod(mode)
-            os.replace(temporary, target)
-        finally:
-            temporary.unlink(missing_ok=True)
+    def _installer_source(package_dir: Path) -> Path:
+        source = package_dir / INSTALLER_SOURCE_RELATIVE_PATH
+        return source if source.is_dir() else package_dir / INSTALLER_MODULE_RELATIVE_PATH
 
-    @staticmethod
-    def _atomic_link(source: Path, target: Path) -> None:
-        temporary = target.with_name(f".{target.name}.{secrets.token_hex(4)}.tmp")
-        try:
-            temporary.symlink_to(source)
-            os.replace(temporary, target)
-        finally:
-            temporary.unlink(missing_ok=True)
+    def _install_installer_module(self, configuration: InstallConfiguration, journal: InstallJournal) -> Path:
+        document = json.loads((configuration.config_dir / "app_env.json").read_text(encoding="utf-8"))
+        validate_environment(document)
+        validate_environment_identity(document, configuration)
+        values = {item["name"]: item["value"] for item in document["variables"]}
+        modules_dir = absolute(values["MODULES_DIR"], "MODULES_DIR", must_exist=True)
+        target = modules_dir / INSTALLER_MODULE_NAME
+        source = self._installer_source(configuration.package_dir)
+        if not source.is_dir() or source.is_symlink():
+            raise InstallationError(f"Brak zwykłego katalogu paczki instalatora: {source}")
+        if target.exists() or target.is_symlink():
+            marker = self._marker(target)
+            if target.is_symlink() or marker is None or marker.get("install_dir") != str(configuration.install_dir):
+                raise InstallationError(f"Odmowa nadpisania obcej paczki instalatora: {target}")
+        journal.state["configuration"]["installer_module_dir"] = str(target)
+        journal._write()
+        # Copy before replacement, also when rebuilding from an installed package.
+        staged = journal.root / "installer-package"
+        shutil.copytree(source, staged, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.egg-info", "build"))
+        def write_package() -> None:
+            shutil.copytree(staged, target)
+            self._write_marker(target, configuration)
+        self._replace(target, journal, write_package)
+        return target
 
     def _install_payload(self, configuration: InstallConfiguration, journal: InstallJournal) -> None:
         def write_clone() -> None:
-            shutil.copytree(configuration.package_dir, configuration.install_dir, symlinks=True)
+            copy_payload_tree(configuration.package_dir, configuration.install_dir, application_sources=configuration.package_dir / "src")
             self._write_marker(configuration.install_dir, configuration)
 
         def write_dev_link() -> None:
@@ -624,7 +579,7 @@ class Installer:
 
         def write_system() -> None:
             configuration.install_dir.mkdir(mode=0o750)
-            shutil.copytree(configuration.package_dir / "src", configuration.install_dir / "src", symlinks=True)
+            copy_payload_tree(configuration.package_dir / "src", configuration.install_dir / "src", application_sources=configuration.package_dir / "src")
             shutil.copytree(
                 configuration.package_dir / "internal_scripts",
                 configuration.install_dir / "internal_scripts",
@@ -641,6 +596,16 @@ class Installer:
                 configuration.install_dir / "host_scripts",
                 symlinks=False,
             )
+            resources = configuration.install_dir / "resources"
+            resources.mkdir(exist_ok=True)
+            for name in ("app_env.template.json", "agents-system.module.template.json", "agents-system.json", "system.template.service"):
+                source = configuration.package_dir / "resources" / name
+                if source.is_file():
+                    shutil.copy2(source, resources / name)
+            defaults = configuration.package_dir / "resources/default_install.json"
+            if not defaults.is_file():
+                defaults = configuration.package_dir / "install/src/resources/default_install.json"
+            shutil.copy2(defaults, resources / "default_install.json")
             readme = configuration.package_dir / "README.md"
             if readme.is_file():
                 shutil.copy2(readme, configuration.install_dir / "src" / "README.md")
@@ -657,7 +622,15 @@ class Installer:
             else write_dev_link,
         )
 
-    def _render_resources(self, configuration: InstallConfiguration, journal: InstallJournal) -> None:
+    def _render_resources(self, configuration: InstallConfiguration, journal: InstallJournal, *, environment_document: dict[str, Any] | None = None) -> None:
+        artifacts = [
+            configuration.install_dir / "resources" / name
+            for name in ("app_env.json", "agents-system.module.json")
+        ] + [
+            configuration.install_dir / "src" / "resources" / name
+            for name in ("app_env.json", "agents-system.module.json")
+        ]
+        artifact_mutations = [prepare_path_change(path, journal) for path in artifacts]
         if configuration.mode == "dev":
             rendered_root = configuration.install_dir / "resources"
             rendered_root.mkdir(parents=True, exist_ok=True)
@@ -679,20 +652,24 @@ class Installer:
             "--bash-source", configuration.bash_source,
             "--output", str(app_env), "--force",
         ]
-        self._run(env_arguments)
+        if environment_document is None:
+            self._run(env_arguments, environment=renderer_process_environment(configuration, self.environment))
+        else:
+            atomic_json(app_env, environment_document)
 
         try:
             environment_document = json.loads(app_env.read_text(encoding="utf-8"))
+            validate_environment(environment_document)
             environment_values = {
                 item["name"]: item["value"]
                 for item in environment_document["variables"]
             }
-            app_dir = _absolute(
+            app_dir = absolute(
                 environment_values["APP_DIR"], "APP_DIR", must_exist=True
             )
-            modules_dir = _absolute(environment_values["MODULES_DIR"], "MODULES_DIR")
+            modules_dir = absolute(environment_values["MODULES_DIR"], "MODULES_DIR")
             manifest_file = environment_values["MODULES_MANIFEST_FILE"]
-            manifest_path = _absolute(
+            manifest_path = absolute(
                 environment_values["MODULES_MANIFEST_PATH"], "MODULES_MANIFEST_PATH"
             )
         except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
@@ -731,7 +708,7 @@ class Installer:
         compatibility_resources.mkdir(parents=True, exist_ok=True)
         for source in (package_app_env, package_manifest):
             target = compatibility_resources / source.name
-            _remove(target)
+            remove(target)
             self._atomic_link(source, target)
 
         def write_config() -> None:
@@ -745,6 +722,8 @@ class Installer:
             self._write_marker(configuration.config_dir, configuration)
 
         self._replace(configuration.config_dir, journal, write_config)
+        for index in artifact_mutations:
+            journal.applied(index)
 
     def _generate_configuration(
         self, configuration: InstallConfiguration, journal: InstallJournal
@@ -784,14 +763,21 @@ class Installer:
                 metadata = path.stat()
                 if not path.is_dir() or path.is_symlink():
                     raise InstallationError(f"Katalog stanu ma nieprawidłowy typ: {path}")
-                if metadata.st_uid != uid or metadata.st_gid != gid:
+                if metadata.st_uid != uid:
                     raise InstallationError(f"Katalog stanu ma obcego właściciela: {path}")
+                index = journal.prepare("path_permissions", path=str(path), uid=metadata.st_uid,
+                                        gid=metadata.st_gid, mode=stat.S_IMODE(metadata.st_mode))
+                os.chown(path, uid, gid)
+                path.chmod(APPLICATION_DIRECTORY_MODE)
+                journal.applied(index)
                 continue
             index = journal.prepare("created_path", path=str(path))
-            path.mkdir(parents=True, mode=0o750)
+            path.mkdir(parents=True, mode=APPLICATION_DIRECTORY_MODE)
+            path.chmod(APPLICATION_DIRECTORY_MODE)
             self._write_marker(path, configuration)
             os.chown(path, uid, gid)
             os.chown(path / MARKER_NAME, uid, gid)
+            (path / MARKER_NAME).chmod(APPLICATION_FILE_MODE)
             journal.applied(index)
 
     def _install_module_record(
@@ -808,7 +794,7 @@ class Installer:
             for component in (path, *path.parents):
                 if component.is_symlink():
                     raise InstallationError(f"Katalog modułów zawiera dowiązanie: {component}")
-            directory = _absolute(raw_path, "INSTALLED_MODULES_DIR")
+            directory = absolute(raw_path, "INSTALLED_MODULES_DIR")
             record = json.loads(source.read_text(encoding="utf-8"))
             if not isinstance(record, dict) or not isinstance(record.get("modules"), list):
                 raise ValueError("agents-system.json wymaga tablicy modules")
@@ -829,17 +815,19 @@ class Installer:
         journal.state["configuration"].update({
             "installed_modules_dir": str(directory),
             "installed_modules_file": str(target),
+            "installed_modules_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
             "installed_modules_created_parents": [str(path) for path in missing if path != directory],
         })
         journal._write()
         for path in reversed(missing):
             index = journal.prepare("created_path", path=str(path))
-            path.mkdir(mode=0o750)
+            path.mkdir(mode=APPLICATION_DIRECTORY_MODE)
+            path.chmod(APPLICATION_DIRECTORY_MODE)
             os.chown(path, uid, gid)
             journal.applied(index)
 
         def write_record() -> None:
-            self._atomic_copy(source, target, mode=0o640)
+            self._atomic_copy(source, target, mode=APPLICATION_FILE_MODE)
             os.chown(target, uid, gid)
 
         self._replace(target, journal, write_record)
@@ -895,13 +883,14 @@ class Installer:
         rendered.chmod(0o644)
         self._run(["systemd-analyze", "verify", str(rendered)])
         package_unit = configuration.install_dir / "system" / unit_name
-        package_unit.parent.mkdir(mode=0o750)
-        shutil.copy2(rendered, package_unit)
+        package_unit.parent.mkdir(mode=0o750, exist_ok=True)
+        self._replace(package_unit, journal, lambda: atomic_copy(rendered, package_unit, mode=0o640))
         account = pwd.getpwnam(configuration.user_system)
-        group = grp.getgrnam(configuration.user_group)
+        group = grp.getgrnam(configuration.user_system)
+        package_unit.parent.chmod(APPLICATION_DIRECTORY_MODE)
         os.chown(package_unit.parent, account.pw_uid, group.gr_gid)
         os.chown(package_unit, account.pw_uid, group.gr_gid)
-        package_unit.chmod(0o640)
+        package_unit.chmod(APPLICATION_FILE_MODE)
         unit_path = self.unit_root / unit_name
         self._replace(
             unit_path,
@@ -910,8 +899,12 @@ class Installer:
         )
         self._run(["systemctl", "daemon-reload"])
         journal.record("daemon_reload")
+
+    def _activate_service(self, configuration: InstallConfiguration, journal: InstallJournal) -> None:
+        unit_name = f"{configuration.app_name}.service"
+        index = journal.prepare("service_enabled", unit=unit_name)
         self._run(["systemctl", "enable", "--now", unit_name])
-        journal.record("service_enabled", unit=unit_name)
+        journal.applied(index)
 
     def _write_absolute_config_pointer(
         self,
@@ -938,7 +931,7 @@ class Installer:
             character in configured_path for character in ("\x00", "\r", "\n")
         ):
             raise InstallationError("APP_ENV_PATH nie może zostać zapisany w src/.env")
-        resolved_configured_path = _absolute(
+        resolved_configured_path = absolute(
             configured_path, "APP_ENV_PATH"
         )
         if resolved_configured_path != app_env_path:
@@ -953,22 +946,23 @@ class Installer:
         content = f"ABSOLUTE_CONFIG_PATH={configured_path}\n"
 
         def write_env() -> None:
-            temporary = target.with_name(
-                f".{target.name}.{secrets.token_hex(4)}.tmp"
-            )
-            try:
-                with temporary.open("x", encoding="utf-8") as stream:
-                    stream.write(content)
-                    stream.flush()
-                    os.fsync(stream.fileno())
-                temporary.chmod(0o640)
-                os.chown(temporary, owner_id, group_id)
-                os.replace(temporary, target)
-            finally:
-                temporary.unlink(missing_ok=True)
+            atomic_text(target, content, mode=APPLICATION_FILE_MODE, owner=(owner_id, group_id))
 
         self._replace(target, journal, write_env)
         return target
+
+    def _set_checkout_permissions(self, configuration: InstallConfiguration,
+                                  journal: InstallJournal, uid: int, gid: int) -> None:
+        root = configuration.package_dir
+        tree = []
+        for path in [root, *root.rglob("*")]:
+            metadata = path.lstat()
+            tree.append({"path": "." if path == root else str(path.relative_to(root)),
+                         "uid": metadata.st_uid, "gid": metadata.st_gid,
+                         "mode": stat.S_IMODE(metadata.st_mode)})
+        index = journal.prepare("checkout_permissions", path=str(root), tree=tree)
+        self._set_ownership(root, uid, gid, configuration.mode)
+        journal.applied(index)
 
     def _set_ownership(self, root: Path, uid: int, gid: int, mode: str) -> None:
         if not root.exists():
@@ -977,15 +971,14 @@ class Installer:
             if path.is_symlink():
                 os.lchown(path, uid, gid)
                 continue
-            os.chown(path, uid, gid)
             current = path.stat().st_mode
-            if mode == "system":
-                if path.is_dir():
-                    os.chmod(path, 0o750)
-                elif current & stat.S_IXUSR:
-                    os.chmod(path, 0o750)
-                else:
-                    os.chmod(path, 0o640)
+            os.chown(path, uid, gid)
+            if path.is_dir():
+                path.chmod(APPLICATION_DIRECTORY_MODE)
+            elif current & stat.S_IXUSR:
+                path.chmod(APPLICATION_EXECUTABLE_MODE)
+            else:
+                path.chmod(APPLICATION_FILE_MODE)
 
     def _verify(self, configuration: InstallConfiguration) -> dict[str, Any]:
         if configuration.mode == "dev" and not configuration.clone_repo:
@@ -1000,6 +993,7 @@ class Installer:
         app_env_path = resources / "app_env.json"
         try:
             app_env_document = json.loads(app_env_path.read_text(encoding="utf-8"))
+            validate_environment(app_env_document)
             environment_values = {
                 item["name"]: item["value"]
                 for item in app_env_document["variables"]
@@ -1018,6 +1012,17 @@ class Installer:
             modules_document = json.loads(manifest_path.read_text(encoding="utf-8"))
             if modules_document.get("kind") != "agents-system-modules-manifest":
                 raise ValueError("nieprawidłowe kind manifestu modułów")
+            for child in modules_document["children"]:
+                module_manifest = Path(child["manifest_path"])
+                module_root = Path(child["absolute_module_path"]).resolve()
+                if not module_manifest.is_absolute() or ".." in module_manifest.parts:
+                    raise ValueError("nieprawidłowa ścieżka manifestu modułu")
+                module_manifest.resolve().relative_to(module_root)
+                detail = json.loads(module_manifest.read_text(encoding="utf-8"))
+                if (detail.get("kind") != "module-manifest"
+                        or detail.get("schema_version") != 1
+                        or detail.get("module_name") != child["module_name"]):
+                    raise ValueError("nieprawidłowy manifest modułu")
         except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
             raise InstallationError(f"Nieprawidłowe zasoby w {resources}: {exc}") from exc
         env_path = configuration.install_dir / "src" / ".env"
@@ -1033,6 +1038,12 @@ class Installer:
                 f"{env_path} musi zawierać wyłącznie ABSOLUTE_CONFIG_PATH"
             )
 
+        installer_module = Path(environment_values["MODULES_DIR"]) / INSTALLER_MODULE_NAME
+        if not (installer_module / "__main__.py").is_file():
+            raise InstallationError(f"Brak zainstalowanej paczki instalatora: {installer_module}")
+        for filename in HELP_MANIFEST_FILES.values():
+            if not (installer_module / "resources" / filename).is_file():
+                raise InstallationError(f"Brak pomocy instalatora: {filename}")
         commands: list[str] = []
         for name, source in self._command_sources(configuration, installed=True):
             target = configuration.commands_dir / name

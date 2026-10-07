@@ -4,7 +4,7 @@ from __future__ import annotations
 from types import MethodType
 
 from .abstract import (
-    AbstractSocketConfiguration, AbstractUnixSocketClient,
+     AbstractUnixSocketClient,
     AbstractMessageCodec, AbstractUnixSocketTransport,
 )
 from .client import UnixSocketClient
@@ -12,6 +12,7 @@ from .codec import MessageCodec
 from .transport import UnixSocketTransport
 from .socket_client import SocketClient
 from .exceptions import ClientNotConfiguredException
+from .models.configuration import SocketConfiguration
 
 
 class _CreateMethod:
@@ -42,10 +43,10 @@ class SocketClientBuilder:
         return cls(client, codec, transport)
 
     @_CreateMethod
-    def create(self, configuration: AbstractSocketConfiguration) -> SocketClientBuilder:
+    def create(self, configuration: SocketConfiguration) -> SocketClientBuilder:
         """Build from application settings on this builder, or a fresh default one."""
-        if not isinstance(configuration, AbstractSocketConfiguration):
-            raise TypeError("configuration must implement AbstractSocketConfiguration")
+        if not isinstance(configuration, SocketConfiguration):
+            raise TypeError("configuration must implement SocketConfiguration")
         if self._socket_client is not None and (self._socket_client.is_connected or self._socket_client.is_transport_connected):
             raise RuntimeError("Close the client before replacing its configuration")
         codec = self._codec_factory()

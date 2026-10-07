@@ -4,4 +4,5 @@ from enum import Enum
 
 class ManifestKind(str, Enum):
     AGENTS_SYSTEM_MODULES = "agents-system-modules-manifest"
-    # Add future manifest kinds here.
+    MODULE = "module-manifest"
+    ENVIRONMENT = "agents-system-environment"

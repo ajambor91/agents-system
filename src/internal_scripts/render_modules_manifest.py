@@ -14,6 +14,7 @@ from typing import Any, Iterator, Sequence
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from manifests import ManifestsApp
 from internal_scripts.common import (  # noqa: E402
     SAFE_IDENTIFIER,
     SHELL_REFERENCE,
@@ -32,9 +33,7 @@ REQUIRED_CHILD_FIELDS = {
     "is_menu_option",
     "is_runtime",
     "runtime",
-    "menu_name",
-    "description",
-    "commands",
+    "manifest_path",
 }
 SECTION_NAME = re.compile(r"^[a-z][a-z0-9_-]*$")
 
@@ -145,7 +144,9 @@ def render(
             raise RenderError(f"{module_name}: niebezpieczna ścieżka modułu")
         resolved_path = (modules / relative).resolve(strict=False)
         if not resolved_path.is_dir() or not is_below(resolved_path, modules):
-            raise RenderError(f"{module_name}: moduł nie istnieje w MODULES_DIR")
+            print(resolved_path)
+
+            raise RenderError(f"{module_name}: moduł nie istnieje w MODULES_DIR - ${resolved_path}")
         normalized = str(resolved_path)
         if normalized in module_paths:
             raise RenderError(f"Powtórzona ścieżka modułu: {normalized}")
@@ -160,9 +161,27 @@ def render(
             raise RenderError(f"{module_name}: runtime musi być tablicą unikalnych identyfikatorów")
         runtime_references.extend((module_name, item) for item in runtimes)
 
-        if not isinstance(child["description"], str) or not child["description"].strip():
+        manifest_template = child["manifest_path"]
+        expected_prefix = template_path + "/"
+        if not isinstance(manifest_template, str) or not manifest_template.startswith(expected_prefix):
+            raise RenderError(f"{module_name}: manifest_path musi być wewnątrz modułu")
+        manifest_relative = Path(manifest_template[len(prefix):])
+        if ".." in manifest_relative.parts:
+            raise RenderError(f"{module_name}: niebezpieczna ścieżka manifestu")
+        manifest_file = (modules / manifest_relative).resolve(strict=False)
+        if not is_below(manifest_file, resolved_path):
+            raise RenderError(f"{module_name}: manifest poza katalogiem modułu")
+        child["manifest_path"] = str(manifest_file)
+        try:
+            detail = ManifestsApp().load_module_manifest(manifest_file, module_name)
+        except (OSError, ValueError) as exc:
+            raise RenderError(str(exc)) from exc
+        if any(field in child for field in ("commands", "description", "usage", "menu_name")):
+            raise RenderError(f"{module_name}: pomoc musi być w manifeście modułu")
+
+        if not isinstance(detail["description"], str) or not detail["description"].strip():
             raise RenderError(f"{module_name}: description musi być niepustym tekstem")
-        commands = child["commands"]
+        commands = detail["commands"]
         if not isinstance(commands, list):
             raise RenderError(f"{module_name}: commands musi być tablicą")
         command_names: set[str] = set()
@@ -174,7 +193,7 @@ def render(
 
         if child["is_menu_option"]:
             section = child["section_name"]
-            menu_name = child["menu_name"]
+            menu_name = detail["menu_name"]
             if (
                 not isinstance(section, str)
                 or not SECTION_NAME.fullmatch(section)
@@ -183,8 +202,10 @@ def render(
                 raise RenderError(f"{module_name}: nieprawidłowe lub powtórzone section_name")
             if not isinstance(menu_name, str) or not menu_name.strip():
                 raise RenderError(f"{module_name}: menu_name musi być niepustym tekstem")
+            if not detail["usage"].strip():
+                raise RenderError(f"{module_name}: usage musi być niepustym tekstem")
             menu_sections.add(section)
-        elif child["section_name"] is not None or child["menu_name"] is not None:
+        elif child["section_name"] is not None or detail["menu_name"] is not None:
             raise RenderError(f"{module_name}: moduł spoza menu musi mieć null w polach menu")
 
         module_names.add(module_name)

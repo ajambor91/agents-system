@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "agents-system-installer"
+version = "0.1.0"
+description = "Installer for Agents System"
+requires-python = ">=3.11"
+dependencies = ["agents-system-manifests==0.1.0"]
+
+
+[project.scripts]
+install = "install.__main__:install"
+
+
+[tool.setuptools]
+package-dir = { install = "." }
+
+packages = [
+    "install",
+    "install.parent",
+    "install.context",
+    "install.consts",
+    "install.enums",
+    "install.errors",
+    "install.models",
+    "install.shared",
+]
+
+include-package-data = false
+
+[tool.setuptools.package-data]
+install = ["resources/*.json"]
+
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]

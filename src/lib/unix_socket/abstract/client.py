@@ -7,8 +7,7 @@ from typing import Generic, TypeVar
 
 from .codec import AbstractMessageCodec
 from .transport import AbstractUnixSocketTransport
-from ..abstract.models import  AbstractSocketConfiguration
-from ..models import Request, Response
+from ..models import Request, Response, SocketConfiguration
 RequestT = TypeVar("RequestT", bound=Request)
 ResponseT = TypeVar("ResponseT", bound=Response)
 
@@ -22,13 +21,17 @@ class AbstractUnixSocketClient(ABC, Generic[RequestT, ResponseT]):
     """
 
     @abstractmethod
-    def __init__(self, configuration: AbstractSocketConfiguration, codec: AbstractMessageCodec, transport: AbstractUnixSocketTransport) -> None:
+    def __init__(self, configuration: SocketConfiguration, codec: AbstractMessageCodec, transport: AbstractUnixSocketTransport) -> None:
         """Bind application configuration, codec and transport."""
 
     @property
     @abstractmethod
     def is_connected(self) -> bool:
         """Return whether the underlying transport currently has a connection."""
+
+    @abstractmethod
+    def socket_exists(self) -> bool:
+        """Check the configured socket path without opening a connection."""
 
     @abstractmethod
     def connect(self) -> None:
@@ -41,4 +44,3 @@ class AbstractUnixSocketClient(ABC, Generic[RequestT, ResponseT]):
     @abstractmethod
     def close(self) -> None:
         """Close the transport safely; repeated calls should be harmless."""
-

@@ -53,7 +53,7 @@ class InternalRendererTests(unittest.TestCase):
                     for item in rendered["children"]
                     if item["is_menu_option"]
                 },
-                {"agents-manager", "agents-system"},
+                {"agents_manager", "agents_system"},
             )
             self.assertEqual(
                 {
@@ -61,18 +61,22 @@ class InternalRendererTests(unittest.TestCase):
                     for item in rendered["children"]
                     if item["is_runtime"]
                 },
-                {"runtime", "agents-data-runtime"},
+                {"runtime", "agents_data_runtime"},
             )
             for item in rendered["children"]:
                 self.assertEqual(
                     Path(item["absolute_module_path"]),
-                    ROOT / "src" / ("_runtime" if item["module_name"] == "runtime" else item["module_name"]),
+                    Path(next(child for child in read_json(template)["children"]
+                              if child["module_name"] == item["module_name"])["absolute_module_path"].replace("${MODULES_DIR}", str(ROOT / "src"))),
                 )
             self.assertNotIn("${", json.dumps(rendered))
-            source_system = next(item for item in read_json(template)["children"] if item["module_name"] == "agents-system")
-            rendered_system = next(item for item in rendered["children"] if item["module_name"] == "agents-system")
-            self.assertEqual(rendered_system["commands"], source_system["commands"])
-            self.assertEqual(rendered_system["commands"][0]["method"], "modules")
+            source_system = next(item for item in read_json(template)["children"] if item["module_name"] == "agents_system")
+            rendered_system = next(item for item in rendered["children"] if item["module_name"] == "agents_system")
+            self.assertNotIn("commands", rendered_system)
+            detail = read_json(Path(rendered_system["manifest_path"]))
+            source_detail = read_json(Path(source_system["manifest_path"].replace("${MODULES_DIR}", str(ROOT / "src"))))
+            self.assertEqual(detail["commands"], source_detail["commands"])
+            self.assertEqual(detail["commands"][0]["method"], "modules")
             with self.assertRaisesRegex(RenderError, "--force"):
                 render_modules(
                     package_dir=ROOT,
@@ -155,7 +159,8 @@ class InternalRendererTests(unittest.TestCase):
             (package / "resources").mkdir(parents=True)
             (package / "internal_scripts").mkdir()
             (package / "install").mkdir()
-            shutil.copy2(ROOT / "install" / "default_install.json", package / "install")
+            (package / "install/src/resources").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / "install/src/resources/default_install.json", package / "install/src/resources")
             shutil.copy2(ROOT / "internal_scripts" / "render-app-env.json", package / "internal_scripts")
             custom = json.loads(json.dumps(source))
             next(

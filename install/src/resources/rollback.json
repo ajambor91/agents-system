@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "command": "./install/rollback.sh",
+  "mode": "write",
+  "steps_scope": "implemented_behavior_contract",
+  "description": "Odwraca wyłącznie mutacje zapisane w zweryfikowanym dzienniku.",
+  "host_script": "${APPLICATION_ROOT}/install/rollback.sh",
+  "target": {
+    "application": "install/src/__main__.py",
+    "command_class": "InstallationRollback",
+    "module": "install/src/rollback.py",
+    "method": "execute",
+    "runtime": false
+  },
+  "flags": [
+    {
+      "name": "help",
+      "short": "-h",
+      "long": "--help",
+      "required": false,
+      "takes_value": false,
+      "description": "Wyświetla pomoc z manifestu JSON; nie wykonuje operacji."
+    },
+    {
+      "name": "yes",
+      "short": null,
+      "long": "--yes",
+      "required": true,
+      "takes_value": false,
+      "description": "Potwierdza wykonanie operacji. Bez tej flagi komenda nie wykonuje zmian."
+    },
+    {
+      "name": "journal",
+      "short": null,
+      "long": "--journal",
+      "required": true,
+      "takes_value": true,
+      "description": "Absolutna ścieżka dziennika ostatniej udanej instalacji lub operacji lifecycle."
+    }
+  ],
+  "execution": {
+    "requires_sudo": true,
+    "requires_confirmation": true,
+    "interactive": false,
+    "supports_dry_run": false,
+    "idempotent": true,
+    "network": false,
+    "timeout_seconds": null,
+    "timeout_policy": "caller-managed"
+  },
+  "failure_policy": "Validate provenance and owned paths before mutation. Persist backups and intent before replacement; attempt journal rollback on failure.",
+  "kind": "installer-help",
+  "operation": "rollback",
+  "usage": "./install/rollback.sh --yes --journal PATH",
+  "executable": "install/rollback.sh",
+  "python_target": "install/src/__main__.py",
+  "flag_names": [
+    "-h",
+    "--help",
+    "--yes",
+    "--journal"
+  ]
+}

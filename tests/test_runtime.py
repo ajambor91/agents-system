@@ -42,18 +42,18 @@ class RuntimeTests(unittest.TestCase):
         loader = ClassLoader(manifest)
         self.assertEqual(
             set(loader.getClasses()),
-            {"app_api", "agents-system", "agents-manager"},
+            {"agents_system_cli", "agents_system", "agents_manager"},
         )
 
         instances = ClassBuilder(loader, configuration).build_class_tree()
         self.assertEqual(set(instances), set(loader.getClasses()))
-        self.assertIs(instances["app_api"].instance_object.configuration, configuration)
+        self.assertIs(instances["agents_system_cli"].instance_object.configuration, configuration)
         self.assertIs(
-            instances["agents-system"].instance_object.configuration,
+            instances["agents_system"].instance_object.configuration,
             configuration,
         )
         self.assertIs(
-            instances["agents-manager"].instance_object._configuration,
+            instances["agents_manager"].instance_object._configuration,
             configuration,
         )
 

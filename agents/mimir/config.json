@@ -21,7 +21,7 @@
             "flags": [
                 {"flag": "--agent", "value": "mimir"},
                 {"flag": "--topic", "value": "mimir"},
-                {"flag": "--wakeup-socket", "value": "/run/agents-manager/control.sock"},
+                {"flag": "--wakeup-socket", "value": "/run/agents_manager/control.sock"},
                 {"flag": "--verbose"}
             ]
         }

@@ -1,114 +1,131 @@
-import logging
 import json
+import logging
 import socketserver
-from .exceptions.runtime_protocol_error import RuntimeProtocolError
 
+from .exceptions import RuntimeProtocolError
+from .models import Request, Response
 
 LOGGER = logging.getLogger(__name__)
 
+
 class RuntimeRequestHandler(socketserver.StreamRequestHandler):
-    """One newline-delimited JSON request per connection."""
-    MAX_MESSAGE_BYTES: int = 1024 * 1024
+    MAX_MESSAGE_BYTES = 1024 * 1024
+
     def handle(self) -> None:
         self._initialize()
         self.connection.settimeout(15)
 
-        try:
+        while True:
+            try:
+                request = self._read_request()
 
-            raw = self.rfile.readline(
-                self.MAX_MESSAGE_BYTES + 1
-            )
+                if request is None:
+                    return
 
-            if len(raw) > self.MAX_MESSAGE_BYTES:
-                raise RuntimeProtocolError(
-                    "REQUEST_TOO_LARGE",
-                    "Request exceeds 1 MiB",
+                response = self._process(request)
+
+            except RuntimeProtocolError as exc:
+                response = Response(
+                    request_id=None,
+                    successful=False,
+                    result=None,
+                    error={
+                        "code": exc.code,
+                        "message": (
+                            exc.details
+                            if exc.details
+                            else str(exc)
+                        ),
+                    },
                 )
 
-            if not raw or not raw.endswith(b"\n"):
-                raise RuntimeProtocolError(
-                    "INVALID_REQUEST",
-                    "Expected newline-terminated JSON",
+            except (TimeoutError, OSError):
+                return
+
+            except Exception as exc:
+                LOGGER.exception(
+                    "Unhandled runtime request failure"
+                )
+
+                response = Response(
+                    request_id=None,
+                    successful=False,
+                    result=None,
+                    error={
+                        "code": "INTERNAL_ERROR",
+                        "message": str(exc),
+                    },
                 )
 
             try:
-                request = json.loads(raw)
+                self._send_response(response)
 
-            except (ValueError, UnicodeError) as exc:
-                raise RuntimeProtocolError(
-                    "INVALID_JSON",
-                    "Invalid JSON request",
-                ) from exc
-
-            if not isinstance(request, dict):
-                raise RuntimeProtocolError(
-                    "INVALID_REQUEST",
-                    "JSON request must be an object",
+            except OSError:
+                LOGGER.exception(
+                    "Failed to send runtime response"
                 )
+                return
 
-            response = {
-                "ok": True,
-                "result": self.server.runtime.dispatch(
-                    request
-                ),
-            }
+    def _read_request(self) -> Request | None:
+        raw = self.rfile.readline(
+            self.MAX_MESSAGE_BYTES + 1
+        )
 
-        except RuntimeProtocolError as exc:
+        if not raw:
+            return None
 
-            response = {
-                "ok": False,
-                "error": {
-                    "code": exc.code,
-                    "message": str(exc),
-                },
-            }
-
-            if exc.details is not None:
-                response["error"]["details"] = exc.details
-
-        except (TimeoutError, OSError) as exc:
-
-            response = {
-                "ok": False,
-                "error": {
-                    "code": "TIMEOUT",
-                    "message": str(exc),
-                },
-            }
-
-        except Exception:
-
-            LOGGER.exception(
-                "Unhandled runtime request failure"
+        if len(raw) > self.MAX_MESSAGE_BYTES:
+            raise RuntimeProtocolError(
+                "REQUEST_TOO_LARGE",
+                "Request exceeds maximum size",
             )
 
-            response = {
-                "ok": False,
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Internal runtime error",
-                },
-            }
+        if not raw.endswith(b"\n"):
+            raise RuntimeProtocolError(
+                "INVALID_REQUEST",
+                "Expected newline-terminated JSON",
+            )
 
         try:
+            body = json.loads(raw)
 
-            serialized = json.dumps(
-                response,
-                ensure_ascii=False,
-                allow_nan=False,
+        except (ValueError, UnicodeError) as exc:
+            raise RuntimeProtocolError(
+                "INVALID_JSON",
+                "Invalid JSON request",
+            ) from exc
+
+        if not isinstance(body, dict):
+            raise RuntimeProtocolError(
+                "INVALID_REQUEST",
+                "JSON request must be an object",
             )
 
-            self.wfile.write(
-                (serialized + "\n").encode("utf-8")
-            )
+        return Request(body)
 
-        except (OSError, ValueError, TypeError):
+    def _process(self, request: Request) -> Response:
+        result = self.server.runtime.dispatch(request)
 
-            LOGGER.exception(
-                "Failed to send runtime response"
-            )
+        return Response(
+            request_id=request.request_id,
+            successful=True,
+            result=result,
+        )
+
+    def _send_response(self, response: Response) -> None:
+        serialized = json.dumps(
+            response.to_dict(),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+
+        self.wfile.write(
+            (serialized + "\n").encode("utf-8")
+        )
+
+        self.wfile.flush()
+
     def _initialize(self) -> None:
-        """
-        Initialize the request handler.
-        """
-        self.MAX_MESSAGE_BYTES = self.server.MAX_MESSAGE_BYTES
+        self.MAX_MESSAGE_BYTES = (
+            self.server.MAX_MESSAGE_BYTES
+        )

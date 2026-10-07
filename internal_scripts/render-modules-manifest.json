@@ -67,7 +67,8 @@
       "${APP_DIR}",
       "${MODULES_DIR}",
       "${MODULES_MANIFEST_PATH}"
-    ]
+    ],
+    "module_manifests": "Explicit children[].manifest_path points to each module resources/*.module.json."
   },
   "destination": {
     "rendered_file_name": "agents-system.module.json",
@@ -97,9 +98,10 @@
   "render_rules": [
     "Replace top-level ${APP_DIR}, ${MODULES_DIR} and ${MODULES_MANIFEST_PATH} placeholders.",
     "Resolve each explicitly declared children[].absolute_module_path below MODULES_DIR; the directory need not match module_name (runtime uses _runtime). Reject absolute suffixes and parent traversal.",
-    "Preserve menu commands including method, named flags, aliases, exclusive_groups and module runtime assignments.",
+    "Preserve only module references and runtime assignments in children; validate commands, flags, usage and descriptions from each external module-manifest without embedding help.",
     "Reject duplicate modules, paths, menu sections and unknown runtime references.",
-    "Reject every unresolved ${NAME} placeholder."
+    "Reject every unresolved ${NAME} placeholder.",
+    "Resolve children[].manifest_path inside the declared module directory and reject missing, malformed or mismatched module manifests."
   ],
   "steps": [
     {

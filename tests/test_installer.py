@@ -32,7 +32,7 @@ class InstallerTests(unittest.TestCase):
         self.group = grp.getgrgid(self.account.pw_gid)
 
     def arguments(self, *extra: str) -> argparse.Namespace:
-        return install_parser().parse_args(["--mode", "dev", "--invoker", self.account.pw_name, *extra])
+        return install_parser().parse_args(["--yes", "--mode", "dev", "--invoker", self.account.pw_name, *extra])
 
     def test_mode_defaults_to_system_and_user_system_requires_value(self) -> None:
         self.assertEqual(install_parser().parse_args([]).mode, "system")
@@ -78,7 +78,8 @@ class InstallerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             package = Path(temporary) / "package"
             (package / "install").mkdir(parents=True)
-            shutil.copy2(ROOT / "install" / "default_install.json", package / "install")
+            (package / "install/src/resources").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / "install/src/resources/default_install.json", package / "install/src/resources")
             installer = Installer(package, environment={}, effective_uid=0)
             with patch.object(installer, "_validate_sources"):
                 configuration = installer.resolve(self.arguments())
@@ -151,16 +152,13 @@ class InstallerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             target = Path(temporary) / "installed"
             (target / "resources").mkdir(parents=True)
-            for module_name in (
-                "agents-manager",
-                "agents-data",
-                "agents-data-backend",
-                "agents-system",
-                "app_api",
-                "agents-data-runtime",
-                "_runtime",
-            ):
-                (target / "src" / module_name).mkdir(parents=True)
+            template = json.loads((ROOT / "resources/agents-system.module.template.json").read_text())
+            for child in template["children"]:
+                relative = Path(child["absolute_module_path"].removeprefix("${MODULES_DIR}/"))
+                resources = target / "src" / relative / "resources"
+                resources.mkdir(parents=True)
+                source = ROOT / "src" / relative / "resources" / f"{child['module_name']}.module.json"
+                shutil.copy2(source, resources)
             configuration = replace(
                 configuration,
                 install_dir=target,
@@ -277,7 +275,7 @@ class InstallerTests(unittest.TestCase):
                 expected.read_text(encoding="utf-8"),
                 f"ABSOLUTE_CONFIG_PATH={app_env_path}\n",
             )
-            self.assertEqual(expected.stat().st_mode & 0o777, 0o640)
+            self.assertEqual(expected.stat().st_mode & 0o777, 0o660)
             journal.applied.assert_called_once_with(0)
 
             rollback_journal = SimpleNamespace(
@@ -311,19 +309,12 @@ class InstallerTests(unittest.TestCase):
             execute.index("outputs = self._verify("),
         )
 
-    def test_install_api_matches_contract_flags(self) -> None:
-        contract = json.loads((ROOT / "install" / "install.json").read_text(encoding="utf-8"))
-        api = json.loads((ROOT / "install" / "install.api.json").read_text(encoding="utf-8"))
-        expected = [(item["short"], item["long"]) for item in contract["flags"]]
-        actual = [(item["short"], item["long"]) for item in api["flags"]]
-        self.assertEqual(actual, expected)
-        expected_names = [
-            flag
-            for item in api["flags"]
-            for flag in (item.get("short"), item.get("long"), *item.get("aliases", []))
-            if flag
-        ]
-        self.assertEqual(api["flag_names"], expected_names)
+    def test_install_manifest_matches_parser_flags(self) -> None:
+        contract = json.loads((ROOT / "install/src/resources/installer.json").read_text(encoding="utf-8"))
+        expected_names = [option for action in install_parser()._actions for option in action.option_strings]
+        declared = [option for flag in contract["flags"] for option in (flag.get("short"), flag.get("long"), *flag.get("aliases", [])) if option]
+        self.assertEqual(declared, expected_names)
+        self.assertEqual(contract["flag_names"], expected_names)
         step_ids = [item["id"] for item in contract["steps"]]
         self.assertLess(
             step_ids.index("render-resources"),
@@ -383,16 +374,16 @@ class InstallerTests(unittest.TestCase):
             self.assertNotIn("AGENTS_REPOSITORY_STATE_HOME", template)
 
     def test_wrappers_expose_help_and_errors_have_no_traceback(self) -> None:
-        for wrapper in ("install.sh", "rollback.sh"):
+        for wrapper in ("install.sh", "rollback.sh", "uninstall.sh", "reinstall.sh", "reconfigure.sh"):
             help_result = subprocess.run(
-                ["bash", str(ROOT / "self" / wrapper), "--help"],
+                ["bash", str(ROOT / "install" / wrapper), "--help"],
                 check=False,
                 capture_output=True,
                 text=True,
             )
             self.assertEqual(help_result.returncode, 0, help_result.stderr)
         result = subprocess.run(
-            [sys.executable, str(ROOT / "install" / "main.py"), "--mode", "dev", "--invoker", "definitely-not-existing"],
+            ["bash", str(ROOT / "install" / "install.sh"), "--mode", "dev", "--invoker", "definitely-not-existing"],
             check=False,
             capture_output=True,
             text=True,

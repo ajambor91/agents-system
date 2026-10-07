@@ -51,7 +51,7 @@ class InstalledModuleRecordTests(unittest.TestCase):
         target = self.install()
         self.assertEqual(target, self.directory / "agents-system.json")
         self.assertEqual(target.read_bytes(), (ROOT / "resources/agents-system.json").read_bytes())
-        self.assertEqual(target.stat().st_mode & 0o777, 0o640)
+        self.assertEqual(target.stat().st_mode & 0o777, 0o660)
         self.assertEqual(target.stat().st_uid, os.getuid())
         self.assertFalse(self.configuration.data_dir.exists())
         self.rollback()

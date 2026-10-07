@@ -206,7 +206,7 @@ def render(
     installation = require_absolute_directory(str(install_dir), "INSTALL_DIR")
     defaults_path = package / "resources" / "default_install.json"
     if not defaults_path.is_file():
-        defaults_path = package / "install" / "default_install.json"
+        defaults_path = package / "install" / "src" / "resources" / "default_install.json"
     defaults = load_name_values(defaults_path)
     template_variables = _validate_source_template(
         package / "resources" / "app_env.template.json"

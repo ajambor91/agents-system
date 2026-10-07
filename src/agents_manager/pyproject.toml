@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agents_manager"
+version = "0.1.0"
+description = "Agents Manager application services"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["agents_system_cli==0.1.0"]
+
+[tool.setuptools]
+package-dir = { agents_manager = "." }
+packages = [
+    "agents_manager",
+    "agents_manager.app",
+    "agents_manager.open_claw",
+    "agents_manager.app.services",
+]
+include-package-data = false
+
+[tool.setuptools.package-data]
+agents_manager = ["meta.json", "resources/*.json"]

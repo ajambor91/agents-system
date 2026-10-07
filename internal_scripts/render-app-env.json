@@ -119,7 +119,7 @@
   ],
   "source": {
     "template": "${APPLICATION_ROOT}/resources/app_env.template.json",
-    "defaults": "${APPLICATION_ROOT}/resources/default_install.json when present, otherwise ${APPLICATION_ROOT}/install/default_install.json",
+    "defaults": "${APPLICATION_ROOT}/resources/default_install.json when present, otherwise ${APPLICATION_ROOT}/install/src/resources/default_install.json",
     "format": "agents-system-environment variables array"
   },
   "destination": {
@@ -234,6 +234,11 @@
       "name": "APP_ENV_FILE",
       "required": true,
       "value": "app_env.json"
+    },
+    {
+      "name": "MAIN_APP_NAME",
+      "required": true,
+      "value": "agents-system"
     },
     {
       "name": "APP_ENV_PATH",

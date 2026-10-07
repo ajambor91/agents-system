@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "version": 1,
+  "kind": "module-manifest",
+  "module_name": "agents_system",
+  "menu_name": "Agents System",
+  "description": "Publiczne API Agents System: lista modułów zainstalowanych i działających w runtime.",
+  "commands": [
+    {
+      "name": "modules",
+      "method": "modules",
+      "description": "Wyświetla moduły zainstalowane albo działające w runtime.",
+      "usage": "asystem system modules (--installed | --running)",
+      "implementation_status": "implemented",
+      "flags": [
+        {
+          "name": "installed",
+          "long": "--installed",
+          "short": null,
+          "aliases": [],
+          "description": "Czyta listy modules z plików JSON w INSTALLED_MODULES_DIR.",
+          "usage": "--installed",
+          "takes_value": false,
+          "type": "boolean",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "running",
+          "long": "--running",
+          "short": null,
+          "aliases": [],
+          "description": "Odpytuje runtime o załadowane publiczne instancje modułów; wymaga działającego socketu.",
+          "usage": "--running",
+          "takes_value": false,
+          "type": "boolean",
+          "required": false,
+          "default": false
+        }
+      ],
+      "exclusive_groups": [
+        {
+          "members": [
+            "installed",
+            "running"
+          ],
+          "minimum": 1,
+          "maximum": 1
+        }
+      ]
+    }
+  ],
+  "usage": "asystem system <command> [flags]"
+}

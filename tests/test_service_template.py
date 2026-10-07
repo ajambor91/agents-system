@@ -16,10 +16,10 @@ class ServiceTemplateTests(unittest.TestCase):
         content = TEMPLATE.read_text(encoding="utf-8")
 
         exec_start = [line for line in content.splitlines() if line.startswith("ExecStart=")]
-        self.assertEqual(exec_start, ["ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/_runtime/main.py"])
-        self.assertNotIn("src/app_api/main.py", content)
-        self.assertNotIn("src/agents-manager/main.py", content)
-        self.assertNotIn("src/agents-system/main.py", content)
+        self.assertEqual(exec_start, ["ExecStart={{PYTHON_BIN}} -u {{APP_DIR}}/src/_runtime/__main__.py"])
+        self.assertNotIn("src/agents_system_cli/__main__.py", content)
+        self.assertNotIn("src/agents_manager/__main__.py", content)
+        self.assertNotIn("src/agents_system/__main__.py", content)
 
     def test_template_declares_identity_paths_and_future_apps_manifest(self) -> None:
         content = TEMPLATE.read_text(encoding="utf-8")
