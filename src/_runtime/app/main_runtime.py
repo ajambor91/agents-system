@@ -107,6 +107,7 @@ class MainRuntime:
         Expose a managed instance method to the runtime API.
         """
 
+        LOGGER.debug('Starting main_runtime.register_action method_name=%s', method_name)
         self._dispatcher.register_action(
             service_name,
             method_name,
@@ -131,6 +132,7 @@ class MainRuntime:
         with InstanceManager.
         """
 
+        LOGGER.debug('Starting main_runtime.refresh_services')
         self._dispatcher.refresh_instances()
 
     def dispatch(
@@ -151,6 +153,7 @@ class MainRuntime:
         SIGINT or stop().
         """
 
+        LOGGER.info("Starting shared runtime: socket=%s maximum_message_bytes=%s", self._socket_path, self.MAX_MESSAGE_BYTES)
         with self._lock:
 
             if self._running:
@@ -275,6 +278,8 @@ class MainRuntime:
             except FileNotFoundError:
                 pass
 
+            LOGGER.info("Shared runtime stopped: socket=%s", self._socket_path)
+
             for signum, previous in (
                 old_handlers.items()
             ):
@@ -286,6 +291,7 @@ class MainRuntime:
 
     def stop(self) -> None:
 
+        LOGGER.info("Stopping shared runtime: socket=%s", self._socket_path)
         with self._lock:
 
             server = (

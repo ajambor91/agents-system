@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+import logging
+
+
 import argparse
 import asyncio
 import contextlib
@@ -28,6 +31,12 @@ DEFAULT_SOCKET_PATH = "/tmp/comm_runtime.sock"
 DEFAULT_REDIS_URL = "redis://localhost:6380"
 DEFAULT_DATA_URL = "http://localhost:3000"
 ALLOWED_ROLES = {"receiver"}
+
+
+from lib.logging_config import configure_logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def acquire_runtime_lock(socket_path: str) -> int | None:
@@ -104,10 +113,7 @@ class CommRuntimeServer:
             self.clients.pop(writer, None)
             writer.close()
             if client.role != "anonymous" and not self._stop_event.is_set():
-                print(
-                    f"[runtime] disconnected {client.role}:{client.name}",
-                    flush=True,
-                )
+                LOGGER.info("Client disconnected: role=%s name=%s", client.role, client.name)
             if task is not None:
                 self._client_tasks.discard(task)
 
@@ -136,6 +142,7 @@ class CommRuntimeServer:
     async def _accept_delivery_ack(
         self, client: Client, writer: asyncio.StreamWriter, request: dict[str, Any]
     ) -> None:
+        LOGGER.debug('Processing delivery acknowledgement')
         if client.role != "receiver":
             await self._send_json(
                 writer, client, {"ok": False, "error": "receiver_role_required"}
@@ -176,11 +183,7 @@ class CommRuntimeServer:
         if role == "receiver":
             for topic in client.topics:
                 self._ensure_topic_consumer(topic)
-        print(
-            f"[runtime] registered {role}:{client.name} "
-            f"topics={','.join(sorted(client.topics)) or '-'}",
-            flush=True,
-        )
+        LOGGER.info("Client registered: role=%s name=%s topics=%s", role, client.name, sorted(client.topics))
         await self._send_json(
             writer,
             client,
@@ -188,6 +191,7 @@ class CommRuntimeServer:
         )
 
     def _ensure_topic_consumer(self, topic: str) -> None:
+        LOGGER.debug('Preparing stream topic consumer topic=%s', topic)
         existing = self._topic_tasks.get(topic)
         if existing is not None and not existing.done():
             return
@@ -238,13 +242,8 @@ class CommRuntimeServer:
                                 break
                 except asyncio.CancelledError:
                     raise
-                except Exception as exc:
-                    print(
-                        f"[runtime] stream {stream} error: {exc}; "
-                        f"retry in {self.retry_seconds:g}s",
-                        file=sys.stderr,
-                        flush=True,
-                    )
+                except Exception:
+                    LOGGER.exception("Stream consumer failed: stream=%s retry_seconds=%s", stream, self.retry_seconds)
                     await asyncio.sleep(self.retry_seconds)
         finally:
             close = getattr(client, "aclose", None) or client.close
@@ -257,16 +256,12 @@ class CommRuntimeServer:
     ) -> bool:
         message_id = event.get("messageId")
         if not message_id:
-            print(f"[runtime] dropping event {event_id} without messageId", file=sys.stderr)
+            LOGGER.warning("Dropping stream event without messageId: event_id=%s topic=%s", event_id, topic)
             return True
         try:
             message = await asyncio.to_thread(self._fetch_message, message_id)
-        except Exception as exc:
-            print(
-                f"[runtime] cannot resolve message {message_id}: {exc}",
-                file=sys.stderr,
-                flush=True,
-            )
+        except Exception:
+            LOGGER.exception("Cannot resolve message: message_id=%s", message_id)
             return False
         envelope = {
             "eventId": event_id,
@@ -276,13 +271,11 @@ class CommRuntimeServer:
             "message": message,
         }
         delivered = await self._deliver(envelope, {topic}, wait_for_ack=True)
-        print(
-            f"[runtime] message={message_id} topic={topic} delivered={delivered}",
-            flush=True,
-        )
+        LOGGER.info("Message delivery completed: message_id=%s topic=%s delivered=%s", message_id, topic, delivered)
         return delivered > 0
 
     def _fetch_message(self, message_id: str) -> dict[str, Any]:
+        LOGGER.debug('Fetching message from data backend message_id=%s', message_id)
         url = f"{self.data_url}/api/messages/{message_id}"
         request = urllib.request.Request(url, headers={"Accept": "application/json"})
         try:
@@ -301,6 +294,7 @@ class CommRuntimeServer:
         *,
         wait_for_ack: bool = False,
     ) -> int:
+        LOGGER.debug('Delivering message to connected receivers')
         targets = [
             (writer, client)
             for writer, client in list(self.clients.items())
@@ -328,6 +322,7 @@ class CommRuntimeServer:
                 if not wait_for_ack:
                     delivered += 1
             except (ConnectionError, OSError):
+                LOGGER.warning("Message delivery connection lost: topic=%s event_id=%s", topic, event_id)
                 self.clients.pop(writer, None)
         if not acknowledgements:
             return delivered
@@ -341,6 +336,8 @@ class CommRuntimeServer:
                 not future.cancelled() and future.exception() is None
                 for future in done
             ) else 0
+            if not delivered:
+                LOGGER.warning("Message acknowledgement timed out or failed: topic=%s event_id=%s targets=%s", topic, event_id, len(acknowledgements))
         finally:
             for target_writer, future in acknowledgements:
                 self._delivery_acks.pop((topic, event_id, target_writer), None)
@@ -351,6 +348,7 @@ class CommRuntimeServer:
     async def _handle_control(
         self, client: Client, writer: asyncio.StreamWriter, command: str
     ) -> None:
+        LOGGER.debug('Starting service._handle_control')
         if command == "PING":
             await self._send_line(writer, client, "PONG")
         elif command == "CLIENTS":
@@ -399,6 +397,7 @@ class CommRuntimeServer:
             return None
 
     async def start(self) -> None:
+        LOGGER.info('Starting communication runtime')
         if os.path.exists(self.socket_path):
             os.remove(self.socket_path)
         self.server = await asyncio.start_unix_server(
@@ -406,7 +405,7 @@ class CommRuntimeServer:
         )
         os.chmod(self.socket_path, 0o666)
         self._socket_inode = os.stat(self.socket_path).st_ino
-        print(f"[runtime] listening on {self.socket_path}", flush=True)
+        LOGGER.info("Communication runtime listening: socket=%s", self.socket_path)
         try:
             await self._stop_event.wait()
         finally:
@@ -430,6 +429,7 @@ class CommRuntimeServer:
             with contextlib.suppress(FileNotFoundError):
                 if os.stat(self.socket_path).st_ino == self._socket_inode:
                     os.remove(self.socket_path)
+            LOGGER.info("Communication runtime stopped: socket=%s", self.socket_path)
 
 
 async def send_control(socket_path: str, command: str) -> str:
@@ -472,6 +472,7 @@ def main(argv: list[str] | None = None) -> int:
 
     repository_root = Path(__file__).resolve().parents[2]
     configuration = ApplicationEnvironment.discover(repository_root)
+    configure_logging("agents-data-runtime")
     args = build_parser().parse_args(argv)
     args.socket = configuration.select("AGENTS_DATA_RUNTIME_PATH", flag=args.socket)
     args.data_url = configuration.select("AGENTS_DATA_COMMUNICATION_APP", flag=args.data_url)

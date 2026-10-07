@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import logging
 from typing import TYPE_CHECKING
 import inspect
 import threading
@@ -7,6 +9,9 @@ if TYPE_CHECKING:
     from agents_system import Application as AgentsSystem
 from .runtime_api_wrapper import RuntimeApiWrapper
 from lib.configuration import Configuration
+
+LOGGER = logging.getLogger(__name__)
+
 
 class InstanceManager:
     """Hold references to class objects, not instances."""
@@ -17,6 +22,7 @@ class InstanceManager:
         self._lock = threading.RLock()
 
     def register(self, name: str, cls: type, instance: object) -> None:
+        LOGGER.debug('Registering runtime instance name=%s', name)
         if not inspect.isclass(cls):
             raise TypeError(f"{name} is not a class")
         if not isinstance(instance, cls):
@@ -40,6 +46,7 @@ class InstanceManager:
         
     def initialize_main_application(self, configuration: Configuration, runtime_api: RuntimeApiWrapper):
         # self._main_app = self._instances[type(configuration).MAIN_APP_NAME].instance_object
+        LOGGER.info('Initializing runtime application')
         self._main_app = self._instances['agents_system'].instance_object
 
         if self._main_app is None:

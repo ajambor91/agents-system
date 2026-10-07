@@ -1,10 +1,16 @@
 """Route commands through Agents System over IPC or the selected module locally."""
+
+import logging
+
 from typing import Any
 from lib.modules_catalog import ModulesCatalog, Module, Command, Flag
 from lib.configuration import Configuration
 from lib.unix_socket import SocketClient
 from ..exceptions import ApiError
 from .module_loader import ModuleLoader
+
+LOGGER = logging.getLogger(__name__)
+
 
 class ModuleDispatcher:
     def __init__(self, configuration: Configuration, socket: SocketClient, catalog: ModulesCatalog) -> None:
@@ -16,6 +22,7 @@ class ModuleDispatcher:
         return self.socket.is_connected and self.socket.is_healthy()
 
     def dispatch(self, section: Module, command: Command, arguments: list[Flag]) -> Any:
+        LOGGER.debug('Starting module_dispatcher.dispatch')
         return self._invoke(section, "execute", {
             "module_name": section.module_name,
             "method_name": command.method or command.name,
@@ -23,6 +30,7 @@ class ModuleDispatcher:
         })
 
     def dispatch_help(self, section: Module, method_name: str, arguments: list[Flag]) -> Any:
+        LOGGER.debug('Starting module_dispatcher.dispatch_help method_name=%s', method_name)
         return self._invoke(section, "help", {
             "module_name": section.module_name,
             "method_name": method_name,
@@ -31,14 +39,15 @@ class ModuleDispatcher:
 
     def _invoke(self, section: Module, method: str, arguments: dict[str, Any]) -> Any:
         target = "agents_system"
-        print("TESSSSSSST")
-        print(method)
+        LOGGER.debug("Invoking module command: module=%s method=%s", section.module_name, method)
         try:
             if self.runtime_available():
+                LOGGER.debug("Routing command through runtime: module=%s method=%s", section.module_name, method)
                 response = self.socket.send("agents_system", method, kwargs=arguments)
                 if not response.successful:
                     raise ApiError(f"Błąd agents-system.{method}: {response.error}", exit_code=1)
                 return response.result
+            LOGGER.debug("Routing command locally: module=%s method=%s", section.module_name, method)
             target = section.module_name
             action = getattr(self.loader.load(section), method, None)
             if not callable(action):

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import shutil
 import tempfile
 
@@ -8,6 +10,9 @@ from pathlib import Path
 from .process import (
     ProcessRunner,
 )
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SudoPolicyService:
@@ -29,6 +34,7 @@ class SudoPolicyService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.info('Installing agent sudo policy agent_name=%s dry_run=%s', agent_name, dry_run)
         if (
             gateway_user
             == agent_user

@@ -1,5 +1,7 @@
 """Terminal session for the public application API."""
 
+import logging
+
 import shlex
 import sys
 from typing import Any
@@ -8,8 +10,12 @@ from ..models import ApiResult
 from . import Renderer
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 class InteractiveConsole:
     def run(self, application, manifest: dict[str, Any]) -> ApiResult:
+        LOGGER.debug('Starting interactive_console.run')
         if not sys.stdin.isatty() or not sys.stdout.isatty():
             raise ApiError("Tryb --interactive wymaga terminala")
         current_section: str | None = None

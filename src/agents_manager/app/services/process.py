@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import logging
+
+
 import os
 import pwd
 import shlex
 import subprocess
 from collections.abc import Callable
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ProcessRunner:
@@ -23,7 +29,7 @@ class ProcessRunner:
         if self._reporter is not None:
             self._reporter(message)
         else:
-            print(message)
+            LOGGER.info("%s", message)
 
     def run(
         self,
@@ -37,6 +43,7 @@ class ProcessRunner:
         if self.verbose:
             self.report("+ " + self.printable(command))
 
+        LOGGER.debug("Starting subprocess: executable=%s argument_count=%s timeout=%s capture=%s", command[0] if command else None, max(0, len(command)-1), timeout, capture)
         try:
             result = subprocess.run(
                 command,
@@ -50,9 +57,11 @@ class ProcessRunner:
                     self.report(result.stdout.rstrip())
                 if result.stderr:
                     self.report(result.stderr.rstrip())
+            LOGGER.debug("Subprocess completed: executable=%s returncode=%s", command[0] if command else None, result.returncode)
             return result
 
         except subprocess.CalledProcessError as exc:
+            LOGGER.error("Subprocess failed: executable=%s returncode=%s", command[0] if command else None, exc.returncode)
 
             details = (
                 (exc.stderr or "").strip()
@@ -69,6 +78,7 @@ class ProcessRunner:
             ) from exc
 
         except subprocess.TimeoutExpired as exc:
+            LOGGER.warning("Subprocess timed out: executable=%s timeout=%s", command[0] if command else None, timeout)
             if check:
                 raise RuntimeError(
                     f"Command timed out after {timeout} seconds: "

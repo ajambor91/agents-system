@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from ..context import ApplicationContext
 from .agent_services_factory import AgentServicesFactory
 
@@ -17,6 +19,9 @@ from .process import (
 )
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 class AgentsInstallatorService:
 
     def __init__(self, services_factory: AgentServicesFactory) -> None:
@@ -29,6 +34,7 @@ class AgentsInstallatorService:
         context: ApplicationContext,
     ) -> dict[str, Any]:
 
+        LOGGER.info('Installing agent agent=%s dry_run=%s', (flags or {}).get('name'), (flags or {}).get('dry_run', False))
         flags = dict(flags)
         agent_root = self._definition_path(flags, context)
         flags['path'] = str(agent_root)

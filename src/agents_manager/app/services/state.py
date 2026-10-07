@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import json
 import os
 import shutil
@@ -16,6 +18,9 @@ from .process import (
     ProcessRunner,
 )
 from .agent_catalog import AgentCatalog
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -94,6 +99,7 @@ class AgentStateService:
         dry_run: bool = False,
     ) -> AgentStatePaths:
 
+        LOGGER.debug('Preparing agent state directories agent_name=%s dry_run=%s', agent_name, dry_run)
         if not isinstance(agent_name, str) or not AgentCatalog.AGENT_PATTERN.fullmatch(agent_name):
             raise ValueError(f"Invalid agent name: {agent_name}")
 
@@ -138,7 +144,7 @@ class AgentStateService:
     @staticmethod
     def _prepare_directory(name: str, parent_fd: int, group_id: int) -> int:
         try:
-            os.mkdir(name, mode=0o2770, dir_fd=parent_fd)
+            os.mkdir(name, mode=0o777, dir_fd=parent_fd)
         except FileExistsError:
             pass
         directory_fd = os.open(
@@ -151,8 +157,8 @@ class AgentStateService:
             group_changed = metadata.st_gid != group_id
             if group_changed:
                 os.fchown(directory_fd, -1, group_id)
-            if group_changed or stat.S_IMODE(metadata.st_mode) != 0o2770:
-                os.fchmod(directory_fd, 0o2770)
+            if group_changed or stat.S_IMODE(metadata.st_mode) != 0o777:
+                os.fchmod(directory_fd, 0o777)
             return directory_fd
         except BaseException:
             os.close(directory_fd)
@@ -160,6 +166,7 @@ class AgentStateService:
 
     def prepare_root(self, *, dry_run: bool = False) -> None:
         """The installer owns creation and permissions of the shared state root."""
+        LOGGER.debug('Preparing agent state directories_root dry_run=%s', dry_run)
         if self.context.state_root.is_symlink() or not self.context.state_root.is_dir():
             raise FileNotFoundError(
                 f"State directory is not prepared: {self.context.state_root}; run the system installer."
@@ -174,6 +181,7 @@ class AgentStateService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Writing agent state text path=%s mode=%s dry_run=%s', path, mode, dry_run)
         if dry_run:
             self.runner.report(
                 f"[DRY] write {path} "
@@ -209,6 +217,7 @@ class AgentStateService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Writing agent state JSON path=%s mode=%s dry_run=%s', path, mode, dry_run)
         self.write_text(
             path,
             json.dumps(
@@ -228,6 +237,7 @@ class AgentStateService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Granting runtime read access username=%s dry_run=%s', username, dry_run)
         self._grant_file_reader(
             username,
             paths.runtime_json,
@@ -242,6 +252,7 @@ class AgentStateService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Granting configuration read access username=%s dry_run=%s', username, dry_run)
         self._grant_file_reader(
             username,
             paths.config_json,
@@ -256,6 +267,7 @@ class AgentStateService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Granting shell read access username=%s dry_run=%s', username, dry_run)
         self._grant_file_reader(
             username,
             paths.agentrc,

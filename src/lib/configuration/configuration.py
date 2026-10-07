@@ -21,6 +21,8 @@ class Configuration(ConfigurationAbstract):
     APP_CONFIG_DIR: ClassVar[str]
     APP_DATA_DIR: ClassVar[str]
     INSTALLED_MODULES_DIR: ClassVar[str]
+    INSTALLED_AGENTS_LIST_PATH: ClassVar[str]
+    INSTALLED_AGENTS_LIST_FILE: ClassVar[str]
     APP_RUNTIME_DIR: ClassVar[str]
     APP_ENV_FILE: ClassVar[str]
     APP_ENV_PATH: ClassVar[str]
@@ -79,6 +81,8 @@ class Configuration(ConfigurationAbstract):
             'APP_CONFIG_DIR': str,
             'APP_DATA_DIR': str,
             'INSTALLED_MODULES_DIR': str,
+            'INSTALLED_AGENTS_LIST_PATH': str,
+            'INSTALLED_AGENTS_LIST_FILE': str,
             'APP_RUNTIME_DIR': str,
             'APP_ENV_FILE': str,
             'APP_ENV_PATH': str,

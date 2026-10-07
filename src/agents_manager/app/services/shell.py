@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import json
 import re
 import shlex
@@ -11,6 +13,9 @@ from .state import (
     AgentStatePaths,
     AgentStateService,
 )
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ShellService:
@@ -39,6 +44,7 @@ class ShellService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Generating agent shell configuration dry_run=%s', dry_run)
         with template_path.open(
             "r",
             encoding="utf-8",

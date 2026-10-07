@@ -1,3 +1,6 @@
+
+import logging
+
 import argparse
 
 from pathlib import Path
@@ -15,6 +18,12 @@ TYPE_MAP = {
     float: "float",
     bool: "bool"
 }
+
+
+from lib.logging_config import configure_logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def generate(source: Path) -> None:
@@ -37,8 +46,7 @@ def generate(source: Path) -> None:
     variables = config['variables']
     # Generate typed class fields
     for field in variables:
-        print("field")
-        print(field)
+        LOGGER.debug("Generating configuration field: name=%s value_type=%s", field.get("name"), type(field.get("value")).__name__)
         name = field["name"]
         value = field["value"]
 
@@ -81,11 +89,12 @@ def generate(source: Path) -> None:
         encoding="utf-8"
     )
 
-    print(f"Generated: {target}")
+    LOGGER.info("Generated configuration class: path=%s fields=%s", target, len(variables))
 
 
 if __name__ == "__main__":
 
+    configure_logging("generate-configuration")
     parser = argparse.ArgumentParser()
 
     parser.add_argument(

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from ..context import ApplicationContext
 from .agent_services_factory import AgentServicesFactory
 
@@ -10,6 +12,9 @@ import json
 from .state import (
     AgentStateService,
 )
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class AgentsExecutorService:
@@ -24,6 +29,7 @@ class AgentsExecutorService:
         context: ApplicationContext,
     ) -> dict[str, Any]:
 
+        LOGGER.info('Executing agent command agent=%s dry_run=%s', (flags or {}).get('name'), (flags or {}).get('dry_run', False))
         services = self._services_factory.create(context, flags)
         state = services.state
         runtime = services.runtime.load(flags.get('name'))

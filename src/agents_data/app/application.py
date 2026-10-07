@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import logging
+
 import argparse
 import sys
 from pathlib import Path
@@ -14,6 +16,12 @@ from .commands.placeholders import (
     MemoryWriteCommand,
     SyncCommand,
 )
+
+
+from lib.logging_config import configure_logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -80,6 +88,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    LOGGER.debug('Starting application.main')
+    configure_logging("agents-data")
     repository_root = Path(__file__).resolve().parents[3]
     configuration = ApplicationEnvironment.discover(repository_root)
     parser = build_parser()

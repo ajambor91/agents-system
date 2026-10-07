@@ -87,6 +87,18 @@
       "example": "/var/lib/agents-system/installed_modules"
     },
     {
+      "name": "INSTALLED_AGENTS_LIST_PATH",
+      "value": "{{APP_DATA_DIR}}/agents_list.json",
+      "description": "Installed agents list.",
+      "example": "/var/lib/agents-system/agents_list.json"
+    },
+    {
+      "name": "INSTALLED_AGENTS_LIST_FILE",
+      "value": "agents_list.json",
+      "description": "Installed agents list file.",
+      "example": "agents_list.json"
+    },
+    {
       "name": "APP_RUNTIME_DIR",
       "value": "{{APP_RUNTIME_DIR}}",
       "description": "Exact configurable runtime directory injected by the installer.",

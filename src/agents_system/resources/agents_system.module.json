@@ -48,6 +48,36 @@
           "maximum": 1
         }
       ]
+    },
+        {
+      "name": "logging",
+      "method": "logging",
+      "description": "Zmienia poziom logowania błędów",
+      "usage": "asystem system logging (--level  )",
+      "implementation_status": "implemented",
+      "flags": [
+        {
+          "name": "level",
+          "long": "--level",
+          "short": "-l",
+          "aliases": [],
+          "description": "Ustawia globalnie poziom logowania błędów.",
+          "usage": "--level [DEBUG | INFO | WARNING | ERROR | CRITICAL]",
+          "takes_value": true,
+          "type": "str",
+          "required": true,
+          "default": null
+        }
+      ],
+      "exclusive_groups": [
+        {
+          "members": [
+            "level"
+          ],
+          "minimum": 1,
+          "maximum": 1
+        }
+      ]
     }
   ],
   "usage": "asystem system <command> [flags]"

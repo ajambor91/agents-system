@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import json
 import subprocess
 import uuid
@@ -11,6 +13,9 @@ from pathlib import Path
 from .process import (
     ProcessRunner,
 )
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -50,6 +55,7 @@ class AgentExecutor:
         timeout_seconds: int | None = None,
     ) -> subprocess.CompletedProcess[str]:
 
+        LOGGER.info('Executing agent process')
         if not command.strip():
             raise ValueError(
                 "Command cannot be empty."
@@ -144,6 +150,7 @@ class AgentExecutor:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Preparing agent history dry_run=%s', dry_run)
         history_directory = (
             runtime.home
             / self.HISTORY_DIRECTORY
@@ -212,6 +219,7 @@ class AgentExecutor:
         entry: dict[str, object],
     ) -> None:
 
+        LOGGER.debug('Appending agent execution history')
         history_file = (
             runtime.home
             / self.HISTORY_DIRECTORY

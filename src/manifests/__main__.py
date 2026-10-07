@@ -14,7 +14,11 @@ if __package__ in (None, ""):
 from .app.manifests_app import ManifestsApp
 
 
+from lib.logging_config import configure_logging
+
+
 def main(arguments: Sequence[str] | None = None) -> int:
+    configure_logging("manifests")
     parser = argparse.ArgumentParser(prog="python -m manifests", description="Walidacja manifestu przez model wybrany według kind.")
     parser.add_argument("manifest", type=Path, help="Ścieżka pliku manifestu JSON.")
     args = parser.parse_args(arguments)

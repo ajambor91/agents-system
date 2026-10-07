@@ -225,6 +225,18 @@
       "description": "Directory of installed-module JSON documents, derived from the selected APP_DATA_DIR."
     },
     {
+      "name": "INSTALLED_AGENTS_LIST_PATH",
+      "required": true,
+      "value": "${APP_DATA_DIR}/${INSTALLED_AGENTS_LIST_FILE}",
+      "description": "Installed-agents list path inside the selected APP_DATA_DIR."
+    },
+    {
+      "name": "INSTALLED_AGENTS_LIST_FILE",
+      "required": true,
+      "value": "agents_list.json",
+      "description": "Installed-agents list filename, without directory components."
+    },
+    {
       "name": "APP_RUNTIME_DIR",
       "required": true,
       "source": "--runtime-dir or resolved mode configuration",

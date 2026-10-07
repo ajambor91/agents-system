@@ -16,7 +16,6 @@ class ModulesCatalogFactory:
         modules: dict[str, Module] = {}
         modules_by_section: dict[str, Module] = {}
         command_index: dict[str, Command] = {}
-        # print(data)
         # exit
         for child_module in data["children"]:
             module = cls._create_module(
@@ -54,7 +53,6 @@ class ModulesCatalogFactory:
         data: dict[str, Any],
         fallback_section_name: str,
     ) -> Module:
-        # print(data)
         return Module(
             module_name=data["module_name"],
             absolute_module_path=data["absolute_module_path"],

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+
+
 from collections.abc import Mapping
 from typing import Any
 
@@ -12,6 +15,9 @@ from .abstract import (
     AbstractUnixSocketTransport,
 )
 from .models import Request, Response, CheckStatus
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SocketClient:
@@ -60,12 +66,11 @@ class SocketClient:
                 "kwargs": dict(kwargs) if kwargs is not None else {},
             },
         )
-        print("SEND CHECK")
-        print(request.to_mapping())
+        LOGGER.debug("Sending module request: module=%s method=%s request_id=%s", module_name, method, request.request_id)
         return self._client.request(request)
     def is_healthy(self) -> bool:
         """Check if the socket client is healthy."""
-        print("IS HEALTHY")
+        LOGGER.debug("Checking runtime health")
         return self.send("health-check", "is_healthy").result
 
     def check_status(self) -> CheckStatus:

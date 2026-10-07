@@ -1,3 +1,5 @@
+
+import logging
 import importlib
 import inspect
 import keyword
@@ -10,6 +12,9 @@ from importlib.machinery import ModuleSpec
 from typing import Any
 
 from .models import ManagedInstance, ModuleEntry
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ClassBuildError(RuntimeError):
@@ -29,7 +34,9 @@ class ClassBuilder:
         Build application classes and instances from discovered modules.
         """
 
+        LOGGER.debug('Building runtime class tree')
         if self._instances:
+            LOGGER.debug("Using cached runtime class tree: instances=%s", len(self._instances))
             return self._instances.copy()
 
         found_classes = self.class_loader.getClasses()
@@ -45,11 +52,13 @@ class ClassBuilder:
                 imported_classes[module_name] = managed_instance
 
             except Exception as exc:
+                LOGGER.exception("Runtime module initialization failed: module=%s", module_name)
                 raise ClassBuildError(
                     f"Failed to build module '{module_name}': {exc}"
                 ) from exc
 
         self._instances = imported_classes
+        LOGGER.info("Runtime class tree built: instances=%s", len(self._instances))
 
         return self._instances.copy()
 
@@ -62,6 +71,7 @@ class ClassBuilder:
         and wrap both in ManagedInstance.
         """
 
+        LOGGER.debug('Building runtime module instance')
         application_class = self._load_class(
             module_entry
         )
@@ -87,6 +97,7 @@ class ClassBuilder:
         Load the application class using module metadata.
         """
 
+        LOGGER.debug('Importing runtime module class')
         metadata = module_entry.meta_data
 
         module_dir = Path(
@@ -135,6 +146,7 @@ class ClassBuilder:
         Register an isolated Python package namespace.
         """
 
+        LOGGER.debug('Starting class_builder._register_namespace module_dir=%s', module_dir)
         if (
             not namespace.isidentifier()
             or keyword.iskeyword(namespace)

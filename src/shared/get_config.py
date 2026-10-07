@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from pathlib import Path
 
 from lib.configuration import Configuration
@@ -11,6 +13,9 @@ from lib.json_loader import JsonLoader
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEV_CONFIG_PATH = PROJECT_ROOT / "resources" / "app_env.json"
 APP_CONFIG_PATH = Path("/etc/agents-system/app_env.json")
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def get_config(
@@ -23,6 +28,7 @@ def get_config(
     With no mode selected, an installed configuration takes precedence and
     the repository resource is used as the development fallback.
     """
+    LOGGER.debug('Starting get_config.get_config path=%s', path)
     if dev_config is True:
         source = Path(path).expanduser() if path is not None else DEV_CONFIG_PATH
     elif dev_config is False:
@@ -37,7 +43,9 @@ def get_config(
     variables = document.get("variables")
     if not isinstance(variables, list):
         raise ValueError(f"{source}: variables must be a list")
-    return Configuration(variables)
+    configuration = Configuration(variables)
+    LOGGER.info("Configuration loaded: path=%s variables=%s", source, len(variables))
+    return configuration
 
 
 __all__ = [

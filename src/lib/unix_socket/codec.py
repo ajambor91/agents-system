@@ -1,10 +1,16 @@
 """UTF-8 JSON messages delimited by a newline."""
 from __future__ import annotations
+
+import logging
+
 import json
 
 from .abstract import AbstractMessageCodec
 from .models import Response, Request
 from .exceptions import UnixSocketProtocolException, UnixSocketSerializationException
+
+LOGGER = logging.getLogger(__name__)
+
 
 class MessageCodec(AbstractMessageCodec[Request, Response]):
     def encode_request(self, request: Request) -> bytes:
@@ -21,8 +27,7 @@ class MessageCodec(AbstractMessageCodec[Request, Response]):
         except (ValueError, UnicodeError) as exc:
             raise UnixSocketSerializationException(str(exc)) from exc
         if not isinstance(document, dict) or type(document.get("successful")) is not bool or not isinstance(document.get("request_id"), str):
-            print("DOCUMENT")
-            print(document)
+            LOGGER.warning("Invalid IPC response: missing or invalid request_id/successful fields")
             raise UnixSocketProtocolException("Response requires request_id and boolean successful")
      
         error = document.get("error")

@@ -1,3 +1,6 @@
+
+import logging
+
 import os
 
 from . import HealthCheck
@@ -12,6 +15,9 @@ from . import InstanceManager
 from . import RuntimeApiWrapper
 from lib.modules_catalog import ModulesFactory, ModulesCatalog
 from .state_provider import StateProvider
+LOGGER = logging.getLogger(__name__)
+
+
 class RuntimeApp:
     config_path: str | None = None
     configuration: Configuration | None = None
@@ -32,8 +38,7 @@ class RuntimeApp:
         modules_json_content = self.manifests.load_modules_manifest(
             type(self.configuration).MODULES_MANIFEST_PATH
         )
-        print("MANIFESS MANIFESS MANIFESS MANIFESS MANIFESS MANIFESS MANIFESS MANIFESS MANIFESS MANIFESS ")
-        print(modules_json_content)
+        LOGGER.info("Loaded runtime modules manifest: path=%s", type(self.configuration).MODULES_MANIFEST_PATH)
         class_builder = ClassBuilder(ClassLoader(modules_json_content), self.configuration)
 
         self.instances = class_builder.build_class_tree()

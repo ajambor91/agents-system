@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import logging
+
+
 from .codec import MessageCodec
 from .models.configuration import SocketConfiguration
 from .models.request import Request
 from .models.response import Response
 
 from .abstract import AbstractUnixSocketClient, AbstractUnixSocketTransport
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class UnixSocketClient(
@@ -29,7 +35,7 @@ class UnixSocketClient(
         return self.transport.socket_exists(self.configuration)
 
     def connect(self) -> None:
-        print("CONNECT")
+        LOGGER.debug("Connecting IPC client: path=%s", self.configuration.socket_path)
         self.transport.connect(self.configuration)
 
     def request(
@@ -39,8 +45,7 @@ class UnixSocketClient(
         timeout: float | None = None,
     ) -> Response:
         
-        print("IN REQUEST")
-        print(self.is_connected)
+        LOGGER.debug("Sending IPC request: request_id=%s connected=%s timeout=%s", request.request_id, self.is_connected, timeout)
         frame = self.codec.encode_request(request)
         return self.codec.decode_response(
             self.transport.exchange(frame, timeout=timeout)

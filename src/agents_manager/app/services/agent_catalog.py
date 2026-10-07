@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import logging
+
 import re
 
 from pathlib import Path
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class AgentCatalog:
@@ -20,6 +25,7 @@ class AgentCatalog:
 
     def list_agents(self) -> list[str]:
 
+        LOGGER.debug('Discovering agent definitions')
         if not self.agents_root.is_dir():
             return []
 
@@ -58,6 +64,7 @@ class AgentCatalog:
         name: str,
     ) -> Path:
 
+        LOGGER.debug('Resolving agent directory name=%s', name)
         if not self.AGENT_PATTERN.fullmatch(name):
             raise ValueError(
                 f"Invalid agent name: {name}"

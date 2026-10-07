@@ -5,8 +5,11 @@ from lib.manifests_loader import ManifestsLoader
 from manifests import ManifestValidator
 
 
+from lib.logging_config import configure_logging
+
 MODULE_NAME = 'agents_system'
 def get_main_app(config: Configuration) -> Application:
+    configure_logging("agents-system")
     path = f"{type(config).MODULES_DIR}/{MODULE_NAME}/resources/{MODULE_NAME}.module.json"
     manifests = ManifestsLoader.load_manifest(path)
     if ManifestValidator.validate(manifests):

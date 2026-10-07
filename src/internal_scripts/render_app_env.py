@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+import logging
+
+
 import argparse
 import grp
 import json
@@ -40,6 +43,12 @@ OBSOLETE_VARIABLES = {
     "REPOSITORY_HISTORY_PATH", "AGENTS_SYSTEM_MODULES_FILE", "AGENTS_SYSTEM_MODULES_PATH",
     "APP_DATA_FULL_DIR", "AGENT_METADATA", "AGENT_METADATA_FULL", "GENERAL_ENV_FILE",
 }
+
+
+from lib.logging_config import configure_logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -160,6 +169,18 @@ def _validate_double_placeholders(values: Mapping[str, str]) -> None:
 def _validate_layout(values: Mapping[str, str], mode: str) -> None:
     for name in ("APP_CONFIG_DIR", "APP_DATA_DIR", "INSTALLED_MODULES_DIR", "APP_RUNTIME_DIR"):
         _normalized_absolute(values[name], name)
+
+    agents_filename = values["INSTALLED_AGENTS_LIST_FILE"]
+    if (agents_filename in {".", ".."} or "/" in agents_filename
+            or "\\" in agents_filename or "\x00" in agents_filename):
+        raise RenderError("INSTALLED_AGENTS_LIST_FILE musi być nazwą pliku bez katalogów")
+    agents_path = _normalized_absolute(
+        values["INSTALLED_AGENTS_LIST_PATH"], "INSTALLED_AGENTS_LIST_PATH"
+    )
+    if Path(agents_path) != Path(values["APP_DATA_DIR"]) / agents_filename:
+        raise RenderError(
+            "INSTALLED_AGENTS_LIST_PATH musi odpowiadać APP_DATA_DIR/INSTALLED_AGENTS_LIST_FILE"
+        )
 
     expected_agent_paths = {
         "AGENT_CONFIG_DIR_TEMPLATE": "/home/{{agent_name}}/.agents",
@@ -300,6 +321,8 @@ def render(
         value = special.get(name, template_item.get("value"))
         if not isinstance(value, str) or not value:
             raise RenderError(f"Szablon nie definiuje wartości {name}")
+        if name == "INSTALLED_AGENTS_LIST_PATH":
+            value = value.replace("{{APP_DATA_DIR}}", "${APP_DATA_DIR}")
         raw[name] = value
         metadata[name] = template_item
     resolved = resolve_values(raw)
@@ -328,11 +351,12 @@ def render(
     if verified_names != list(raw):
         raise RenderError("Weryfikacja zapisanego app_env.json nie powiodła się")
     if verbose:
-        print(f"[render-app-env] zapisano {output}", file=sys.stderr)
+        LOGGER.info("Rendered environment configuration: path=%s", output)
     return {"output": str(output.resolve()), "mode": mode, "variables": verified_names, "paths": mode_values}
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_logging("render-app-env")
     arguments = parser().parse_args(argv)
     physical_package = Path(__file__).resolve().parents[2]
     package = physical_package

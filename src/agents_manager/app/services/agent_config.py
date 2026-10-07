@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import json
 import re
 
@@ -8,6 +10,9 @@ from pathlib import Path
 from typing import Any
 
 from .agent_catalog import AgentCatalog
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -149,6 +154,7 @@ class AgentConfigService:
 
     def resolve(self, name: str | None) -> AgentConfig:
         """Resolve an explicit definition or the single default definition."""
+        LOGGER.debug('Resolving agent definition name=%s', name)
         if name is not None:
             return self.load(name)
 
@@ -170,6 +176,7 @@ class AgentConfigService:
         return defaults[0]
 
     def load(self, name: str) -> AgentConfig:
+        LOGGER.debug('Loading agent definition name=%s', name)
         agent_root = self.catalog.get_agent_root(name)
         config_path = agent_root / "config.json"
         if not config_path.is_file():

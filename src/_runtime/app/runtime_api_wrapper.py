@@ -1,9 +1,15 @@
 from __future__ import annotations
+
+import logging
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .instance_manager import InstanceManager
 from .state_provider import StateProvider 
 from shared.models.modules_list_data import ModuleData, ModulesListData
+
+LOGGER = logging.getLogger(__name__)
+
 
 class RuntimeApiWrapper:
     def __init__(self, instance_manager: InstanceManager,state_provider: StateProvider):
@@ -11,8 +17,7 @@ class RuntimeApiWrapper:
         self._state_provider = state_provider
 
     def instance(self,module_name: str): 
-        print("####DEB#### ####DEB#### ####DEB#### ####DEB#### ####DEB####")
-        print(module_name)
+        LOGGER.debug("Resolving managed runtime instance: module=%s", module_name)
         return self._instance_manager.get(module_name).instance_object
 
     def get_running_modules(self) -> ModulesListData:

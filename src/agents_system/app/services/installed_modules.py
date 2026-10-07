@@ -1,5 +1,7 @@
 """Read and check installed module records through the manifests application."""
 from __future__ import annotations
+
+import logging
 from pathlib import Path
 from typing import Any
 from lib.configuration import Configuration
@@ -8,11 +10,15 @@ from shared.models.modules_list_data import ModuleData, ModulesListData
 from ..exceptions import ConfigurationError
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 class InstalledModulesReader:
     def __init__(self, configuration: Configuration) -> None:
         self.configuration = configuration
 
     def list_modules(self) -> ModulesListData:
+        LOGGER.debug('Starting installed_modules.list_modules')
         directory = Path(type(self.configuration).INSTALLED_MODULES_DIR).expanduser()
         if not directory.is_absolute() or '..' in directory.parts:
             raise ConfigurationError('INSTALLED_MODULES_DIR musi być bezpieczną ścieżką absolutną')

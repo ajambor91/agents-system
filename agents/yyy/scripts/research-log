@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+import unicodedata
+
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+def slugify(value: str, *, fallback: str) -> str:
+    normalized = (
+        unicodedata.normalize("NFKD", value)
+        .encode("ascii", "ignore")
+        .decode("ascii")
+        .lower()
+    )
+    slug = re.sub(r"[^a-z0-9]+", "-", normalized).strip("-")
+    return (slug or fallback)[:72].rstrip("-")
+
+
+def unique_path(
+    directory: Path,
+    timestamp: str,
+    query: str,
+    requested_by: str,
+) -> Path:
+    stem = "_".join(
+        (
+            timestamp,
+            slugify(query, fallback="research"),
+            slugify(requested_by, fallback="unknown"),
+        )
+    )
+    candidate = directory / f"{stem}.md"
+    counter = 2
+
+    while candidate.exists():
+        candidate = directory / f"{stem}_{counter}.md"
+        counter += 1
+
+    return candidate
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Save one private Markdown report for a research request."
+    )
+    parser.add_argument("--query", required=True)
+    parser.add_argument(
+        "--requested-by",
+        default=os.environ.get("AGENT_REQUESTED_BY", "user"),
+    )
+    parser.add_argument("--summary", default="")
+    parser.add_argument(
+        "--status",
+        choices=("completed", "partial", "failed"),
+        default="completed",
+    )
+    parser.add_argument("--source", action="append", default=[])
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path(
+            os.environ.get(
+                "AGENT_SEARCH_HISTORY_DIR",
+                str(Path.home() / ".history" / "searches"),
+            )
+        ),
+    )
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    body = "" if sys.stdin.isatty() else sys.stdin.read().strip()
+    now = datetime.now(timezone.utc)
+    timestamp = now.strftime("%Y-%m-%dT%H-%M-%SZ")
+
+    output_directory = args.output_dir.expanduser()
+    output_directory.mkdir(parents=True, exist_ok=True)
+    output_directory.chmod(0o700)
+
+    output_path = unique_path(
+        output_directory,
+        timestamp,
+        args.query,
+        args.requested_by,
+    )
+
+    lines = [
+        "---",
+        f"timestamp: {json.dumps(now.isoformat().replace('+00:00', 'Z'))}",
+        f"requested_by: {json.dumps(args.requested_by, ensure_ascii=False)}",
+        f"query: {json.dumps(args.query, ensure_ascii=False)}",
+        f"status: {args.status}",
+        "---",
+        "",
+        f"# Research: {args.query}",
+        "",
+        "## Summary",
+        "",
+        args.summary or "No summary provided.",
+        "",
+        "## Findings",
+        "",
+        body or "No findings recorded.",
+        "",
+        "## Sources",
+        "",
+    ]
+
+    if args.source:
+        lines.extend(f"- {source}" for source in args.source)
+    else:
+        lines.append("- No sources recorded.")
+
+    lines.extend(("", "## Uncertainty and follow-up", "", "Not recorded.", ""))
+
+    descriptor = os.open(
+        output_path,
+        os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+        0o600,
+    )
+
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        handle.write("\n".join(lines))
+
+    print(output_path)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+
+
 from dataclasses import asdict
 import json
 import os
@@ -12,6 +15,9 @@ from ..models import ApiResult
 from lib.modules_catalog import ModulesCatalog, Module, Command, Flag
 from lib.configuration import Configuration
 from lib.unix_socket.models import Response
+LOGGER = logging.getLogger(__name__)
+
+
 class Renderer:
     MODES = ("human", "human-raw", "agent", "json")
     _configuration: Configuration | None = None
@@ -40,7 +46,7 @@ class Renderer:
 
     def root_help(self, catalog: ModulesCatalog) -> ApiResult:
         if self._mode == "json":
-            print("JSON")
+            LOGGER.debug("Rendering root help: mode=%s", self._mode)
             # return self._json(manifest)
         if self._mode == "agent":
             return self._json({
@@ -117,7 +123,6 @@ class Renderer:
         return ApiResult(stdout="\n".join(lines) + "\n", data=command)
 
     def command_result(self, response: Any) -> ApiResult:
-        # print(response)
         if self._mode in {"json", "agent"}:
             return self._json(response, compact=self._mode == "agent")
         if isinstance(response, dict) and "message" in response:

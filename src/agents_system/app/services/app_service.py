@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import logging
 from .asystem import Asystem
 from .asystem_remote import AsystemRemote
 from typing import TYPE_CHECKING, Any
@@ -9,6 +11,9 @@ if TYPE_CHECKING:
 from lib.configuration import Configuration
 from .modules_service import ModulesService
 from ..exceptions.input_error import InputError
+LOGGER = logging.getLogger(__name__)
+
+
 class AppService:
 
     _asysten: Asystem
@@ -25,6 +30,7 @@ class AppService:
             self._asysten = Asystem(self._module_service)
 
     def execute(self, method_name: str, flags: dict[str,Any] = {},  module_name: str | None = None):
+            LOGGER.info('Starting app_service.execute method_name=%s module_name=%s agent=%s dry_run=%s', method_name, module_name, (flags or {}).get('name'), (flags or {}).get('dry_run', False))
             if not module_name or module_name in ('agents_system', 'system'):
                 action = getattr(self, method_name, None)
                 if not callable(action):
@@ -34,6 +40,7 @@ class AppService:
                 return self._asysten.exec(method_name,flags, module_name)
             
     def modules(self,flags: dict[str,Any]):
+        LOGGER.debug('Starting app_service.modules agent=%s dry_run=%s', (flags or {}).get('name'), (flags or {}).get('dry_run', False))
         installed = flags.get('installed')
         running = flags.get('running') 
         if type(installed) is not bool or type(running) is not bool or installed == running:
@@ -45,7 +52,11 @@ class AppService:
         names = [f"  {module.module_name}" for module in modules.modules.values()]
         message = title + ":\n" + ("\n".join(names) if names else "  (empty)")
         return {"mode": mode, "modules": asdict(modules)['modules'], "message": message}
- 
+    def logging(self, flags: dict[str, Any]):
+        level = flags.get('level')
+        LOGGER.debug(f"Starting app_service.logging selected level: {level}")
+        return self._asysten.logging(level)
+
     def help(self,module_name: str, method_name: str): 
         if not module_name:
             return {"message": "Module does not have requested method"}

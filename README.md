@@ -283,3 +283,29 @@ woła loader, uruchamia walidację przez modele wybrane strategią według
 `kind` i rozwiązuje referencje modułów. Dokument można sprawdzić przez
 `PYTHONPATH=src python3 -m manifests PATH`. Wszystkie entrypointy aplikacji
 są plikami `__main__.py`.
+
+## Logowanie
+
+Aplikacje w `src/` używają loggerów standardowej biblioteki `logging`.
+Wspólny formatter zapisuje rekordy RFC 5424 na stderr (systemd zbiera je
+w journal): facility daemon, poziom, czas UTC, host, aplikacja, PID i nazwa
+loggera jako MSGID. Traceback pozostaje w jednym rekordzie. Wyniki CLI i JSON
+pozostają na stdout; logi nie zawierają debugowych zrzutów payloadów.
+
+`AGENTS_MANAGER_LOG_LEVEL` jest niezależnym ustawieniem procesu, czytanym przy starcie;
+wartość domyślna to `INFO`. Oba szablony usług deklarują
+`Environment="AGENTS_MANAGER_LOG_LEVEL=INFO"`; instalator renderuje `system.template.service`.
+Aby włączyć szczegółowe logi, ustaw `Environment="AGENTS_MANAGER_LOG_LEVEL=DEBUG"` w override
+usługi przez `systemctl edit agents-system.service` (lub nazwę skonfigurowanej
+usługi), następnie wykonaj daemon-reload i restart usługi. Obsługiwane poziomy:
+`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`; niepoprawna wartość powoduje
+ostrzeżenie i wybór `INFO`. Lokalne CLI również respektuje `AGENTS_MANAGER_LOG_LEVEL`.
+
+Logowanie obejmuje również ścieżki bez wcześniejszych wydruków debugowych:
+start i zatrzymanie runtime, importowanie i cache modułów, wybór IPC lub
+lokalnego wykonania, konfigurację i manifesty, operacje agentów, zapis stanu,
+przygotowanie użytkowników i uprawnień, procesy oraz dostarczanie wiadomości.
+`INFO` opisuje operacje i ich wyniki, `DEBUG` szczegóły etapów,
+`WARNING` odrzucenia i problemy odzyskiwalne, a `ERROR` błędy operacji.
+Logger zachowuje strumień stderr z chwili konfiguracji, aby przechwytywanie
+wyniku adaptera runtime nie dołączało logów do odpowiedzi operacji.

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import json
 
 from datetime import datetime, timezone
@@ -11,6 +13,9 @@ from typing import Any
 from ..context import ApplicationContext
 from ...open_claw.abstract import AgentToolAbstract
 from .state import AgentStateService
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class AgentRegistryService:
@@ -36,6 +41,7 @@ class AgentRegistryService:
         dry_run: bool = False,
     ) -> dict[str, Any]:
         """Merge retained records, runtime files, task history and OpenClaw."""
+        LOGGER.info('Synchronizing agent registry dry_run=%s', dry_run)
         previous = self.read()
         previous_agents = previous.get("agents", {})
         runtimes = self._runtime_records()
@@ -103,6 +109,7 @@ class AgentRegistryService:
 
     def read(self) -> dict[str, Any]:
         """Read the retained registry, rejecting corruption before overwrite."""
+        LOGGER.debug('Reading agent registry')
         if not self.path.is_file():
             return {
                 "schema_version": self.SCHEMA_VERSION,

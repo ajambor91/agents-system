@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import logging
+
 from pathlib import Path
 
 from manifests import ManifestsApp
 
 from .models import MetaDataClass
 from .models import ModuleEntry
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ClassLoader:
@@ -16,6 +21,7 @@ class ClassLoader:
         self._found_classes = self._get_modules_list()
 
     def loadClasses(self) -> "ClassLoader":
+        LOGGER.debug('Starting class_loader.loadClasses')
         self._found_classes = self._get_modules_list()
         return self
 
@@ -23,6 +29,7 @@ class ClassLoader:
         return self._found_classes.copy()
 
     def _get_modules_list(self) -> dict[str, ModuleEntry]:
+        LOGGER.debug('Discovering runtime modules')
         children = self._modules_list.get("children")
         if not isinstance(children, list):
             raise ValueError("Modules manifest must contain a children list")

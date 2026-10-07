@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from pathlib import Path
 from typing import Any, Sequence
 import time
@@ -19,6 +21,9 @@ from lib.modules_catalog import ModulesCatalog, ModulesFactory, Module, Flag
 from .services import RenderersFactory
 from lib.unix_socket import SocketClient, SocketClientBuilder, SocketConfiguration
 from lib.unix_socket.exceptions import UnixSocketConnectionException
+LOGGER = logging.getLogger(__name__)
+
+
 class AgentsSystemCLI:
 
     renderers_factory: RenderersFactory | None = None
@@ -36,6 +41,7 @@ class AgentsSystemCLI:
         return self.socket_client.is_connected and self.socket_client.is_healthy()
 
     def run(self, arguments: Sequence[str]) -> ApiResult:
+        LOGGER.debug('Starting application.run')
         mode = "human"
         help: bool = False
         try:
@@ -80,9 +86,11 @@ class AgentsSystemCLI:
                 return self.renderers_factory.create_help_renderer(mode, renderer).render(response)
             return renderer.command_result(response)
         except ApiError as exc:
+            LOGGER.warning("Console request rejected: exit_code=%s", exc.exit_code)
             return self.renderers_factory.create_renderer("human-raw" if mode == "interactive" else mode).error(str(exc), exc.exit_code)
             # return Renderer("human-raw" if mode == "interactive" else mode).error(str(exc), exc.exit_code)
         except KeyboardInterrupt:
+            LOGGER.info("Console request interrupted by user")
             return self.renderers_factory.create_renderer("human-raw" if mode == "interactive" else mode).error(
                 "przerwano przez użytkownika",
                 130,
@@ -99,6 +107,7 @@ class AgentsSystemCLI:
 
     def __initialize(self) -> None:
         """Initialize the application, loading manifests and preparing the runtime."""
+        LOGGER.debug('Starting application.__initialize')
         settings = type(self.configuration)
         socket_configuration = SocketConfiguration(
             socket_path=settings.SYSTEM_AGENT_RUNTIME_SOCKET,
@@ -119,6 +128,7 @@ class AgentsSystemCLI:
                     raise
 
         self.catalog = ModulesFactory.create_modules_from_json_file(Path(type(self.configuration).MODULES_MANIFEST_PATH))
+        LOGGER.info("Console initialized: modules=%s runtime_connected=%s", len(self.catalog.modules), self.socket_client.is_connected)
         self.dispatcher = ModuleDispatcher(self.configuration, self.socket_client, self.catalog)
         self.renderers_factory = RenderersFactory(self.configuration, self.runtime_available)
 

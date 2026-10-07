@@ -1,12 +1,17 @@
 """Resolve and execute OpenClaw inside the gateway user's normal Bash shell."""
 from __future__ import annotations
 
+import logging
+
 import pwd
 from subprocess import CompletedProcess
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..app.services.process import ProcessRunner
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class OpenClawShell:
@@ -19,6 +24,7 @@ class OpenClawShell:
 
     def run(self, command: list[str], *, check: bool = True, capture: bool = False,
             timeout: int | float | None = None) -> CompletedProcess[str]:
+        LOGGER.info('Starting shell.run timeout=%s', timeout)
         user = pwd.getpwnam(self._gateway_user)
         return self._runner.run_as_user(
             self._gateway_user,

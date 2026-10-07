@@ -1,10 +1,15 @@
 from __future__ import annotations
+
+import logging
 from typing import TYPE_CHECKING
 from lib.modules_catalog import ModulesCatalog
 if TYPE_CHECKING:
     from agents_system import (
         State as AgentsSystemsState
         )
+LOGGER = logging.getLogger(__name__)
+
+
 class StateProvider:
 
     
@@ -14,6 +19,7 @@ class StateProvider:
         self._init_agents_system_state(modules_catalog)
 
     def get_agents_system_state(self):
+        LOGGER.debug('Starting state_provider.get_agents_system_state')
         return self._agents_system_state
 
     def _init_agents_system_state(self, modules_catalog: ModulesCatalog):

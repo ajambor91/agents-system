@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import json
 
 from pathlib import Path
@@ -11,6 +13,9 @@ from .state import (
     AgentStatePaths,
     AgentStateService,
 )
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class RuntimeConfigService:
@@ -31,6 +36,7 @@ class RuntimeConfigService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Writing agent runtime configuration dry_run=%s', dry_run)
         data = {
             "version": 1,
 
@@ -74,6 +80,7 @@ class RuntimeConfigService:
         agent_name: str,
     ) -> AgentRuntime:
 
+        LOGGER.debug('Loading agent runtime configuration agent_name=%s', agent_name)
         path = (
             self.state
             .paths(agent_name)

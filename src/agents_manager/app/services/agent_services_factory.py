@@ -1,6 +1,9 @@
 """Build isolated, context-dependent dependencies for one manager operation."""
 from __future__ import annotations
 
+import logging
+
+
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +27,9 @@ from .wakeup import WakeupService
 
 if TYPE_CHECKING:
     from ...open_claw import AgentToolAbstract
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -63,8 +69,7 @@ class AgentServicesFactory:
         messages: list[str] = []
         runner = self._runner_factory(verbose=flags.get('verbose', False), reporter=messages.append)
         state = AgentStateService(context, runner)
-        print("AGENT ROOT AGENT ROOT AGENT ROOT AGENT ROOT AGENT ROOT AGENT ROOT ")
-        print(context.agents_root)
+        LOGGER.debug("Creating agent services: agents_root=%s", context.agents_root)
         catalog_root = Path(flags['path']).parent if flags.get('path') is not None else context.agents_root
         catalog = AgentCatalog(catalog_root)
         tool = self._agent_tool.for_user(context.gateway_user, runner)

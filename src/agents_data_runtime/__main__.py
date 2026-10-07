@@ -3,15 +3,14 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    __package__ = "agents_data_runtime"
-
-from .service import main
 
 
+
+from . import Application
+from shared.get_config import get_config
+def run():
+    app = Application(get_config())
+    app.install_agent("/home/user-system/repositories/agents-system/agents/cccp")
+    return 0
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(run())

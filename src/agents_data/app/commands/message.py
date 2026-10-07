@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import argparse
 import json
 import os
@@ -12,6 +14,9 @@ from typing import Any
 
 from ..commands.base import CommandBase
 from ..services.app_comm import AppCommService
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class MessageCommand(CommandBase):
@@ -30,12 +35,7 @@ class MessageCommand(CommandBase):
             "messages": [{"type": args.type, "content": content}],
         }
 
-        if args.verbose:
-            print(
-                f"[DEBUG] POST {args.app_comm_url}/api/messages "
-                f"sender={sender} receivers={','.join(receivers)}",
-                file=sys.stderr,
-            )
+        LOGGER.debug("Submitting message: sender=%s receiver_count=%s type=%s", sender, len(receivers), args.type)
 
         result = AppCommService(args.app_comm_url, args.timeout).send_message(payload)
         local_record = {
@@ -52,12 +52,9 @@ class MessageCommand(CommandBase):
             try:
                 local_path = self._store_local(history_home, sender, local_record)
             except OSError as exc:
-                print(
-                    f"[WARN] Wiadomość została wysłana, ale nie zapisano "
-                    f"kopii lokalnej: {exc}",
-                    file=sys.stderr,
-                )
+                LOGGER.warning("Message sent but local copy failed: message_id=%s error_type=%s", result.message_id, type(exc).__name__)
 
+        LOGGER.info("Message command completed: message_id=%s local_copy=%s", result.message_id, local_path)
         if args.json:
             print(
                 json.dumps(
@@ -139,6 +136,7 @@ class MessageCommand(CommandBase):
                 records = current if isinstance(current, list) else [current]
             except json.JSONDecodeError:
                 damaged = path.with_suffix(".json.invalid")
+                LOGGER.warning("Preserving invalid message history: path=%s backup=%s", path, damaged)
                 path.replace(damaged)
         records.append(record)
 

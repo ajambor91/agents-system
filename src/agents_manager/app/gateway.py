@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import logging
+
+
 import argparse
 import asyncio
 import contextlib
@@ -26,6 +29,12 @@ DEFAULT_SOCKET = "/run/agents_manager/control.sock"
 MAX_REQUEST_BYTES = 2 * 1024 * 1024
 
 
+from lib.logging_config import configure_logging
+
+
+LOGGER = logging.getLogger(__name__)
+
+
 class GatewayServer:
     """Gateway-owned Unix service accepting authenticated agent wakeups."""
 
@@ -44,7 +53,7 @@ class GatewayServer:
             limit=MAX_REQUEST_BYTES + 1,
         )
         self.socket_path.chmod(0o666)
-        print(f"[gateway] listening on {self.socket_path}", flush=True)
+        LOGGER.info("Gateway listening: socket=%s", self.socket_path)
         async with self.server:
             await self.stopping.wait()
         self.server.close()
@@ -100,7 +109,7 @@ class GatewayServer:
             timeout=timeout,
         )
         if result.stderr:
-            print(result.stderr.rstrip(), file=sys.stderr, flush=True)
+            LOGGER.warning("Agent wakeup stderr: agent=%s output=%s", agent, result.stderr.rstrip())
         return {"ok": True, "agent": agent, "output": result.stdout[-4096:]}
 
     def _require_controller(self, caller_user: str) -> None:
@@ -146,6 +155,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None, configuration: Configuration | None = None) -> int:
+    configure_logging("agents-manager")
     args = build_parser().parse_args(argv)
     socket_path = Path(args.socket)
     if args.action != "serve":

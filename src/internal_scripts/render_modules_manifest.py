@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+import logging
+
+
 import argparse
 import copy
 import json
@@ -36,6 +39,12 @@ REQUIRED_CHILD_FIELDS = {
     "manifest_path",
 }
 SECTION_NAME = re.compile(r"^[a-z][a-z0-9_-]*$")
+
+
+from lib.logging_config import configure_logging
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -144,7 +153,7 @@ def render(
             raise RenderError(f"{module_name}: niebezpieczna ścieżka modułu")
         resolved_path = (modules / relative).resolve(strict=False)
         if not resolved_path.is_dir() or not is_below(resolved_path, modules):
-            print(resolved_path)
+            LOGGER.warning("Module directory unavailable: module=%s path=%s", module_name, resolved_path)
 
             raise RenderError(f"{module_name}: moduł nie istnieje w MODULES_DIR - ${resolved_path}")
         normalized = str(resolved_path)
@@ -230,7 +239,7 @@ def render(
     if any(SHELL_REFERENCE.search(value) for value in _strings(verified)):
         raise RenderError("Weryfikacja wykryła nierozwiązany placeholder")
     if verbose:
-        print(f"[render-modules-manifest] zapisano {output}", file=sys.stderr)
+        LOGGER.info("Rendered modules manifest: path=%s", output)
     return {
         "output": str(output.resolve()),
         "manifest_path": str(installed_manifest),
@@ -242,6 +251,7 @@ def render(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_logging("render-modules-manifest")
     arguments = parser().parse_args(argv)
     package = Path(__file__).resolve().parents[2]
     try:

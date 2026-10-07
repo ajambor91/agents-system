@@ -1,4 +1,10 @@
+
+import logging
+
 from typing import Any
+LOGGER = logging.getLogger(__name__)
+
+
 class HelpService:
 
     _manifests: dict[str, Any] = {}
@@ -6,8 +12,7 @@ class HelpService:
         self._manifests = manifests
 
     def help(self, method_name: str) -> dict[str, Any]:
-        print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
-        print(self._manifests)
+        LOGGER.debug("Resolving command help: method=%s", method_name)
         if method_name in (None, '', 'agents_system', 'system'):
             return self._manifests
         command = next((command for command in self._manifests['commands'] if command['name'] == method_name), None)

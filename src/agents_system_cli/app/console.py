@@ -10,6 +10,9 @@ from .exceptions import ApiError
 from .models import ApiResult
 
 
+from lib.logging_config import configure_logging
+
+
 class Console:
     @staticmethod
     def execute(arguments: Sequence[str] | None = None, *, application: AgentsSystemCLI | None = None) -> ApiResult:
@@ -29,6 +32,7 @@ class Console:
 
     @classmethod
     def main(cls, arguments: Sequence[str] | None = None) -> int:
+        configure_logging("agents-system-cli")
         try:
             return cls.emit(cls.execute(arguments))
         except ApiError as exc:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import json
 import os
 import pwd
@@ -13,6 +15,9 @@ from typing import Any
 from ..context import ApplicationContext
 from .process import ProcessRunner
 from ...open_claw import AgentToolAbstract, OpenClawFacade
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -42,6 +47,7 @@ class WakeupService:
         caller_user: str,
         timeout: int,
     ) -> WakeupResult:
+        LOGGER.info('Starting wakeup.execute agent_name=%s caller_user=%s timeout=%s', agent_name, caller_user, timeout)
         if timeout <= 0 or timeout > 3600:
             raise ValueError("Wakeup timeout must be between 1 and 3600 seconds.")
         runtime = self._load_runtime(agent_name)
@@ -80,6 +86,7 @@ class WakeupService:
         return value
 
     def _authorize(self, runtime: dict[str, Any], caller_user: str) -> None:
+        LOGGER.debug('Starting wakeup._authorize caller_user=%s', caller_user)
         effective_user = pwd.getpwuid(os.geteuid()).pw_name
         if runtime.get("gateway_user") != effective_user:
             raise PermissionError("Gateway process does not own this agent runtime.")

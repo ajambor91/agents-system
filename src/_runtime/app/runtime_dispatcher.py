@@ -1,3 +1,6 @@
+
+import logging
+
 import threading
 
 from concurrent.futures import ThreadPoolExecutor
@@ -6,6 +9,9 @@ from typing import Any
 from . import InstanceManager
 from .exceptions import RuntimeDispatchError
 from .models import Request
+
+LOGGER = logging.getLogger(__name__)
+
 
 class RuntimeDispatcher:
     """
@@ -50,6 +56,7 @@ class RuntimeDispatcher:
 
     def refresh_instances(self) -> None:
 
+        LOGGER.debug('Starting runtime_dispatcher.refresh_instances')
         managed_names = {
             managed_instance.get_class_name()
             for managed_instance
@@ -97,7 +104,7 @@ class RuntimeDispatcher:
         self,
         request_obj: Request,
     ) -> Any:
-        print("REQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSSREQUESTSS")
+        LOGGER.debug("Dispatching runtime request: request_id=%s", request_obj.request_id)
         instance_name = request_obj.payload['module_name']
 
         method_name = request_obj.payload['method']
@@ -171,8 +178,7 @@ class RuntimeDispatcher:
             )
 
         try:
-            print(kwargs)
-            print("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
+            LOGGER.debug("Submitting runtime action: module=%s method=%s argument_names=%s", instance_name, method_name, sorted(kwargs))
             future = executor.submit(
                 action,
                 **kwargs,
@@ -181,6 +187,7 @@ class RuntimeDispatcher:
             return future.result()
 
         except Exception as exc:
+            LOGGER.exception("Runtime action failed: module=%s method=%s", instance_name, method_name)
 
             raise RuntimeDispatchError(
                 "ACTION_FAILED",
@@ -246,6 +253,7 @@ class RuntimeDispatcher:
         wait: bool = True,
     ) -> None:
 
+        LOGGER.debug('Starting runtime_dispatcher.shutdown')
         with self._lock:
 
             executors = list(

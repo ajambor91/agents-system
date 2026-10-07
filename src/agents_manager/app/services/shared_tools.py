@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import shlex
 import shutil
 import tempfile
@@ -9,6 +11,9 @@ from pathlib import Path
 
 from .agent_config import BootstrapProcess
 from .process import ProcessRunner
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -41,6 +46,7 @@ class SharedToolsService:
         privileged: bool,
         dry_run: bool,
     ) -> None:
+        LOGGER.info('Deploying shared agent tools source=%s destination=%s owner=%s privileged=%s dry_run=%s', source, destination, owner, privileged, dry_run)
         tools = self._discover(source, destination)
         self._validate_bootstrap(bootstrap, tools)
 
@@ -90,6 +96,7 @@ class SharedToolsService:
         dry_run: bool,
     ) -> None:
         """Start configured background tools immediately as the agent user."""
+        LOGGER.info('Starting agent bootstrap destination=%s owner=%s dry_run=%s', destination, owner, dry_run)
         if not configured:
             return
         bootstrap = destination / self.BOOTSTRAP_NAME
@@ -286,6 +293,7 @@ class SharedToolsService:
         privileged: bool,
         replace_existing: bool,
     ) -> None:
+        LOGGER.debug('Starting shared_tools._install_file source=%s destination=%s owner=%s privileged=%s', source, destination, owner, privileged)
         self._prepare_target(destination, privileged, replace_existing)
         if privileged:
             self.runner.run_privileged([
@@ -305,6 +313,7 @@ class SharedToolsService:
         privileged: bool,
         replace_existing: bool,
     ) -> None:
+        LOGGER.debug('Starting shared_tools._install_content destination=%s owner=%s privileged=%s', destination, owner, privileged)
         with tempfile.NamedTemporaryFile(
             "w", encoding="utf-8", delete=False
         ) as handle:

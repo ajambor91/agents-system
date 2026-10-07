@@ -17,6 +17,9 @@ if __package__ in (None, ""):
 
 from .app import RuntimeApp, MainRuntime
 
+from lib.logging_config import configure_logging
+
+
 def get_env() -> None:
     script_dir = Path(__file__).resolve().parent
     env_file = (script_dir / "./../.env").resolve()
@@ -30,6 +33,7 @@ def get_env() -> None:
 def main() -> int:
     """Run the shared resident runtime process."""
 
+    configure_logging("agents-system-runtime")
     get_env()
 
     bootstrap = RuntimeApp()

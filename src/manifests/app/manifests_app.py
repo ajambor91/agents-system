@@ -1,6 +1,8 @@
 """Coordinate manifest I/O, model validation and reference resolution."""
 from __future__ import annotations
 
+import logging
+
 import copy
 from pathlib import Path
 from typing import Any
@@ -8,6 +10,9 @@ from typing import Any
 from lib.manifests_loader import ManifestsLoader
 from .helpers import ManifestValidator
 from .exceptions import ManifestStructureError
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ManifestsApp:
@@ -18,12 +23,15 @@ class ManifestsApp:
         return ManifestsLoader.parse_manifest(content)
 
     def validate_manifest(self, manifest_data: Any) -> bool:
+        LOGGER.debug('Starting manifests_app.validate_manifest')
         return ManifestValidator.validate(manifest_data)
 
     def load_modules_manifest(self, path: str | Path) -> dict[str, Any]:
+        LOGGER.debug('Starting manifests_app.load_modules_manifest path=%s', path)
         return self.resolve_module_manifests(self.load_manifest(path))
 
     def resolve_module_manifests(self, data: dict[str, Any]) -> dict[str, Any]:
+        LOGGER.debug('Starting manifests_app.resolve_module_manifests')
         self.validate_manifest(data)
         if data['kind'] != 'agents-system-modules-manifest':
             raise ManifestStructureError('Expected an agents-system-modules-manifest')
@@ -39,6 +47,7 @@ class ManifestsApp:
         return resolved
 
     def load_module_manifest(self, path: str | Path, module_name: str) -> dict[str, Any]:
+        LOGGER.debug('Starting manifests_app.load_module_manifest path=%s module_name=%s', path, module_name)
         document = self.load_manifest(path)
         self.validate_manifest(document)
         if document['kind'] != 'module-manifest':

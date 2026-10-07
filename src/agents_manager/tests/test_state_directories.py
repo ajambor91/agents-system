@@ -29,7 +29,7 @@ class StateDirectoriesTests(unittest.TestCase):
         self.runner = Mock()
         self.service = AgentStateService(self.context, self.runner)
 
-    def test_create_group_writable_directories_even_with_restrictive_umask(self):
+    def test_create_world_writable_directories_even_with_restrictive_umask(self):
         previous_umask = os.umask(0o077)
         try:
             paths = self.service.prepare("example")
@@ -37,7 +37,7 @@ class StateDirectoriesTests(unittest.TestCase):
             os.umask(previous_umask)
         for directory in (paths.agent_dir, paths.shells_dir):
             metadata = directory.stat()
-            self.assertEqual(stat.S_IMODE(metadata.st_mode), 0o2770)
+            self.assertEqual(stat.S_IMODE(metadata.st_mode), 0o777)
             self.assertEqual(metadata.st_gid, self.state_root.stat().st_gid)
         self.runner.run_privileged.assert_not_called()
         self.runner.run.assert_not_called()
@@ -49,8 +49,8 @@ class StateDirectoriesTests(unittest.TestCase):
         agent.chmod(0o700)
         shells.chmod(0o755)
         self.service.prepare("example")
-        self.assertEqual(stat.S_IMODE(agent.stat().st_mode), 0o2770)
-        self.assertEqual(stat.S_IMODE(shells.stat().st_mode), 0o2770)
+        self.assertEqual(stat.S_IMODE(agent.stat().st_mode), 0o777)
+        self.assertEqual(stat.S_IMODE(shells.stat().st_mode), 0o777)
         with patch.object(state_module.os, "fchown") as chown, patch.object(state_module.os, "fchmod") as chmod:
             self.service.prepare("example")
         chown.assert_not_called()
@@ -61,7 +61,7 @@ class StateDirectoriesTests(unittest.TestCase):
         shells = self.state_root / "example" / "shells"
         shells.mkdir(parents=True)
         for directory in (shells.parent, shells):
-            directory.chmod(0o2770)
+            directory.chmod(0o777)
         original_fstat = os.fstat
 
         def other_owner_metadata(fd):
@@ -76,18 +76,18 @@ class StateDirectoriesTests(unittest.TestCase):
             self.service.prepare("example")
         self.runner.run_privileged.assert_not_called()
 
-    def test_changing_group_also_restores_setgid_mode(self):
+    def test_changing_group_also_normalizes_world_writable_mode(self):
         parent_fd = os.open(self.state_root, os.O_RDONLY | os.O_DIRECTORY)
         self.addCleanup(os.close, parent_fd)
         group_id = self.state_root.stat().st_gid
-        metadata = SimpleNamespace(st_gid=group_id + 1, st_mode=stat.S_IFDIR | 0o2770)
+        metadata = SimpleNamespace(st_gid=group_id + 1, st_mode=stat.S_IFDIR | 0o777)
         with patch.object(state_module.os, "fstat", return_value=metadata), \
                 patch.object(state_module.os, "fchown") as chown, \
                 patch.object(state_module.os, "fchmod") as chmod:
             directory_fd = self.service._prepare_directory("example", parent_fd, group_id)
         try:
             chown.assert_called_once_with(directory_fd, -1, group_id)
-            chmod.assert_called_once_with(directory_fd, 0o2770)
+            chmod.assert_called_once_with(directory_fd, 0o777)
         finally:
             os.close(directory_fd)
 
@@ -195,7 +195,7 @@ class StateReaderTraversalTests(unittest.TestCase):
                 self.runner.reset_mock()
                 method("agent-user", self.paths)
                 self.assertEqual(self.runner.run_privileged.call_args_list, self.expected_calls(file_path))
-        self.assertEqual(stat.S_IMODE(self.paths.agent_dir.stat().st_mode), 0o2770)
+        self.assertEqual(stat.S_IMODE(self.paths.agent_dir.stat().st_mode), 0o777)
         self.assertEqual(stat.S_IMODE(self.state_root.stat().st_mode), 0o2770)
 
     def test_shell_reader_can_traverse_agent_and_shell_directories(self):
@@ -203,7 +203,8 @@ class StateReaderTraversalTests(unittest.TestCase):
         expected = self.expected_calls(self.paths.agentrc) + self.expected_calls(self.paths.bashrc)
         self.assertEqual(self.runner.run_privileged.call_args_list, expected)
         for directory in (self.state_root, self.paths.agent_dir, self.paths.shells_dir):
-            self.assertEqual(stat.S_IMODE(directory.stat().st_mode), 0o2770)
+            expected_mode = 0o2770 if directory == self.state_root else 0o777
+            self.assertEqual(stat.S_IMODE(directory.stat().st_mode), expected_mode)
         # Directory ACLs grant traversal only; shared inventories remain private.
         for recorded_call in self.runner.run_privileged.call_args_list:
             arguments = recorded_call.args[0]

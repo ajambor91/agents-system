@@ -1,0 +1,170 @@
+{
+  "version": 1,
+
+  "shell": {
+    "binary": "/bin/bash",
+    "working_directory": "{{AGENT_WORKSPACE}}"
+  },
+
+  "environment": [
+    {
+      "name": "AGENT_NAME",
+      "value": "{{AGENT_NAME}}",
+      "description": "Logical OpenClaw agent name."
+    },
+    {
+      "name": "AGENT_USER",
+      "value": "{{AGENT_USER}}",
+      "description": "Linux user assigned to this agent."
+    },
+    {
+      "name": "AGENT_HOME",
+      "value": "{{AGENT_HOME}}",
+      "description": "Linux home assigned to this agent."
+    },
+    {
+      "name": "AGENT_WORKSPACE",
+      "value": "{{AGENT_WORKSPACE}}",
+      "description": "OpenClaw workspace assigned to this agent."
+    },
+    {
+      "name": "AGENT_STATE_DIR",
+      "value": "{{AGENT_STATE_DIR}}",
+      "description": "Central user-system-owned state directory."
+    },
+    {
+      "name": "AGENT_GATEWAY_USER",
+      "value": "{{AGENT_GATEWAY_USER}}",
+      "description": "Linux user running the OpenClaw gateway."
+    },
+    {
+      "name": "AGENT_HISTORY_DIR",
+      "value": "{{AGENT_HOME}}/.history",
+      "description": "Private execution and research history."
+    },
+    {
+      "name": "AGENT_SEARCH_HISTORY_DIR",
+      "value": "{{AGENT_HOME}}/.history/searches",
+      "description": "One report file per research request."
+    },
+    {
+      "name": "AGENT_SCRIPTS",
+      "value": "{{AGENT_SCRIPTS}}",
+      "description": "Agent-specific scripts."
+    },
+    {
+      "name": "AGENT_TOOLS",
+      "value": "{{AGENT_TOOLS}}",
+      "description": "Agent-specific tools."
+    },
+    {
+      "name": "AGENT_TMP",
+      "value": "{{AGENT_HOME}}/tmp",
+      "description": "Private temporary directory."
+    },
+    {
+      "name": "TMPDIR",
+      "value": "{{AGENT_HOME}}/tmp",
+      "description": "Temporary directory for child processes."
+    },
+    {
+      "name": "XDG_CONFIG_HOME",
+      "value": "{{AGENT_HOME}}/.config",
+      "description": "Agent-local XDG configuration."
+    },
+    {
+      "name": "XDG_CACHE_HOME",
+      "value": "{{AGENT_HOME}}/.cache",
+      "description": "Agent-local XDG cache."
+    },
+    {
+      "name": "XDG_DATA_HOME",
+      "value": "{{AGENT_HOME}}/.local/share",
+      "description": "Agent-local XDG data."
+    }
+  ],
+
+  "path": [
+    "{{AGENT_HOME}}/bin",
+    "{{AGENT_SCRIPTS}}",
+    "{{AGENT_TOOLS}}/bin",
+    "{{AGENT_HOME}}/.local/bin"
+  ],
+
+  "agentrc_commands": [
+    {
+      "command": "umask 077",
+      "description": "Create private files by default."
+    },
+    {
+      "command": "[[ -x \"$AGENT_TOOLS/bin/bootstrap.sh\" ]] && \"$AGENT_TOOLS/bin/bootstrap.sh\"",
+      "description": "Start configured background tools once."
+    }
+  ],
+
+  "bashrc": {
+    "environment": [
+      {
+        "name": "HISTFILE",
+        "value": "{{AGENT_HOME}}/.bash_history",
+        "description": "Dedicated shell history."
+      },
+      {
+        "name": "HISTSIZE",
+        "value": "10000",
+        "description": "Commands retained in memory."
+      },
+      {
+        "name": "HISTFILESIZE",
+        "value": "20000",
+        "description": "Commands persisted to disk."
+      },
+      {
+        "name": "HISTCONTROL",
+        "value": "ignoreboth:erasedups",
+        "description": "Remove duplicate history entries."
+      },
+      {
+        "name": "GIT_PAGER",
+        "value": "cat",
+        "description": "Disable interactive Git pager."
+      },
+      {
+        "name": "SYSTEMD_PAGER",
+        "value": "cat",
+        "description": "Disable interactive systemd pager."
+      }
+    ],
+
+    "shell_options": [
+      {
+        "command": "shopt -s histappend",
+        "description": "Append history instead of replacing it."
+      },
+      {
+        "command": "shopt -s checkwinsize",
+        "description": "Refresh terminal dimensions."
+      }
+    ],
+
+    "sources": [
+      {
+        "path": "{{AGENT_HOME}}/.bashrc.local",
+        "optional": true,
+        "description": "Optional local shell overrides."
+      }
+    ],
+
+    "commands": [
+      {
+        "command": "[[ -d \"$AGENT_WORKSPACE\" ]] && cd \"$AGENT_WORKSPACE\"",
+        "description": "Start interactive shell in the workspace."
+      }
+    ],
+
+    "prompt": {
+      "enabled": true,
+      "value": "[{{AGENT_NAME}}] \\u@\\h:\\w\\$ "
+    }
+  }
+}

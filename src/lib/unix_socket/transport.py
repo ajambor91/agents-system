@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import logging
+
+
 import socket
 from pathlib import Path
 from .abstract import AbstractUnixSocketTransport
 from .exceptions import UnixSocketConnectionException, UnixSocketProtocolException, UnixSocketTimeoutException
 from .models import SocketConfiguration
+
+LOGGER = logging.getLogger(__name__)
+
 
 class UnixSocketTransport(AbstractUnixSocketTransport):
     def __init__(self) -> None:
@@ -28,8 +34,7 @@ class UnixSocketTransport(AbstractUnixSocketTransport):
                 raise ValueError("timeouts cannot be negative")
         self.close()
         connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        print("SOCKETPATH")
-        print(configuration.socket_path)
+        LOGGER.debug("Connecting Unix socket: path=%s connect_timeout=%s", configuration.socket_path, configuration.connect_timeout)
         try:
             connection.settimeout(configuration.connect_timeout)
             connection.connect(str(configuration.socket_path))
@@ -63,7 +68,7 @@ class UnixSocketTransport(AbstractUnixSocketTransport):
                 raise UnixSocketProtocolException("Socket response is too large")
             frame = bytes(self._buffer[:end])
             del self._buffer[:end]
-            print("EXCHANGE")
+            LOGGER.debug("Received Unix socket response: bytes=%s", len(frame))
             return frame
         except UnixSocketProtocolException:
             self.close()
@@ -72,8 +77,7 @@ class UnixSocketTransport(AbstractUnixSocketTransport):
             self.close()
             raise UnixSocketTimeoutException(str(exc)) from exc
         except OSError as exc:
-            print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-            print(exc)
+            LOGGER.warning("Unix socket exchange failed: path=%s error=%s", self._configuration.socket_path, exc)
             self.close()
             raise UnixSocketConnectionException(str(exc)) from exc
 

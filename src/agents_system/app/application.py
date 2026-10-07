@@ -1,6 +1,8 @@
 """Public API of the Agents System module."""
 from __future__ import annotations
 
+import logging
+
 from typing import Any, TYPE_CHECKING
 
 from .state.app_state_remote import AppStateRemote, State
@@ -10,6 +12,9 @@ if TYPE_CHECKING:
 
 from lib.configuration import Configuration
 from .services import HelpService
+
+LOGGER = logging.getLogger(__name__)
+
 
 class Application:
     _configuration: Configuration 
@@ -25,6 +30,7 @@ class Application:
 
     def execute(self, method_name: str, flags: dict[str, Any] = {},  module_name: str | None = None) -> dict[str, Any]:
         """Return installed module records or public resident instances."""
+        LOGGER.info('Starting application.execute method_name=%s module_name=%s agent=%s dry_run=%s', method_name, module_name, (flags or {}).get('name'), (flags or {}).get('dry_run', False))
         return self._app_service.execute(method_name, flags, module_name)
         return self._app_service.list(installed=installed, running=running)
 
@@ -34,6 +40,7 @@ class Application:
              return self._help_service.help(method_name)
         return self._app_service.help(module_name, method_name)
     def initialize(self, runtime_api: RuntimeApiWrapper):
+            LOGGER.debug('Starting application.initialize')
             self._runtime_api_wrapper = runtime_api
             self._app_service = AppService(self._configuration, runtime_api)
             initial_state: State = runtime_api.request_agents_systeninitial_stateget_agents_system_state()

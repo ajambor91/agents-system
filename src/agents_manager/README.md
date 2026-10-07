@@ -74,8 +74,9 @@ Instalator zapisuje źródło jako `definition_path` w konfiguracji stanu.
 pola korzystają z dotychczasowej lokalizacji `agents/NAME` w repozytorium.
 
 Katalog główny stanu przygotowuje instalator systemu. Manager tworzy w nim
-katalogi agenta i `shells/` bez `sudo`, z dziedziczeniem grupy i trybem
-`2770`. Dedykowany agent spoza grupy aplikacji otrzymuje ACL pozwalające
+katalogi agenta i `shells/` bez `sudo`, z trybem `0777` (odczyt, zapis
+i przechodzenie dla wszystkich użytkowników), bez ustawiania bitu SGID.
+Tryb jest normalizowany także dla istniejących katalogów i niezależnie od umask. Dedykowany agent spoza grupy aplikacji otrzymuje ACL pozwalające
 przejść przez te katalogi i odczytać wskazane pliki konfiguracji oraz powłoki.
 
 ## Wstrzykiwanie zależności

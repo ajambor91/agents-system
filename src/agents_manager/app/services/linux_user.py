@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import pwd
 import re
 import shutil
@@ -10,6 +12,9 @@ from pathlib import Path
 from .process import (
     ProcessRunner,
 )
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -39,6 +44,7 @@ class LinuxUserService:
         dry_run: bool = False,
     ) -> LinuxUser:
 
+        LOGGER.debug('Resolving or creating runtime user username=%s dry_run=%s', username, dry_run)
         if not self.USER_PATTERN.fullmatch(
             username
         ):
@@ -104,6 +110,7 @@ class LinuxUserService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Preparing runtime user home dry_run=%s', dry_run)
         directories = [
             user.home / "bin",
             user.home / "scripts",
@@ -156,6 +163,7 @@ class LinuxUserService:
         dry_run: bool = False,
     ) -> None:
 
+        LOGGER.debug('Preparing runtime user workspace dry_run=%s', dry_run)
         if dry_run:
             self.runner.report(
                 f"[DRY] create workspace "

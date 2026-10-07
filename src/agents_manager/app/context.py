@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import os
 import pwd
 
@@ -7,6 +9,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from lib.configuration import Configuration
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -30,6 +35,7 @@ class ApplicationContext:
         gateway_user: str | None = None,
     ) -> "ApplicationContext":
 
+        LOGGER.debug('Starting context.create')
         repo_root = repo_root.expanduser().resolve()
 
         gateway_user = (

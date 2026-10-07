@@ -1,13 +1,18 @@
 """Default response data for the JSON message protocol."""
 from __future__ import annotations
+
+import logging
+
 from typing import Any
+
+LOGGER = logging.getLogger(__name__)
+
 
 class Response:
     def __init__(self, request_id: str, successful: bool, result: Any = None, error: dict[str, Any] | None = None) -> None:
         self._request_id = request_id
         self._successful = successful
-        print("RESPONSE RESULS")
-        print(result)
+        LOGGER.debug("Created runtime response: request_id=%s successful=%s result_type=%s", request_id, successful, type(result).__name__)
         self._result = result
         self._error = dict(error) if error is not None else None
 

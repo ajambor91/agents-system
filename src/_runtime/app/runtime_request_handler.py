@@ -104,7 +104,9 @@ class RuntimeRequestHandler(socketserver.StreamRequestHandler):
         return Request(body)
 
     def _process(self, request: Request) -> Response:
+        LOGGER.debug("Processing runtime request: request_id=%s operation=%s", request.request_id, request.operation)
         result = self.server.runtime.dispatch(request)
+        LOGGER.debug("Runtime request completed: request_id=%s", request.request_id)
 
         return Response(
             request_id=request.request_id,
@@ -113,6 +115,7 @@ class RuntimeRequestHandler(socketserver.StreamRequestHandler):
         )
 
     def _send_response(self, response: Response) -> None:
+        LOGGER.debug("Sending runtime response: request_id=%s successful=%s", response.request_id, response.successful)
         serialized = json.dumps(
             response.to_dict(),
             ensure_ascii=False,

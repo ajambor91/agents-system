@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import logging
 import json
 import os
 import pwd
@@ -9,6 +11,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from ..app.services.process import ProcessRunner
 from .shell import OpenClawShell
+
+LOGGER = logging.getLogger(__name__)
+
 
 class OpenClawBackend:
     EXECUTOR_PLUGIN_ID = 'agent-executor'
@@ -23,6 +28,7 @@ class OpenClawBackend:
         self._shell = OpenClawShell(gateway_user, self.process_runner)
 
     def add_agent(self, *, name: str, workspace: Path, model: str | None=None, force: bool=False, dry_run: bool=False) -> None:
+        LOGGER.debug('Starting backend.add_agent name=%s force=%s dry_run=%s', name, force, dry_run)
         existing = self._find_agent(name)
         if existing is not None:
             if not force:
@@ -53,6 +59,7 @@ class OpenClawBackend:
         return None
 
     def list_agents(self) -> list[dict]:
+        LOGGER.debug('Starting backend.list_agents')
         result = self._shell.run([str(self.binary), 'agents', 'list', '--json'], capture=True)
         try:
             agents = json.loads(result.stdout)
@@ -80,6 +87,7 @@ class OpenClawBackend:
             self.process_runner.report(f'[+] OpenClaw agent already registered: {name}')
 
     def apply_identity(self, *, name: str, workspace: Path, dry_run: bool=False) -> None:
+        LOGGER.debug('Starting backend.apply_identity name=%s dry_run=%s', name, dry_run)
         identity = workspace / 'IDENTITY.md'
         if not identity.is_file():
             return
@@ -91,6 +99,7 @@ class OpenClawBackend:
 
     def install_executor_plugin(self, plugin_root: Path, *, snapshot_root: Path, dry_run: bool=False) -> None:
         """Install a root-owned snapshot accepted by OpenClaw's trust checks."""
+        LOGGER.debug('Starting backend.install_executor_plugin dry_run=%s', dry_run)
         if not (plugin_root / 'openclaw.plugin.json').is_file():
             raise FileNotFoundError(f'Missing OpenClaw plugin manifest: {plugin_root}')
         if snapshot_root.name != self.EXECUTOR_PLUGIN_ID:
@@ -137,6 +146,7 @@ class OpenClawBackend:
 
     def set_agent_tools(self, name: str, policy: dict, *, dry_run: bool=False) -> None:
         """Persist one validated per-agent tool policy in OpenClaw."""
+        LOGGER.debug('Starting backend.set_agent_tools name=%s dry_run=%s', name, dry_run)
         policy = dict(policy)
         if 'also_allow' in policy:
             policy['alsoAllow'] = policy.pop('also_allow')
@@ -148,6 +158,7 @@ class OpenClawBackend:
 
     def get_agent_tools(self, name: str) -> dict:
         """Read the currently authored OpenClaw tool policy for one agent."""
+        LOGGER.debug('Starting backend.get_agent_tools name=%s', name)
         result = self._shell.run([str(self.binary), 'config', 'get', f'agents.entries.{name}.tools'], check=False, capture=True)
         if result.returncode != 0:
             combined = f'{result.stdout or ''}\n{result.stderr or ''}'
@@ -163,6 +174,7 @@ class OpenClawBackend:
         return policy
 
     def run_agent(self, *, agent_name: str, session_key: str, message_file: Path, timeout: int):
+        LOGGER.debug('Starting backend.run_agent agent_name=%s timeout=%s', agent_name, timeout)
         return self._shell.run(['openclaw', 'agent', '--agent', agent_name,
                                 '--session-key', session_key, '--message-file', str(message_file),
                                 '--timeout', str(timeout), '--json'], capture=True, timeout=timeout + 30)

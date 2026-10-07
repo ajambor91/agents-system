@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from ..context import ApplicationContext
 from .agent_services_factory import AgentServicesFactory
 
@@ -10,6 +12,9 @@ from typing import Any
 
 from .agent_catalog import AgentCatalog
 from .agent_registry import AgentRegistryService
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class AgentsStatusService:
@@ -24,6 +29,7 @@ class AgentsStatusService:
         flags: Mapping[str, Any],
         context: ApplicationContext,
     ) -> dict[str, Any]:
+        LOGGER.info('Reading agent status agent=%s dry_run=%s', (flags or {}).get('name'), (flags or {}).get('dry_run', False))
         if not AgentCatalog.AGENT_PATTERN.fullmatch(flags.get('name')):
             raise ValueError(f"Invalid agent name: {flags.get('name')}")
 
