@@ -28,6 +28,7 @@ class Agent:
     _agent_source_dir_path: Path | None = None
     _temp_path: Path | None = None
     _target_path: Path | None = None
+    _home_path: Path | None = None
     _model: str
     _agent_home: str
     _agent_group: str
@@ -48,11 +49,11 @@ class Agent:
         return super().__new__(cls)
 
     def __init__(self, source_dir: str,data: str):
-        self.STATUS = AgentStatus.INITIALIZED
+        self.STATUS = AgentStatus.INSTALLING_INITIALIZED
         self._validate(data)
-        self.STATUS = AgentStatus.VALIDATED
+        self.STATUS = AgentStatus.INSTALLING_VALIDATED
         self._assign_fields(source_dir, data)
-        self.STATUS = AgentStatus.ASSIGNED
+        self.STATUS = AgentStatus.INSTALLING_ASSIGNED
 
         
     @classmethod
@@ -69,9 +70,17 @@ class Agent:
             if not data.get(field):
                 raise Exception(f"Config does not contain all required fields! Field: {field}")
         return True
+    def update_status(self, status: AgentStatus) -> None:
+        self.STATUS = status
 
+    def get_status(self) -> AgentStatus:
+        return self.STATUS
+    
     def get_agent_name(self) -> str:
         return self._agent_name
+
+    def get_agent_group(self) -> str:
+        return self._agent_group
     
     def get_agent_temp_path(self) -> Path:
         return self._temp_path
@@ -88,20 +97,19 @@ class Agent:
     def get_agent_home(self) -> str :
         return self._agent_home
 
+    def get_home_path(self) -> Path:
+        return self._home_path
     def get_agent_model(self) -> str:
         return self._model
+
+    def get_agent_shell(self) -> str :
+        return self._shell
     
-    def update_agents_paths(self, agent_source_path: Path, agent_temp_path: Path, agent_target_path: Path):
+    def update_agents_paths(self, agent_temp_path: Path, agent_source_path: Path , agent_target_path: Path| None = None):
         self._agent_source_dir_path = agent_source_path
         self._target_path = agent_target_path
         self._temp_path = agent_temp_path
-
-
-    def load_md_files(self, loader_service: LoaderDataService) -> bool:
-        if self.STATUS == AgentStatus.SYSTEM_INSTALLED:
-            self._markdown_files = loader_service.load_personalities(self._agent_source_dir_path, self._PERSONALITIES_DIR)
-        else:
-            raise Exception("Agent not installed in the system")
+        self._home_path = Path(self._agent_home)
 
     def _assign_fields(self,agent_source_dir: str, data: dict[str, Any]):
         self._agent_name = data.get('name')

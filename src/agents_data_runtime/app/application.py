@@ -39,8 +39,8 @@ class Application:
             removing_service=removing_service
             )
 
-    def install_agent(self, path: str):
-        self._agents_service.install_agent(path)
+    def install_agent(self, path: str, force: bool = False):
+        return self._agents_service.install_agent(path, force)
 
     def remove_agent(self, agent_name: str):
-        self._agents_service.removing_agent(agent_name)
+        return self._agents_service.removing_agent(agent_name)

@@ -42,3 +42,4 @@ class LoaderDataService:
             stem: MarkdownFile(**data)
             for stem, data in raw_files.items()
         }
+

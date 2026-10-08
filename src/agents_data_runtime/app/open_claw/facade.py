@@ -6,7 +6,7 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from typing import Any, TYPE_CHECKING
 import subprocess
-
+from ..models.markdown_doc import MarkdownFile
 
 
 LOGGER = logging.getLogger(__name__)
@@ -28,7 +28,8 @@ class OpenClawFacade:
         
         return self._run_as_user(command)
 
-    def remove_agent(self, name):
+
+    def remove_agent(self, name: str):
         command = [
             "openclaw", "agents", "delete", name, "--force", "--json" 
         ]
@@ -38,9 +39,10 @@ class OpenClawFacade:
     #     LOGGER.debug('Starting facade.list_agents')
     #     return self._get_backend().list_agents()
 
-    # def apply_identity(self, *, name: str, workspace: Path, dry_run: bool=False) -> None:
-    #     LOGGER.debug('Starting facade.apply_identity name=%s dry_run=%s', name, dry_run)
-    #     return self._get_backend().apply_identity(name=name, workspace=workspace, dry_run=dry_run)
+    def apply_identity(self, name: str, identity: MarkdownFile, dry_run: bool=False) -> None:
+        command = [str(self.binary), 'agents', 'set-identity', '--agent', name, '--identity-file', str(identity)]
+        LOGGER.debug('Starting facade.apply_identity name=%s dry_run=%s', name, dry_run)
+        return self._get_backend().apply_identity(name=name, workspace=workspace, dry_run=dry_run)
 
     # def install_executor_plugin(self, plugin_root: Path, *, snapshot_root: Path, dry_run: bool=False) -> None:
     #     LOGGER.debug('Starting facade.install_executor_plugin dry_run=%s', dry_run)
@@ -69,5 +71,19 @@ class OpenClawFacade:
             "bash",
             *command,
         ]
-        return subprocess.run(user_command, check=True)
+        try:
+            return subprocess.run(
+                user_command,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as e:
+            message = (
+                (e.stderr or "").strip()
+                or (e.stdout or "").strip()
+                or f"Command failed, error code: {e.returncode}"
+            )
+            raise RuntimeError(message) from e
+    
 
