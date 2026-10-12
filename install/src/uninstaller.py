@@ -42,7 +42,8 @@ class Uninstaller(InstallerParent):
         self.installer.verbose = configuration.verbose
         unit = self.installer.unit_root / f'{configuration.app_name}.service'
         if configuration.mode == 'system':
-            validate_managed_unit(unit, configuration)
+            for service in self.installer._unit_paths(configuration):
+                validate_managed_unit(service, configuration)
         env = configuration.install_dir / 'src/.env'
         expected = f"ABSOLUTE_CONFIG_PATH={configuration.config_dir / ENVIRONMENT_FILE}\n"
         if env.is_symlink() or not env.is_file() or env.read_text(encoding='utf-8') != expected:
@@ -66,15 +67,18 @@ class Uninstaller(InstallerParent):
         validate_owned_directory(installer_module, configuration)
         raw = lifecycle_journal_configuration(configuration, previous, 'uninstall')
         raw['unit_path'] = str(unit)
+        raw['manager_unit_path'] = str(self.installer._unit_paths(configuration)[1])
 
         def apply(journal: InstallJournal) -> dict[str, Any]:
             if configuration.mode == 'system':
-                journal.record('service_state', unit=unit.name, **self.installer._service_state(unit.name))
-                self.installer._run(['systemctl', 'disable', '--now', unit.name])
+                for service in reversed(self.installer._unit_paths(configuration)):
+                    journal.record('service_state', unit=service.name, **self.installer._service_state(service.name))
+                    self.installer._run(['systemctl', 'disable', '--now', service.name])
             for command in commands:
                 delete_path(command, journal)
             if configuration.mode == 'system':
-                delete_path(unit, journal)
+                for service in self.installer._unit_paths(configuration):
+                    delete_path(service, journal)
                 self.installer._run(['systemctl', 'daemon-reload'])
                 journal.record('daemon_reload')
             if record is not None:

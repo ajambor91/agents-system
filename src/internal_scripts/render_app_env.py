@@ -170,6 +170,12 @@ def _validate_layout(values: Mapping[str, str], mode: str) -> None:
     for name in ("APP_CONFIG_DIR", "APP_DATA_DIR", "INSTALLED_MODULES_DIR", "APP_RUNTIME_DIR"):
         _normalized_absolute(values[name], name)
 
+    for name in ("AGENT_PERSONALITY_DIR_NAME", "AGENT_SCRIPTS_SOURCE_DIR_NAME"):
+        value = values[name]
+        if (not value or value != value.strip() or value in {".", ".."}
+                or any(char in value for char in ("/", "\\", "\x00", "\r", "\n"))):
+            raise RenderError(f"{name} musi być samą nazwą katalogu bez ścieżki")
+
     agents_filename = values["INSTALLED_AGENTS_LIST_FILE"]
     if (agents_filename in {".", ".."} or "/" in agents_filename
             or "\\" in agents_filename or "\x00" in agents_filename):

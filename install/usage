@@ -5,3 +5,5 @@ install/uninstall.sh --yes --journal PATH [--purge-data] [--verbose]
 install/rollback.sh --yes --journal PATH
 
 Każda komenda: --help lub -h pokazuje opcje bez wykonywania zmian.
+
+Tryb system: ${APP_NAME}.service oraz ${APP_NAME}-manager.service (root:root).

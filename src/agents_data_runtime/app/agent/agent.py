@@ -28,6 +28,7 @@ class Agent:
     _agent_source_dir_path: Path | None = None
     _temp_path: Path | None = None
     _target_path: Path | None = None
+    _lib_path: Path | None = None
     _home_path: Path | None = None
     _model: str
     _agent_home: str
@@ -75,6 +76,13 @@ class Agent:
 
     def get_status(self) -> AgentStatus:
         return self.STATUS
+
+    def set_lib_path(self):
+        if self.STATUS != AgentStatus.INSTALLING_COPIED_DATA_FILES:
+            raise Exception("Cannot set installation")
+        self._lib_path = self._target_path
+    def get_lib_path(self) -> Path:
+        return self._lib_path
     
     def get_agent_name(self) -> str:
         return self._agent_name

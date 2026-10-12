@@ -117,7 +117,11 @@ class InternalRendererTests(unittest.TestCase):
                 values = {
                     item["name"]: item["value"] for item in read_json(output)["variables"]
                 }
+                from manifests import ManifestValidator
+                ManifestValidator().validate(read_json(output))
                 self.assertEqual(result["mode"], mode)
+                self.assertEqual(values["SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET"], values["APP_RUNTIME_DIR"] + "/agents-system_main_manager_runtime.sock")
+                self.assertEqual(values["SYSTEM_AGENT_MANAGER_RUNTIME_PID"], values["APP_RUNTIME_DIR"] + "/agents_manager_runtime.pid")
                 self.assertEqual(values["INSTALLED_MODULES_DIR"], values["APP_DATA_DIR"] + "/installed_modules")
                 self.assertFalse(set(values) & {
                     "REPOSITORIES_DIR", "REPOSITORY_HISTORY_PATH", "AGENT_METADATA",

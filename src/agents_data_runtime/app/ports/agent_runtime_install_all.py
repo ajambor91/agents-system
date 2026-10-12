@@ -1,0 +1,4 @@
+from .agent_runtime_apply_personality import AgentRuntimeApplyPersonality
+from .agent_runtime_install import AgentRuntimeInstall
+class AgentRuntimeInstallAll(AgentRuntimeApplyPersonality, AgentRuntimeInstall):
+    pass

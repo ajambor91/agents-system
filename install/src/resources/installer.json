@@ -207,7 +207,8 @@
     "system_data_dir": "--data-dir, APP_DATA_DIR or /var/lib/${APP_NAME}",
     "dev_data_dir": "--data-dir, APP_DATA_DIR or ${USER_SYSTEM_HOME}/.${APP_NAME}/data",
     "system_runtime_dir": "--runtime-dir, APP_RUNTIME_DIR or /run/${APP_NAME}",
-    "dev_runtime_dir": "--runtime-dir, APP_RUNTIME_DIR or ${USER_SYSTEM_HOME}/.${APP_NAME}/run"
+    "dev_runtime_dir": "--runtime-dir, APP_RUNTIME_DIR or ${USER_SYSTEM_HOME}/.${APP_NAME}/run",
+    "manager_system_unit": "/etc/systemd/system/${APP_NAME}-manager.service"
   },
   "templates": [
     {
@@ -226,6 +227,16 @@
       "required_in_modes": [
         "system"
       ]
+    },
+    {
+      "source": "${APPLICATION_ROOT}/resources/manager.template.service",
+      "rendered_name": "${APP_NAME}-manager.service",
+      "required_in_modes": [
+        "system"
+      ],
+      "user": "root",
+      "group": "root",
+      "entrypoint": "${APP_DIR}/src/agents_data_runtime/__main__.py"
     }
   ],
   "steps": [
@@ -297,7 +308,7 @@
     {
       "order": 14,
       "id": "install-service",
-      "description": "Only system mode renders, verifies and installs the systemd unit; activation occurs after the environment pointer is written."
+      "description": "Only system mode renders, verifies and installs both ${APP_NAME}.service and ${APP_NAME}-manager.service (root:root); both activate after the environment pointer is written."
     },
     {
       "order": 15,

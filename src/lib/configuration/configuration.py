@@ -32,6 +32,8 @@ class Configuration(ConfigurationAbstract):
     AGENTS_DATA_RUNTIME_PATH: ClassVar[str]
     AGENTS_DATA_COMMUNICATION_APP: ClassVar[str]
     APP_RUNTIME: ClassVar[str]
+    AGENT_PERSONALITY_DIR_NAME: ClassVar[str]
+    AGENT_SCRIPTS_SOURCE_DIR_NAME: ClassVar[str]
     APP_RUNTIME_PATH: ClassVar[str]
     AGENT_HOME_ROOT: ClassVar[str]
     AGENT_HOME_TEMPLATE: ClassVar[str]
@@ -59,6 +61,8 @@ class Configuration(ConfigurationAbstract):
     AGENT_COMMUNICATION_PATH_TEMPLATE: ClassVar[str]
     SYSTEM_AGENT_RUNTIME_SOCKET: ClassVar[str]
     SYSTEM_AGENT_RUNTIME_PID: ClassVar[str]
+    SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET: ClassVar[str]
+    SYSTEM_AGENT_MANAGER_RUNTIME_PID: ClassVar[str]
     COMMUNICATION_AGENT_RUNTIME_SOCKET: ClassVar[str]
     COMMUNICATION_AGENT_RUNTIME_PID: ClassVar[str]
     MAX_MESSAGE_BYTES_BASE: ClassVar[str]
@@ -92,6 +96,8 @@ class Configuration(ConfigurationAbstract):
             'AGENTS_DATA_RUNTIME_PATH': str,
             'AGENTS_DATA_COMMUNICATION_APP': str,
             'APP_RUNTIME': str,
+            'AGENT_PERSONALITY_DIR_NAME': str,
+            'AGENT_SCRIPTS_SOURCE_DIR_NAME': str,
             'APP_RUNTIME_PATH': str,
             'AGENT_HOME_ROOT': str,
             'AGENT_HOME_TEMPLATE': str,
@@ -119,6 +125,8 @@ class Configuration(ConfigurationAbstract):
             'AGENT_COMMUNICATION_PATH_TEMPLATE': str,
             'SYSTEM_AGENT_RUNTIME_SOCKET': str,
             'SYSTEM_AGENT_RUNTIME_PID': str,
+            'SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET': str,
+            'SYSTEM_AGENT_MANAGER_RUNTIME_PID': str,
             'COMMUNICATION_AGENT_RUNTIME_SOCKET': str,
             'COMMUNICATION_AGENT_RUNTIME_PID': str,
             'MAX_MESSAGE_BYTES_BASE': str,

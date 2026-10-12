@@ -2,8 +2,7 @@
 from __future__ import annotations
 import logging
 
-from lib.unix_socket import SocketClient, SocketClientBuilder, SocketConfiguration
-from lib.configuration import Configuration
+from lib.unix_socket import SocketClient
 from ..exceptions import ApiError
 LOGGER = logging.getLogger(__name__)
 

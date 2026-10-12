@@ -1,6 +1,4 @@
-import shutil
-import os
-import sys
+
 import subprocess
 import grp
 import pwd
@@ -10,7 +8,6 @@ from lib.configuration import Configuration
 
 
 class SystemService:
-    _TEMP_DIR: str = "/dev/shm/agents-system"
     _configuration: Configuration
 
     def __init__(self, configuration: Configuration):
@@ -99,73 +96,54 @@ class SystemService:
                 )
             raise RuntimeError(message) from e
 
-    def create_source_path(self, agent_source) -> Path:
-        agent_source = Path(agent_source)
-        return agent_source
 
-    def create_temp_dir(self, agent_name: str) -> Path:
-        temp_path = Path(f"{self._TEMP_DIR}/{agent_name}")
-        self.remove_data(temp_path)
-        temp_path.mkdir(parents=True, exist_ok=True)
-        return temp_path
 
-    def create_target_path(self, agent_name: str) -> Path:
-        agent_target = Path(f"{type(self._configuration).APP_DATA_DIR}/{agent_name}")
-        if agent_target.is_dir():
-            raise Exception("Agent exists")
-        agent_target.mkdir(parents=True, exist_ok=True)
-        return agent_target
-
-    def get_temp_path(self, agent_name: str) -> Path | None:
-        try:
-            agent_target = Path(f"{type(self._configuration).APP_DATA_DIR}/{agent_name}")
-            if agent_target.is_dir():
-                return agent_target
-            raise  Exception("Temp path does not exist")
-        except Exception:
-            return None
-        
-    def get_source_path(self, path: str) -> Path:
-        agent_source = Path(path)
-        if agent_source.is_dir():
-            return agent_source
-        raise  Exception("Source path does not exist")
-
-    def _write_temp_file(
-        self,
-        temp_path: Path,
-        filename: str,
-        content: str | bytes
-    ) -> Path:
-        target = temp_path / filename
-        target.parent.mkdir(parents=True, exist_ok=True)
-
-        if isinstance(content, bytes):
-            target.write_bytes(content)
-        else:
-            target.write_text(content, encoding="utf-8")
-
-        return target
-
-    def copy_temp_files(
-        self,
-        temp_path: Path,
-        agent_source: Path
-    ) -> bool:
-        shutil.copytree(agent_source, temp_path, dirs_exist_ok=True)
-        return True
-
-    def copy_agents_files(
-        self,
-        temp_path: Path,
-        target_path: Path
-    ) -> bool:
-        shutil.copytree(temp_path, target_path, dirs_exist_ok=True)
-        return True
-
-    def remove_data(self, path: Path) -> bool:
-        print("REMOVE TEMP")
-        print(path)
-        if path.is_dir():
-            shutil.rmtree(path)
-        return True
+    def link_agent_files(
+            self,
+            source_path: Path | str,
+            target_path: Path | str,
+            file_extension: str | None = None
+        ) -> bool:
+            if isinstance(source_path, str):
+                source_path = Path(source_path)
+            if isinstance(target_path, str):
+                target_path = Path(target_path)
+            absolute_source_path = source_path.absolute()
+            absolute_target_path = target_path.absolute()
+            print("DEBUG_DEBUG_DEBUG_DEBUG_DEBUG_DEBUG_DEBUG_DEBUG_")
+            print(absolute_source_path)
+            print(absolute_target_path)
+            if not absolute_source_path.exists():
+                raise Exception("Source data does not exist")
+    
+            if not absolute_target_path.exists():
+                absolute_target_path.mkdir(parents=True)
+    
+            if (
+                absolute_source_path.is_file()
+                and (
+                    not file_extension
+                    or absolute_source_path.suffix == file_extension
+                )
+            ):
+                target_file = absolute_target_path / absolute_source_path.name
+                if target_path.exists() and target_file.is_file():
+                    target_file.unlink(missing_ok=True)
+                target_file.symlink_to(absolute_source_path)
+                return True
+    
+            if not absolute_source_path.is_dir():
+                raise Exception("Cannot find any matches")
+    
+            pattern = f"*{file_extension}" if file_extension else "*"
+    
+            for file in absolute_source_path.glob(pattern):
+                if not file.is_file():
+                    continue
+    
+                target_file = absolute_target_path / file.name
+                if target_path.exists() and target_file.is_file():
+                    target_file.unlink(missing_ok=True)
+                target_file.symlink_to(file)
+    
+            return True

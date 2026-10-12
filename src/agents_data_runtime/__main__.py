@@ -6,13 +6,18 @@ from __future__ import annotations
 
 
 
-from . import Application
+from .app import Application
+from .runtime.runtime import Runtime
 from shared.get_config import get_config
 def run():
-    app = Application(get_config())
+    config = get_config()
+    app = Application(config)
     # res = app.install_agent("/home/user-system/repositories/agents-system/agents/www")
-    res =  app.remove_agent('www')
-    print(res)
+    # res =  app.remove_agent('www')
+    # res = app.run_agent("www", "Powiedz cokolwiek")
+    # print(res)
+    runtime = Runtime(configuration=config, app=app)
+    runtime.run()
     return 0
 if __name__ == "__main__":
     raise SystemExit(run())

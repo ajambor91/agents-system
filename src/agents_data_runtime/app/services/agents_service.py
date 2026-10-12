@@ -1,15 +1,28 @@
 from .removing_service import RemovingService
 from .installer_service import InstallerService
-from ..models import AgentDTO
+from .running_service import RunningService
+from ..models import (
+    AgentDTO,
+    MessageResultDTO,
+    MessageDTO
+    )
 from ..enums import AgentStatus
 from typing import Any
 class AgentsService:
     
     _removing_service: RemovingService
     _installer_service: InstallerService
-    def __init__(self, installer_service: InstallerService, removing_service: RemovingService):
+    _running_service: RunningService
+    def __init__(self, 
+                 installer_service: InstallerService, 
+                 removing_service: RemovingService,
+                 running_service: RunningService
+                 ):
         self._removing_service = removing_service
         self._installer_service = installer_service
+        self._running_service = running_service
+
+
 
     def install_agent(self, path: str, force: bool) -> dict[str, Any]:
         agent: AgentDTO  = self._installer_service.install(path, force)
@@ -43,6 +56,29 @@ class AgentsService:
                         "status" : "Agent could not be removed",
                         "details" : agent_dto.to_dict()
                     } 
+
+    def run_agent(self, agent_name: str, message: str) -> dict[str, Any]:
+        message_dto = MessageDTO(
+            status=AgentStatus.RUNNING_RUN_INITIALIED,
+            message=message,
+            name=agent_name
+        )
+        result: MessageResultDTO = self._running_service.run_agent(message_dto)
+        if result.status == AgentStatus.RUNNING_SUCCESS:
+            return {
+                "status": "Agent was running",
+                "details" : result.to_dict()
+            } 
+        elif result.status == AgentStatus.RUNNING_FAILED:
+            return {
+                "status": "Agent wasn't running",
+                "details" : result.to_dict()
+            } 
+        else:
+            return {
+                "status": "Unknown error",
+                "details" : result.to_dict()
+            } 
 
     def _cleanup(self, agent: AgentDTO) -> dict[str, Any]:
         agent_dto: AgentDTO  = self._removing_service.cleanup(agent)

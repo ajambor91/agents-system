@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import re
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -12,6 +15,30 @@ TEMPLATE = ROOT / "resources" / "system.template.service"
 
 
 class ServiceTemplateTests(unittest.TestCase):
+    def test_manager_template_renders_to_valid_root_service(self) -> None:
+        content = (ROOT / 'resources/manager.template.service').read_text()
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            values = {
+                'APP_DIR': str(ROOT), 'APP_NAME': 'agents-system-manager',
+                'INSTALL_MODE': 'system', 'USER_SYSTEM': 'root',
+                'USER_SYSTEM_HOME': '/root', 'PYTHON_BIN': sys.executable,
+                'APP_CONFIG_DIR': str(base), 'APP_DATA_DIR': str(base),
+                'APP_RUNTIME_DIR': str(base), 'APP_ENV_PATH': str(base / 'app_env.json'),
+                'MODULES_MANIFEST_PATH': str(base / 'modules.json'),
+                'SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET': str(base / 'manager.sock'),
+                'SYSTEM_AGENT_MANAGER_RUNTIME_PID': str(base / 'manager.pid'),
+            }
+            for name, value in values.items():
+                content = content.replace('{{' + name + '}}', value)
+            self.assertNotIn('{{', content)
+            self.assertIn('User=root\nGroup=root\n', content)
+            self.assertIn('ExecStart=' + sys.executable + ' -u -m agents_data_runtime', content)
+            unit = base / 'agents-system-manager.service'
+            unit.write_text(content)
+            result = subprocess.run(['systemd-analyze', 'verify', str(unit)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_template_runs_only_the_shared_runtime(self) -> None:
         content = TEMPLATE.read_text(encoding="utf-8")
 

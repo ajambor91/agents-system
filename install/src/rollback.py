@@ -161,7 +161,7 @@ class InstallationRollback(InstallerParent):
             raise InstallationError(f"Niebezpieczna ścieżka w dzienniku: {raw_path}")
         allowed_exact = {
             Path(configuration[name])
-            for name in ("install_dir", "config_dir", "data_dir", "runtime_dir", "unit_path", "installed_modules_dir", "installed_modules_file", "installer_module_dir")
+            for name in ("install_dir", "config_dir", "data_dir", "runtime_dir", "unit_path", "manager_unit_path", "installed_modules_dir", "installed_modules_file", "installer_module_dir")
             if isinstance(configuration.get(name), str)
         }
         installed_dir = configuration.get("installed_modules_dir")
@@ -184,7 +184,8 @@ class InstallationRollback(InstallerParent):
                     generated_paths.add((root / relative).absolute())
                     generated_paths.add((root / relative).resolve(strict=False))
         if isinstance(configuration.get("install_dir"), str) and isinstance(configuration.get("app_name"), str):
-            generated_paths.add(Path(configuration["install_dir"]) / "system" / f"{configuration['app_name']}.service")
+            for suffix in ("", "-manager"):
+                generated_paths.add(Path(configuration["install_dir"]) / "system" / f"{configuration['app_name']}{suffix}.service")
         if path in allowed_exact or path.absolute() in generated_paths or path.resolve(strict=False) in generated_paths:
             return path
         if isinstance(commands_dir, str) and path.parent == Path(commands_dir):

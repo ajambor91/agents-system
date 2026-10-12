@@ -315,6 +315,18 @@
       "value": ".agents"
     },
     {
+      "name": "AGENT_PERSONALITY_DIR_NAME",
+      "required": true,
+      "value": "personalities",
+      "description": "Agents personalities dir"
+    },
+    {
+      "name": "AGENT_SCRIPTS_SOURCE_DIR_NAME",
+      "required": true,
+      "value": "scripts",
+      "description": "Agents scripts dir"
+    },
+    {
       "name": "AGENT_CONFIG_DIR_TEMPLATE",
       "required": true,
       "value": "${AGENT_HOME_TEMPLATE}/${AGENT_CONFIG_DIR_NAME}",
@@ -466,6 +478,20 @@
       "source": "app_env.template.json",
       "value": "1024",
       "description": "Multiplier used with MAX_MESSAGE_BYTES_BASE to calculate the maximum runtime message size."
+    },
+    {
+      "name": "SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET",
+      "value": "${APP_RUNTIME_DIR}/agents-system_main_manager_runtime.sock",
+      "description": "Agents Manager socket path.",
+      "example": "/run/agents-system/agents-system_manager_app_runtime.sock",
+      "required": true
+    },
+    {
+      "name": "SYSTEM_AGENT_MANAGER_RUNTIME_PID",
+      "value": "${APP_RUNTIME_DIR}/agents_manager_runtime.pid",
+      "description": "Managed Agents Manager variable SYSTEM_AGENT_MANAGER_RUNTIME_PID.",
+      "example": "/run/agents-system/agents_manager_runtime.pid",
+      "required": true
     }
   ],
   "template_migration": {

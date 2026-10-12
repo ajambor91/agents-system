@@ -16,11 +16,15 @@ class AgentStatus(Enum):
     INSTALLING_AGENBT_RUNTIME_INSTALLED = 'installing_agent_runtime_installed'
     INSTALLING_COPIED_DATA_FILES = 'installing_copied_data_files'
     INSTALLING_REMOVED_TEMP = 'installing_removed_temp'
+    INSTALLING_ENTRY_ADDED = 'installing_entry_added'
+    INSTALLING_LINKED_AGENT_PERSONALITY_FILES = 'installing_link_agent_personality_files'
+    INSTALLING_APPLIED_PERSONALITY = 'installing_applied_personality'
+    INSTALLING_LINKED_AGENT_SCRIPTS_FILES = 'installing_link_agent_scripts_files'
     INSTALLING_INSTALLED = 'installing_installed'
     # Installationstatuses only for debug
     INSTALLING_INSTALLATION_ERROR = 'installing_installation_error'
     INSTALLING_LOAD_AGENT_DATA = 'installing_load_agent_data'
-
+    INSTALLING_CHECKING_AGENT_EXISTS = 'installing_checking_agent_exists'
     #Cleaning statuses
     CLEANING_CLEANED = 'cleaning_cleaned'
     CLEANING_ERROR = 'cleaning_error'
@@ -31,9 +35,9 @@ class AgentStatus(Enum):
     CLEANING_CLEANED_TEMP = 'cleaning_cleaned_temp'
     CLEANING_CLEANED_SOURCE = 'cleaning_cleaned_source'
     CLEANING_CLEANED_TARGET = 'cleaning_cleaned_target'
-
+    CLEANING_NO_NEEDED = 'cleaning_no_needed'
     # Removing statuses
-    REMOVING_REMOVED = "rremoving_removed"
+    REMOVING_REMOVED = "removing_removed"
     REMVIGN_REMOVED_ERROR = 'removing_removed_error'
     REMOVING_INITIALIZED = 'removing_initiallized'
     REMOVING_CREATED = 'removing_created'
@@ -44,4 +48,12 @@ class AgentStatus(Enum):
     REMOVING_REMOVE_ENTRY = 'removing_remove_entry'
     REMOVING_GET_AGENT_PATH = 'removing_get_agent_path'
     REMOVING_GET_AGENT_DATA = 'removing_get_agent_data'
+
+    RUNNING_RUN_INITIALIED = 'running_run_initialized'
+    RUNNING_GET_AGENT_PATH = 'running_get_agent_path'
+    RUNNING_GET_AGENT_DATA = 'running_get_agent_data'
+    RUNNING_AGENT_CREATED = 'running_agent_created'
+
+    RUNNING_SUCCESS = 'running_success'
+    RUNNING_FAILED = 'running_failed'
     

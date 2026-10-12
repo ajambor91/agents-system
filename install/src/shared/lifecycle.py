@@ -33,6 +33,15 @@ def validate_environment(document: dict[str, Any]) -> None:
         raise InstallationError(f"Konfiguracja wymaga kind={ENVIRONMENT_KIND}")
     try:
         ManifestValidator.validate(document)
+        values = environment_values(document)
+        for name in ("AGENT_PERSONALITY_DIR_NAME", "AGENT_SCRIPTS_SOURCE_DIR_NAME"):
+            if name not in values:
+                continue
+            value = values[name]
+            if (not isinstance(value, str) or not value or value != value.strip()
+                    or value in {".", ".."}
+                    or any(char in value for char in ("/", "\\", "\x00", "\r", "\n"))):
+                raise ValueError(f"{name} musi być samą nazwą katalogu bez ścieżki")
     except (ValueError, TypeError, OSError) as exc:
         raise InstallationError(f"Nieprawidłowa konfiguracja środowiska: {exc}") from exc
 
@@ -193,7 +202,7 @@ def managed_commands(journal: Any, configuration: InstallConfiguration) -> list[
 
 def lifecycle_journal_configuration(configuration: InstallConfiguration, previous: Any, operation: str) -> dict[str, Any]:
     raw = configuration.public_dict()
-    for name in ('unit_path', 'installed_modules_dir', 'installed_modules_file', 'installed_modules_sha256', 'installed_modules_created_parents', 'installer_module_dir'):
+    for name in ('unit_path', 'manager_unit_path', 'installed_modules_dir', 'installed_modules_file', 'installed_modules_sha256', 'installed_modules_created_parents', 'installer_module_dir'):
         if name in previous.state['configuration']:
             raw[name] = previous.state['configuration'][name]
     raw['managed_commands'] = [str(path) for path in managed_commands(previous, configuration)]

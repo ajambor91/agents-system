@@ -100,7 +100,10 @@ listy modułów oraz aktualizuje jednostkę systemd. Ścieżki instalacji, danyc
 runtime, aktywnego JSON i konta nie mogą się zmienić; taka zmiana wymaga
 osobnej migracji zasobów. Usługa systemowa jest zatrzymywana przed zmianami
 i ponownie uruchamiana po ich zastosowaniu. W dev runtime musi być zatrzymany,
-a jego sockety usunięte przed operacją lifecycle.
+a jego sockety usunięte przed operacją lifecycle. Kontrola obejmuje również
+`SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET`. Ścieżki socketu i pliku PID Managera
+(`SYSTEM_AGENT_MANAGER_RUNTIME_PID`) są renderowane z szablonu środowiska
+i udostępniane przez generowaną klasę `Configuration`.
 
 Każda operacja mutująca tworzy własny dziennik. Błąd powoduje próbę rollbacku,
 obejmującą konfigurację, wygenerowane pliki, dowiązania i wcześniejszy stan
@@ -139,3 +142,17 @@ system bez sudo użytkownik wywołujący, zostaje dodany do tej grupy bez usuwan
 pozostałych członkostw. Nowe członkostwo zacznie działać po ponownym logowaniu.
 W trybie dev bez klonowania uprawnienia obejmują bieżący checkout. Zmiany jego
 metadanych, istniejących katalogów stanu i członkostwa można cofnąć rollbackiem.
+
+## Drugi runtime systemd
+
+W trybie `system` instalator renderuje dwie jednostki: `${APP_NAME}.service`
+z `resources/system.template.service` oraz `${APP_NAME}-manager.service`
+z `resources/manager.template.service`. Manager działa jako `root:root` i uruchamia
+`src/agents_data_runtime` przez `python -m agents_data_runtime`, z `PYTHONPATH`
+wskazującym `APP_DIR/src`. Jego `APP_NAME` ma suffix `-manager`; obie usługi
+korzystają ze wspólnych katalogów i konfiguracji instalacji.
+
+Obie jednostki są weryfikowane, publikowane i uruchamiane po zapisaniu `src/.env`.
+Reinstalacja i rekonfiguracja zatrzymują oraz odtwarzają obie usługi;
+odinstalowanie wyłącza i usuwa obie. Dziennik i rollback obejmują ich pliki
+oraz wcześniejszy stan. W trybie `dev` jednostki systemd nie są instalowane.

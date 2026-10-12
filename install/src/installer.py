@@ -84,6 +84,7 @@ class Installer(InstallerParent):
         journal_configuration["unit_path"] = str(
             self.unit_root / f"{configuration.app_name}.service"
         )
+        journal_configuration["manager_unit_path"] = str(self.unit_root / f"{configuration.app_name}-manager.service")
         def apply(journal: InstallJournal) -> dict[str, Any]:
             self._log(f"journal: {journal.root}")
             self._preflight(configuration)
@@ -312,7 +313,8 @@ class Installer(InstallerParent):
             self._installer_source(self.package_dir),
         ]
         if mode == "system":
-            required.append(self.package_dir / "resources" / "system.template.service")
+            required.extend(self.package_dir / "resources" / name for name in ("system.template.service", "manager.template.service"))
+            required.append(self.package_dir / "src/agents_data_runtime/__main__.py")
         missing = [str(path) for path in required if not path.exists()]
         if missing:
             raise InstallationError("Brak wymaganych źródeł instalacji: " + ", ".join(missing))
@@ -371,9 +373,9 @@ class Installer(InstallerParent):
         for state_dir in (configuration.data_dir, configuration.runtime_dir):
             if state_dir.exists() or state_dir.is_symlink():
                 existing.append(state_dir)
-        unit = self.unit_root / f"{configuration.app_name}.service"
-        if configuration.mode == "system" and (unit.exists() or unit.is_symlink()):
-            existing.append(unit)
+        units = self._unit_paths(configuration)
+        if configuration.mode == "system":
+            existing.extend(unit for unit in units if unit.exists() or unit.is_symlink())
         for name, _ in self._command_sources(configuration, installed=False):
             target = configuration.commands_dir / name
             if target.exists() or target.is_symlink():
@@ -427,7 +429,7 @@ class Installer(InstallerParent):
                 owned_root = configuration.install_dir.resolve(strict=False)
                 if not is_below(target, owned_root):
                     raise InstallationError(f"Odmowa nadpisania obcego dowiązania: {path}")
-            elif path == unit:
+            elif path in units:
                 if path.is_symlink():
                     raise InstallationError(f"Odmowa nadpisania dowiązanej usługi: {path}")
                 try:
@@ -445,12 +447,15 @@ class Installer(InstallerParent):
             print("+ " + " ".join(arguments), file=sys.stderr)
         return run_command(self.runner, arguments, allowed=allowed, environment=environment)
 
+    def _unit_paths(self, configuration: InstallConfiguration) -> tuple[Path, Path]:
+        return tuple(self.unit_root / f"{configuration.app_name}{suffix}.service" for suffix in ("", "-manager"))
+
     def _quiesce_service(self, configuration: InstallConfiguration, journal: InstallJournal) -> None:
-        unit = self.unit_root / f"{configuration.app_name}.service"
-        if configuration.mode == "system" and unit.exists():
-            name = unit.name
-            journal.record("service_state", unit=name, **self._service_state(name))
-            self._run(["systemctl", "stop", name])
+        if configuration.mode == "system":
+            for unit in reversed(self._unit_paths(configuration)):
+                if unit.exists():
+                    journal.record("service_state", unit=unit.name, **self._service_state(unit.name))
+                    self._run(["systemctl", "stop", unit.name])
 
     def _prepare_account(self, configuration: InstallConfiguration, journal: InstallJournal) -> tuple[int, int]:
         if not configuration.dedicated_user:
@@ -598,7 +603,7 @@ class Installer(InstallerParent):
             )
             resources = configuration.install_dir / "resources"
             resources.mkdir(exist_ok=True)
-            for name in ("app_env.template.json", "agents-system.module.template.json", "agents-system.json", "system.template.service"):
+            for name in ("app_env.template.json", "agents-system.module.template.json", "agents-system.json", "system.template.service", "manager.template.service"):
                 source = configuration.package_dir / "resources" / name
                 if source.is_file():
                     shutil.copy2(source, resources / name)
@@ -856,7 +861,10 @@ class Installer(InstallerParent):
         return {"enabled": enabled.returncode == 0, "active": active.returncode == 0}
 
     def _install_unit(self, configuration: InstallConfiguration, journal: InstallJournal) -> None:
-        unit_name = f"{configuration.app_name}.service"
+        for template_name, unit in zip(("system.template.service", "manager.template.service"), self._unit_paths(configuration)):
+            self._install_runtime_unit(configuration, journal, template_name, unit.name)
+
+    def _install_runtime_unit(self, configuration: InstallConfiguration, journal: InstallJournal, template_name: str, unit_name: str) -> None:
         journal.record("service_state", unit=unit_name, **self._service_state(unit_name))
         env_path = configuration.config_dir / "app_env.json"
         values = {
@@ -865,13 +873,13 @@ class Installer(InstallerParent):
         }
         context = {
             **values,
-            "APP_NAME": configuration.app_name,
+            "APP_NAME": unit_name.removesuffix(".service"),
             "APP_DIR": str(configuration.install_dir),
             "USER_SYSTEM": configuration.user_system,
             "USER_GROUP": configuration.user_group,
             "PYTHON_BIN": sys.executable,
         }
-        template = (configuration.package_dir / "resources" / "system.template.service").read_text(
+        template = (configuration.package_dir / "resources" / template_name).read_text(
             encoding="utf-8"
         )
         for name, value in context.items():
@@ -901,10 +909,10 @@ class Installer(InstallerParent):
         journal.record("daemon_reload")
 
     def _activate_service(self, configuration: InstallConfiguration, journal: InstallJournal) -> None:
-        unit_name = f"{configuration.app_name}.service"
-        index = journal.prepare("service_enabled", unit=unit_name)
-        self._run(["systemctl", "enable", "--now", unit_name])
-        journal.applied(index)
+        for unit in self._unit_paths(configuration):
+            index = journal.prepare("service_enabled", unit=unit.name)
+            self._run(["systemctl", "enable", "--now", unit.name])
+            journal.applied(index)
 
     def _write_absolute_config_pointer(
         self,
@@ -1051,7 +1059,8 @@ class Installer(InstallerParent):
                 raise InstallationError(f"Nieprawidłowe dowiązanie komendy: {target}")
             commands.append(str(target))
         if configuration.mode == "system":
-            self._run(["systemctl", "is-active", f"{configuration.app_name}.service"])
+            for unit in self._unit_paths(configuration):
+                self._run(["systemctl", "is-active", unit.name])
         return {
             "status": "installed",
             "mode": configuration.mode,

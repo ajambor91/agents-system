@@ -43,9 +43,11 @@ class Reconfigure(InstallerParent):
         self.installer._validate_sources(configuration.mode)
         unit_path = self.installer.unit_root / f'{configuration.app_name}.service'
         if configuration.mode == 'system':
-            validate_managed_unit(unit_path, configuration)
+            for unit in self.installer._unit_paths(configuration):
+                validate_managed_unit(unit, configuration)
         raw = lifecycle_journal_configuration(configuration, previous, 'reconfigure')
         raw['unit_path'] = str(unit_path)
+        raw['manager_unit_path'] = str(self.installer._unit_paths(configuration)[1])
         account = pwd.getpwnam(configuration.user_system)
         group = grp.getgrnam(configuration.user_group)
 

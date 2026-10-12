@@ -1,11 +1,12 @@
 from lib.configuration import Configuration
 from .services import (
     AgentsService,
-    LoaderDataService,
+    TempFilesService,
     InstallerService,
     SystemService,
     AppDataService,
-    RemovingService
+    RemovingService,
+    RunningService
 )
 
 from .adapters import OpenClawRuntime
@@ -19,24 +20,29 @@ class Application:
         app_data_service: AppDataService = AppDataService(configuration)
         agent_runtime = OpenClawRuntime(configuration) 
         system_service = SystemService(configuration)
-        loader_service = LoaderDataService(configuration)
-        loader_service  = LoaderDataService(configuration)
+        temp_service = TempFilesService(configuration)
+        running_service = RunningService(
+            agents_runtime=agent_runtime,
+            app_data=app_data_service
+            )
         installer = InstallerService(
             system_service=system_service,
-            loader_service=loader_service,
+            temp_service=temp_service,
             app_data=app_data_service,
-            agent_runtime=agent_runtime
+            agent_runtime=agent_runtime,
+            configuration=configuration
         )
         removing_service: RemovingService = RemovingService(
             system_service=system_service,
-            loader_service=loader_service,
+            temp_service=temp_service,
             app_data=app_data_service,
             agent_runtime=agent_runtime
         )
 
         self._agents_service = AgentsService(
             installer_service=installer,
-            removing_service=removing_service
+            removing_service=removing_service,
+            running_service=running_service
             )
 
     def install_agent(self, path: str, force: bool = False):
@@ -44,3 +50,6 @@ class Application:
 
     def remove_agent(self, agent_name: str):
         return self._agents_service.removing_agent(agent_name)
+
+    def run_agent(self, agent_name: str, message: str):
+        return self._agents_service.run_agent(agent_name, message)

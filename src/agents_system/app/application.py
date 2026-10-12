@@ -36,8 +36,8 @@ class Application:
 
     def help(self, method_name: str, flags: dict[str, Any] = {}, module_name: str | None = None) -> dict[str, Any]:
         """Return installed module records or public resident instances."""
-        if module_name is None or module_name in {"agents_system", "system"}:
-             return self._help_service.help(method_name)
+        # if module_name is None or module_name in {"agents_system", "system"}:
+        #      return self._help_service.help(method_name)
         return self._app_service.help(module_name, method_name)
     def initialize(self, runtime_api: RuntimeApiWrapper):
             LOGGER.debug('Starting application.initialize')

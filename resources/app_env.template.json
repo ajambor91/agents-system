@@ -159,6 +159,18 @@
       "example": "/run/agents-system/agents-system_main_app_runtime.sock"
     },
     {
+      "name": "AGENT_PERSONALITY_DIR_NAME",
+      "value": "personality",
+      "description": "Agents personalities dir",
+      "example": "personality"
+    },
+    {
+      "name": "AGENT_SCRIPTS_SOURCE_DIR_NAME",
+      "value": "scripts",
+      "description": "Agents scripts dir",
+      "example": "scripts"
+    },
+    {
       "name": "AGENT_HOME_ROOT",
       "value": "/home",
       "description": "Default root for regular agent Linux homes. Actual homes must be confirmed through the passwd database.",
@@ -313,6 +325,18 @@
       "value": "${APP_RUNTIME_DIR}/agents_runtime.pid",
       "description": "Managed Agents System variable SYSTEM_AGENT_RUNTIME_PID.",
       "example": "/run/agents-system/agents_runtime.pid"
+    },
+    {
+      "name": "SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET",
+      "value": "${APP_RUNTIME_DIR}/agents-system_main_manager_runtime.sock",
+      "description": "Agents Manager socket path.",
+      "example": "/run/agents-system/agents-system_manager_app_runtime.sock"
+    },
+    {
+      "name": "SYSTEM_AGENT_MANAGER_RUNTIME_PID",
+      "value": "${APP_RUNTIME_DIR}/agents_manager_runtime.pid",
+      "description": "Managed Agents Manager variable SYSTEM_AGENT_MANAGER_RUNTIME_PID.",
+      "example": "/run/agents-system/agents_manager_runtime.pid"
     },
     {
       "name": "COMMUNICATION_AGENT_RUNTIME_SOCKET",

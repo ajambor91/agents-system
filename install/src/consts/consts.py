@@ -35,7 +35,10 @@ GENERATED_ARTIFACT_RELATIVE_PATHS = (
     Path("resources/app_env.json"), Path("resources/agents-system.module.json"),
     Path("src/resources/app_env.json"), Path("src/resources/agents-system.module.json"),
 )
-DEV_RUNTIME_SOCKET_VARIABLES = ("SYSTEM_AGENT_RUNTIME_SOCKET", "COMMUNICATION_AGENT_RUNTIME_SOCKET")
+DEV_RUNTIME_SOCKET_VARIABLES = (
+    "SYSTEM_AGENT_RUNTIME_SOCKET", "COMMUNICATION_AGENT_RUNTIME_SOCKET",
+    "SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET",
+)
 
 INSTALLER_MODULE_NAME = "install"
 INSTALLER_SOURCE_RELATIVE_PATH = Path("install/src")

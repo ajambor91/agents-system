@@ -92,6 +92,62 @@ class LifecycleTests(unittest.TestCase):
             return subprocess.CompletedProcess(argv, 0, '', '')
         return subprocess.run(argv, **kwargs)
 
+    def test_installs_root_manager_unit_after_config_pointer(self):
+        unit = self.units / 'agents-system-manager.service'
+        content = unit.read_text()
+        self.assertIn('User=root\nGroup=root\n', content)
+        self.assertIn('Environment="APP_NAME=agents-system-manager"', content)
+        self.assertIn('-u -m agents_data_runtime', content)
+        self.assertNotIn('{{', content)
+        self.assertIn(['systemctl', 'enable', '--now', unit.name], self.calls)
+        self.assertIn(['systemctl', 'is-active', unit.name], self.calls)
+
+    def test_failed_manager_activation_rolls_back_both_units(self):
+        manager = self.units / 'agents-system-manager.service'
+        before = manager.read_bytes()
+        original_runner = self.installer.runner
+        failed = False
+
+        def fail_manager(argv, **kwargs):
+            nonlocal failed
+            if not failed and argv == ['systemctl', 'enable', '--now', manager.name]:
+                failed = True
+                return subprocess.CompletedProcess(argv, 1, '', 'manager activation failed')
+            return original_runner(argv, **kwargs)
+
+        self.installer.runner = fail_manager
+        path = self.new_environment(MAX_MESSAGE_BYTES_BASE='4096')
+        with self.assertRaisesRegex(InstallationError, 'manager activation failed'):
+            Reconfigure(installer=self.installer).execute(self.arguments(InstallerMode.RECONFIGURE, '--envs', str(path)))
+        self.assertEqual(json.loads(self.journals[-1].path.read_text())['status'], 'rolled-back')
+        self.assertEqual(manager.read_bytes(), before)
+        for name in ('agents-system.service', manager.name):
+            self.assertIn(['systemctl', 'start', name], self.calls)
+
+    def test_foreign_manager_unit_is_rejected_before_mutations(self):
+        unit = self.units / 'agents-system-manager.service'
+        unit.write_text('foreign service')
+        before = len(self.calls)
+        with self.assertRaisesRegex(InstallationError, 'Usługa nie należy'):
+            Uninstaller(installer=self.installer).execute(self.arguments(InstallerMode.UNINSTALL))
+        self.assertEqual(len(self.calls), before)
+        self.assertEqual(unit.read_text(), 'foreign service')
+
+    def test_dev_lifecycle_rejects_manager_runtime_socket(self):
+        from install.src.shared.lifecycle import validate_dev_runtime_stopped
+        from install.src.consts.consts import DEV_RUNTIME_SOCKET_VARIABLES
+        configuration = replace(self.config, mode='dev')
+        document = {'variables': [
+            {'name': name, 'value': str(self.base / (name + '.sock'))}
+            for name in DEV_RUNTIME_SOCKET_VARIABLES
+        ]}
+        validate_dev_runtime_stopped(document, configuration)
+        socket_path = self.base / 'SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET.sock'
+        socket_path.touch()
+        with self.assertRaisesRegex(InstallationError, 'Zatrzymaj runtime dev'):
+            validate_dev_runtime_stopped(document, configuration)
+        validate_dev_runtime_stopped(document, self.config)
+
     def test_invoker_membership_is_added_after_verification(self):
         events = []
         config = replace(self.config, force=True)
@@ -157,6 +213,8 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(data.read_text(), 'saved')
         self.assertTrue((self.config.install_dir / 'src/lib/configuration/configuration.py').is_file())
         self.assertIn(['systemctl', 'stop', 'agents-system.service'], self.calls)
+        self.assertIn(['systemctl', 'stop', 'agents-system-manager.service'], self.calls)
+        self.assertIn(['systemctl', 'enable', '--now', 'agents-system-manager.service'], self.calls)
         self.assertIn(['systemctl', 'enable', '--now', 'agents-system.service'], self.calls)
 
     def test_invalid_env_is_rejected_before_journal_or_service_access(self):
@@ -187,6 +245,7 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(source.read_bytes(), source_before)
         self.assertEqual(json.loads(self.journals[-1].path.read_text())['status'], 'rolled-back')
         self.assertIn(['systemctl', 'start', 'agents-system.service'], self.calls)
+        self.assertIn(['systemctl', 'start', 'agents-system-manager.service'], self.calls)
 
     def test_reinstall_preserves_configuration_and_data(self):
         data = self.config.data_dir / 'keep.txt'
@@ -208,10 +267,12 @@ class LifecycleTests(unittest.TestCase):
         self.assertFalse(self.config.install_dir.exists())
         self.assertFalse(self.config.config_dir.exists())
         self.assertFalse((self.units / 'agents-system.service').exists())
+        self.assertFalse((self.units / 'agents-system-manager.service').exists())
         self.assertFalse((self.config.commands_dir / 'asystem').exists())
         self.assertEqual(data.read_text(), 'saved')
         InstallationRollback(runner=self.runner, effective_uid=0).rollback(Path(result['journal']))
         self.assertTrue(self.config.install_dir.is_dir())
+        self.assertTrue((self.units / 'agents-system-manager.service').is_file())
         self.assertTrue((self.config.commands_dir / 'asystem').is_symlink())
         self.assertTrue((self.config.config_dir / 'app_env.json').is_file())
         self.assertTrue((self.config.data_dir / 'installed_modules/agents-system.json').is_file())

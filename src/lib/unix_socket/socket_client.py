@@ -53,15 +53,16 @@ class SocketClient:
 
     def send(
         self,
-        module_name: str,
-        method: str,
+        module_name: str =  None,
+        method: str = None,
         kwargs: Mapping[str, Any] | None = None,
     ) -> Response:
         """Send module_name, method and kwargs in the existing request payload."""
+        operation = f"{module_name}.{method}" if module_name else method
         request = Request(
-            operation=f"{module_name}.{method}",
+            operation=operation,
             payload={
-                "module_name": module_name,
+                "module_name": module_name if module_name else None,
                 "method": method,
                 "kwargs": dict(kwargs) if kwargs is not None else {},
             },
