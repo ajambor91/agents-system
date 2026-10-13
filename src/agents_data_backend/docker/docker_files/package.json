@@ -1,0 +1,22 @@
+{
+  "name": "agent-stack",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "app-data",
+    "app-comm",
+    "app-sync"
+  ],
+  "scripts": {
+    "dev:data": "npm run dev -w app-data",
+    "dev:comm": "npm run dev -w app-comm",
+    "dev:sync": "npm run dev -w app-sync",
+    "build": "npm run build --workspaces"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "ts-node-dev": "^2.0.0",
+    "@types/node": "^20.0.0",
+    "@types/express": "^4.17.17"
+  }
+}
