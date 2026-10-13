@@ -28,8 +28,8 @@ class Configuration(ConfigurationAbstract):
     APP_ENV_PATH: ClassVar[str]
     MODULES_MANIFEST_FILE: ClassVar[str]
     MODULES_MANIFEST_PATH: ClassVar[str]
-    AGENTS_DATA_RUNTIME: ClassVar[str]
-    AGENTS_DATA_RUNTIME_PATH: ClassVar[str]
+    AGENTS_MANAGER_RUNTIME: ClassVar[str]
+    AGENTS_MANAGER_RUNTIME_PATH: ClassVar[str]
     AGENTS_DATA_COMMUNICATION_APP: ClassVar[str]
     APP_RUNTIME: ClassVar[str]
     AGENT_PERSONALITY_DIR_NAME: ClassVar[str]
@@ -92,8 +92,8 @@ class Configuration(ConfigurationAbstract):
             'APP_ENV_PATH': str,
             'MODULES_MANIFEST_FILE': str,
             'MODULES_MANIFEST_PATH': str,
-            'AGENTS_DATA_RUNTIME': str,
-            'AGENTS_DATA_RUNTIME_PATH': str,
+            'AGENTS_MANAGER_RUNTIME': str,
+            'AGENTS_MANAGER_RUNTIME_PATH': str,
             'AGENTS_DATA_COMMUNICATION_APP': str,
             'APP_RUNTIME': str,
             'AGENT_PERSONALITY_DIR_NAME': str,

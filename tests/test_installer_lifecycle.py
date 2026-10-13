@@ -97,7 +97,7 @@ class LifecycleTests(unittest.TestCase):
         content = unit.read_text()
         self.assertIn('User=root\nGroup=root\n', content)
         self.assertIn('Environment="APP_NAME=agents-system-manager"', content)
-        self.assertIn('-u -m agents_data_runtime', content)
+        self.assertIn('-u -m agents_manager_runtime', content)
         self.assertNotIn('{{', content)
         self.assertIn(['systemctl', 'enable', '--now', unit.name], self.calls)
         self.assertIn(['systemctl', 'is-active', unit.name], self.calls)

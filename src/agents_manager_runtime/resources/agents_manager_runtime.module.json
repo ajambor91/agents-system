@@ -2,7 +2,7 @@
   "schema_version": 1,
   "version": 1,
   "kind": "module-manifest",
-  "module_name": "agents_data_runtime",
+  "module_name": "agents_manager_runtime",
   "menu_name": null,
   "description": "Osobny runtime komunikacji i dostarczania wiadomości agentom.",
   "commands": [],

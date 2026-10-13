@@ -65,7 +65,7 @@ class EnvironmentManifest(ManifestModel):
             'APP_ENV_PATH': ('APP_CONFIG_DIR', values.get('APP_ENV_FILE', 'app_env.json')),
             'MODULES_MANIFEST_PATH': ('APP_CONFIG_DIR', values.get('MODULES_MANIFEST_FILE', 'agents-system.module.json')),
             'APP_RUNTIME_PATH': ('APP_RUNTIME_DIR', values.get('APP_RUNTIME', '')),
-            'AGENTS_DATA_RUNTIME_PATH': ('APP_RUNTIME_DIR', values.get('AGENTS_DATA_RUNTIME', '')),
+            'AGENTS_MANAGER_RUNTIME_PATH': ('APP_RUNTIME_DIR', values.get('AGENTS_MANAGER_RUNTIME', '')),
         }
         for name, (parent, suffix) in relationships.items():
             if name in values and parent in values:

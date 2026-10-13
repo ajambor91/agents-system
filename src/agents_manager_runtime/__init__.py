@@ -1,4 +1,4 @@
-"""agents_data_runtime Python package."""
+"""agents_manager_runtime Python package."""
 
 from .app import Application
 from .app.agent import Agent

@@ -84,7 +84,7 @@ agents-system/
     ├── agents_data/
     │   ├── __main__.py
     │   └── app/
-    ├── agents_data_runtime/
+    ├── agents_manager_runtime/
     │   ├── __main__.py
     │   └── service.py
     └── agents_data_backend/
@@ -100,7 +100,7 @@ Kanoniczne entrypointy to dokładnie:
 | Console API | `src/agents_system_cli/__main__.py` |
 | Agents Manager Desktop | `src/agents_manager/__main__.py` |
 | Agent Data | `src/agents_data/__main__.py` |
-| Agents Data Runtime | `src/agents_data_runtime/__main__.py` |
+| Agents Data Runtime | `src/agents_manager_runtime/__main__.py` |
 | Agent Data Backend | `src/agents_data_backend/__main__.py` |
 
 Nazwy katalogów aplikacji są nazwami importowalnych pakietów Pythona
@@ -134,9 +134,9 @@ Wspólny proces rezydentny dla aplikacji systemowych. Odpowiada za:
 - przechwytywanie stdout/stderr starszych adapterów.
 
 Nie obsługuje transportu wiadomości agentów. Ta odpowiedzialność należy do
-osobnego `src/agents_data_runtime/`.
+osobnego `src/agents_manager_runtime/`.
 
-### `src/agents_data_runtime/`
+### `src/agents_manager_runtime/`
 
 Osobny proces rezydentny transportu Agents Data. Odpowiada za:
 
@@ -187,7 +187,7 @@ Lokalna aplikacja Pythona dla agentów i użytkowników. Odpowiada za:
 
 - wysyłanie i odbieranie wiadomości;
 - lokalną historię i inbox;
-- klienta nasłuchującego `agents_data_runtime`;
+- klienta nasłuchującego `agents_manager_runtime`;
 - jawne potwierdzenia dostarczenia;
 - lokalny sync plików i bazy przez przyszłe API synchronizacji.
 
@@ -219,7 +219,7 @@ agents_manager (desktop) -------+
                                 v
                            shared runtime
 
-agents_data (local receiver) <-> agents_data_runtime
+agents_data (local receiver) <-> agents_manager_runtime
         |                              |
         v                              v
 agents_data_backend ------------> Redis Streams
@@ -250,12 +250,12 @@ agents_data/message_send
   -> zapis MongoDB
   -> zapis/odświeżenie Redis Cache
   -> publikacja do stream:<receiver>
-  -> agents_data_runtime konsumuje zdarzenie
+  -> agents_manager_runtime konsumuje zdarzenie
   -> pobiera pełny dokument przez backend API
   -> dostarcza do zarejestrowanego receivera agents_data
   -> receiver zapisuje lokalny JSONL/inbox
   -> receiver odsyła ACK
-  -> agents_data_runtime wykonuje XACK
+  -> agents_manager_runtime wykonuje XACK
 ```
 
 Zdarzenie w streamie zawiera identyfikator wiadomości, a nie pełny mutable
@@ -371,7 +371,7 @@ Konsolidacja jest ukończona dopiero, gdy:
 
 - wszystkie entrypointy używają siedmiu stałych ścieżek;
 - nie istnieje `src/agents_system/`;
-- wspólny runtime obsługuje aplikacje systemowe, a `agents_data_runtime` wyłącznie transport wiadomości;
+- wspólny runtime obsługuje aplikacje systemowe, a `agents_manager_runtime` wyłącznie transport wiadomości;
 - desktop Agents Manager nie działa jako daemon;
 - Agent Data nie łączy się bezpośrednio z Redis/Mongo;
 - backend zapisuje przed publikacją;

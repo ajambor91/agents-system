@@ -42,8 +42,8 @@
       "role": "resident-runtime"
     },
     {
-      "id": "agents_data_runtime",
-      "entrypoint": "src/agents_data_runtime/__main__.py",
+      "id": "agents_manager_runtime",
+      "entrypoint": "src/agents_manager_runtime/__main__.py",
       "status": "migrated",
       "role": "agent-communication-runtime"
     },

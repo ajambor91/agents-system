@@ -17,7 +17,7 @@ Najważniejsze ustalenia:
 2. `src/agents_system_cli` obsługuje konsolę `asystem`, ale wszystkie komendy sekcji
    `agents` nadal kończą się wynikiem `Not implemented yet.`. Nie wywołują
    jeszcze przeniesionego `src/agents_manager`.
-3. `src/agents_manager`, `src/agents_data` i `src/agents_data_runtime` mają
+3. `src/agents_manager`, `src/agents_data` i `src/agents_manager_runtime` mają
    własne parsery CLI, lecz nie mają jeszcze bezpośrednich wrapperów w
    `host_scripts/`.
 4. `src/agents_data_backend` jest wyłącznie szkieletem i nie przyjmuje flag.
@@ -68,7 +68,7 @@ nie powtarza tej flagi w każdym wierszu.
 - Komentarz `asystem-env-export.sh` nie wymienia publicznych `--local/--file`,
   choć implementacja je obsługuje.
 - Nie istnieją jeszcze wrappery dla standalone `agents_manager`,
-  `agents_data` ani `agents_data_runtime`.
+  `agents_data` ani `agents_manager_runtime`.
 
 ## 3. Aplikacje pod `src/*`
 
@@ -79,7 +79,7 @@ nie powtarza tej flagi w każdym wierszu.
 | `src/agents_system_cli` | Hierarchiczna konsola manifest-driven, runtime-first z bezpiecznym fallbackiem lokalnym. | Tak: globalne tryby wyjścia, sekcja, komenda i flagi z manifestu. `--interactive` wymaga TTY. |
 | `src/agents_manager` | Przeniesiona aplikacja desktopowa z własnym `argparse`. Nie jest jeszcze podłączona do `asystem agents`. | Tak, pełny zestaw opisano niżej. |
 | `src/agents_data` | CLI wiadomości oraz placeholdery memory/sync. | Tak. `messege_send` ma rozbudowane flagi; pozostałe podkomendy są placeholderami. |
-| `src/agents_data_runtime` | Osobny broker Unix socket ↔ Redis Streams ↔ backend HTTP. | Tak: wymagany positional `action` i opcjonalne flagi transportu. |
+| `src/agents_manager_runtime` | Osobny broker Unix socket ↔ Redis Streams ↔ backend HTTP. | Tak: wymagany positional `action` i opcjonalne flagi transportu. |
 | `src/agents_data_backend` | Szkielet wypisujący opis JSON. | Nie. |
 | `src/internal_scripts` | Dwa renderery instalatora: środowisko oraz manifest modułów. | Tak, ale są to komendy wewnętrzne, niepublikowane do `/usr/local/bin`. |
 
@@ -116,7 +116,7 @@ Nazwa `messege_send` nadal zawiera historyczną literówkę. `memory_write`,
 `memory_get`, `memory_find`, `drive_sync` i `sync` nie mają jeszcze flag i
 zwracają placeholder.
 
-### `src/agents_data_runtime`
+### `src/agents_manager_runtime`
 
 - wymagany positional `action`: `start`, `status`, `stop` albo `clients`;
 - `--socket`;
@@ -157,7 +157,7 @@ aktywny pozostaje lokalny artefakt repozytorium.
 | `src/agents_system_cli` | `APP_RUNTIME_PATH` |
 | `src/agents_manager` | `USER_SYSTEM`, `APP_DATA_DIR`; `SUDO_USER` pozostaje kontekstem wywołania |
 | `src/agents_data` | `AGENTS_DATA_COMMUNICATION_APP`, `USER_SYSTEM_HOME`; `AGENT_NAME`, `AGENT_HOME`, `HOME` i `SUDO_USER` pozostają kontekstem procesu |
-| `src/agents_data_runtime` | `AGENTS_DATA_RUNTIME_PATH`, `AGENTS_DATA_COMMUNICATION_APP` |
+| `src/agents_manager_runtime` | `AGENTS_MANAGER_RUNTIME_PATH`, `AGENTS_DATA_COMMUNICATION_APP` |
 
 `COMM_REDIS_URL` i `COMM_RUNTIME_GROUP` nie zostały przemianowane na sztuczne
 odpowiedniki. Ponieważ nie występują w odświeżonym kontrakcie, są odpowiednio
@@ -191,7 +191,7 @@ Oba szablony systemd używają obecnie tych samych nazw: `INSTALL_MODE`,
 
 1. `asystem agents ...` nadal zwraca placeholder i nie uruchamia jeszcze
    przeniesionego `src/agents_manager`.
-2. `agents_data_runtime` nadal nie ma osobnej publicznej jednostki systemd.
+2. `agents_manager_runtime` nadal nie ma osobnej publicznej jednostki systemd.
 3. `agents_data` zachowuje historyczną nazwę komendy `messege_send`.
 4. URL Redis Streams i nazwa consumer group nie są częścią globalnego
    `app_env.json`; przed wdrożeniem produkcyjnym trzeba zdecydować, czy należą

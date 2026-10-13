@@ -314,7 +314,7 @@ class Installer(InstallerParent):
         ]
         if mode == "system":
             required.extend(self.package_dir / "resources" / name for name in ("system.template.service", "manager.template.service"))
-            required.append(self.package_dir / "src/agents_data_runtime/__main__.py")
+            required.append(self.package_dir / "src/agents_manager_runtime/__main__.py")
         missing = [str(path) for path in required if not path.exists()]
         if missing:
             raise InstallationError("Brak wymaganych źródeł instalacji: " + ", ".join(missing))

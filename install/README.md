@@ -148,7 +148,7 @@ metadanych, istniejących katalogów stanu i członkostwa można cofnąć rollba
 W trybie `system` instalator renderuje dwie jednostki: `${APP_NAME}.service`
 z `resources/system.template.service` oraz `${APP_NAME}-manager.service`
 z `resources/manager.template.service`. Manager działa jako `root:root` i uruchamia
-`src/agents_data_runtime` przez `python -m agents_data_runtime`, z `PYTHONPATH`
+`src/agents_manager_runtime` przez `python -m agents_manager_runtime`, z `PYTHONPATH`
 wskazującym `APP_DIR/src`. Jego `APP_NAME` ma suffix `-manager`; obie usługi
 korzystają ze wspólnych katalogów i konfiguracji instalacji.
 

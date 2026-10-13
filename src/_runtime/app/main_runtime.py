@@ -46,7 +46,7 @@ class MainRuntime:
 
         settings = type(configuration)
         socket_path: str = settings.SYSTEM_AGENT_RUNTIME_SOCKET
-        socket_mode: int = 0o600
+        socket_mode: int = 0o660
         self._instance_manager = instance_manager
         self.configuration = configuration
 

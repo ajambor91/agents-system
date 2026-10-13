@@ -61,7 +61,7 @@ class InternalRendererTests(unittest.TestCase):
                     for item in rendered["children"]
                     if item["is_runtime"]
                 },
-                {"runtime", "agents_data_runtime"},
+                {"runtime", "agents_manager_runtime"},
             )
             for item in rendered["children"]:
                 self.assertEqual(

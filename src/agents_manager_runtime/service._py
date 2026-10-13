@@ -472,9 +472,9 @@ def main(argv: list[str] | None = None) -> int:
 
     repository_root = Path(__file__).resolve().parents[2]
     configuration = ApplicationEnvironment.discover(repository_root)
-    configure_logging("agents-data-runtime")
+    configure_logging("agents-manager-runtime")
     args = build_parser().parse_args(argv)
-    args.socket = configuration.select("AGENTS_DATA_RUNTIME_PATH", flag=args.socket)
+    args.socket = configuration.select("AGENTS_MANAGER_RUNTIME_PATH", flag=args.socket)
     args.data_url = configuration.select("AGENTS_DATA_COMMUNICATION_APP", flag=args.data_url)
     if args.action == "start":
         lock_descriptor = acquire_runtime_lock(args.socket)

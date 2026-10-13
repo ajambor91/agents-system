@@ -57,12 +57,11 @@ class AppService:
         LOGGER.debug(f"Starting app_service.logging selected level: {level}")
         return self._asysten.logging(level)
 
-    # def help(self,module_name: str, method_name: str): 
-    #     if not module_name:
-    #         return {"message": "Module does not have requested method"}
+    def help(self,module_name: str, method_name: str): 
+        if not module_name:
+            return {"message": "Module does not have requested method"}
             
-    #     if module_name and self._runtime_api:
-    #         return self._asysten.help(module_name, method_name)
+        if module_name and self._runtime_api:
+            return self._asysten.help(module_name, method_name)
 
-    def help(self,module_name: str, method_name: str):
-        return self._asysten.run_agent("www", "Hi, how r u?") 
+

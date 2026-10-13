@@ -76,6 +76,7 @@ class RemovingService:
                 )
 
     def cleanup(self, agent: AgentDTO) -> AgentDTO:
+        status = AgentStatus.CLEANING_INITIALIZED
         cleaning = self._check_is_cleaning_needed(agent)
         try:
             if not cleaning:
@@ -86,7 +87,7 @@ class RemovingService:
             return AgentDTO(
                     status=AgentStatus.CLEANING_ERROR,
                     break_status=agent.break_status,
-                    clean_status=status,
+                    clean_status=agent.clean_status if agent.clean_status else status,
                     name=agent.name,
                     home=agent.home,
                     group=agent.group,
@@ -99,11 +100,14 @@ class RemovingService:
 
 
     def _cleaning(self, agent: AgentDTO) -> AgentDTO:
-        status = AgentStatus.CLEANING_INITIALIZED
         statuses: list[AgentStatus] = list(AgentStatus)
         statuses.reverse()
         status_index = statuses.index(agent.break_status)
         steps_to_clean: list[AgentStatus] = statuses[status_index:]
+        print("DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG ")
+        print(agent.break_status)
+        print("SETPS SETPS SETPS SETPS SETPS SETPS SETPS SETPS ")
+        print(steps_to_clean)
         for status in steps_to_clean:
             if status not in [
                 AgentStatus.INSTALLING_CREATED_TEMP_DIR,
@@ -117,9 +121,9 @@ class RemovingService:
                 continue
             match status:
                 case  AgentStatus.INSTALLING_CREATED_TEMP_DIR:
-                    self._system_service.remove_data(agent.temp_path)
+                    self._app_data_service.remove_data(agent.temp_path)
                 case  AgentStatus.INSTALLING_CREATED_TARGET_DIR:
-                    self._system_service.remove_data(agent.target_path)
+                    self._app_data_service.remove_data(agent.target_path)
                     status = AgentStatus.CLEANING_CLEANED_TARGET     
                 case AgentStatus.INSTALLING_USER_CREATED:
                     self._system_service.remove_agent_user(agent.name)
@@ -128,7 +132,7 @@ class RemovingService:
                     self._agents_runtime.remove_agent(agent.name)
                     status = AgentStatus.CLEANING_CLEANED_AGENT
                 case AgentStatus.INSTALLING_INITIALIZED:
-                    self._app_data_service.remove_agent_data(agent.name)
+                    self._app_data_service.clean_agent_data(agent.name)
                     status = AgentStatus.CLEANING_CLEANED_ENTRY
         return AgentDTO(
             status=AgentStatus.CLEANING_CLEANED,

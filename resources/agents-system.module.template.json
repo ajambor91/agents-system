@@ -25,7 +25,7 @@
       "is_menu_option": false,
       "is_runtime": false,
       "runtime": [
-        "agents_data_runtime"
+        "agents_manager_runtime"
       ],
       "manifest_path": "${MODULES_DIR}/agents_data/resources/agents_data.module.json"
     },
@@ -59,15 +59,15 @@
       "manifest_path": "${MODULES_DIR}/agents_system_cli/resources/agents_system_cli.module.json"
     },
     {
-      "module_name": "agents_data_runtime",
+      "module_name": "agents_manager_runtime",
       "section_name": null,
-      "absolute_module_path": "${MODULES_DIR}/agents_data_runtime",
+      "absolute_module_path": "${MODULES_DIR}/agents_manager_runtime",
       "is_menu_option": false,
       "is_runtime": true,
       "runtime": [
-        "agents_data_runtime"
+        "agents_manager_runtime"
       ],
-      "manifest_path": "${MODULES_DIR}/agents_data_runtime/resources/agents_data_runtime.module.json"
+      "manifest_path": "${MODULES_DIR}/agents_manager_runtime/resources/agents_manager_runtime.module.json"
     },
     {
       "module_name": "runtime",

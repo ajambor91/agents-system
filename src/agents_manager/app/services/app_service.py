@@ -49,34 +49,50 @@ class AppService:
         return self._agents_service.run_agent(agent_name=agent_name, message=message)
 
     def install(self, args: dict[str,Any] = {}) -> dict[str, Any]:
-        path = args.get('path')
-        if not path:
-            raise Exception("Agent must have source dir path!") 
-        LOGGER.debug("Received request to install agent from path: %s", path)
+        try:
+            path = args.get('path')
+            if not path:
+                raise Exception("Agent must have source dir path!") 
+            LOGGER.debug("Received request to install agent from path: %s", path)
 
-        name = args.get('name')
-        user = args.get('user')
-        model = args.get('model')
-        dry_run = args.get('dry_run')
-        force = args.get('force')
-        return self._agents_service.install_agent(path, name, user, model, dry_run, force)
-
+            name = args.get('name')
+            user = args.get('user')
+            model = args.get('model')
+            dry_run = args.get('dry_run')
+            force = args.get('force')
+            return self._agents_service.install_agent(path, name, user, model, dry_run, force)
+        except Exception as exc:
+            return {
+                "Status": "install-error",
+                "details":  getattr(exc, "details", str(exc))                           
+            }
     def delete(self, args: dict[str,Any] = {}) -> dict[str, Any]:
-        name = args.get('name')
-        if not name:
-            raise Exception("Agent must have a name!") 
+        try:
+            name = args.get('name')
+            if not name:
+                raise Exception("Agent must have a name!") 
 
-        LOGGER.debug("Received request to delete agent with name: %s", name)
-        dry_run = args.get('dry_run')
-        force = args.get('force')
-        return self._agents_service.delete_agent(name, dry_run, force)
-
+            LOGGER.debug("Received request to delete agent with name: %s", name)
+            dry_run = args.get('dry_run')
+            force = args.get('force')
+            return self._agents_service.delete_agent(name, dry_run, force)
+        except Exception as exc:
+            return {
+                "Status": "delete-error",
+                "details":  getattr(exc, "details", str(exc))                           
+            }
     def connect_agents_runtime(self) -> dict[str, Any]:
-        LOGGER.debug("Received request for connect to the agents-manager")
-        self._socket.connect()
-        is_connected = self._socket.connected
-        if not is_connected:
-            raise Exception("Cannot connect to the Agents Runtime Socket")
-        return {"Status": "connected"}
+        try:
+            LOGGER.debug("Received request for connect to the agents-manager")
+            self._socket.connect()
+            is_connected = self._socket.connected
+            if not is_connected:
+                raise Exception("Cannot connect to the Agents Runtime Socket")
+            return {"Status": "connected"}
+        except Exception as exc:
+            return {
+                "Status": "disconnected",
+                "details":  getattr(exc, "details", str(exc))                           
+            }
 
         

@@ -15,7 +15,7 @@ Stałe entrypointy aplikacji:
 | --- | --- | --- |
 | agents-system | `src/agents_system/__main__.py` | zaimplementowana |
 | runtime | `src/_runtime/__main__.py` | zaimplementowana |
-| agents_data_runtime | `src/agents_data_runtime/__main__.py` | przeniesiony broker komunikacji |
+| agents_manager_runtime | `src/agents_manager_runtime/__main__.py` | przeniesiony broker komunikacji |
 | agents_system_cli | `src/agents_system_cli/__main__.py` | zaimplementowana konsola/API |
 | agents_manager | `src/agents_manager/__main__.py` | kod przeniesiony |
 | agents_data | `src/agents_data/__main__.py` | kod przeniesiony |

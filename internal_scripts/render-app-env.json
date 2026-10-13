@@ -270,15 +270,15 @@
       "description": "Installed modules manifest path derived from APP_CONFIG_DIR."
     },
     {
-      "name": "AGENTS_DATA_RUNTIME",
+      "name": "AGENTS_MANAGER_RUNTIME",
       "required": true,
-      "value": "agents-system_agents_data_runtime.sock",
+      "value": "agents-system_agents_manager_runtime.sock",
       "description": "Unix-socket filename for the dedicated Agents Data runtime."
     },
     {
-      "name": "AGENTS_DATA_RUNTIME_PATH",
+      "name": "AGENTS_MANAGER_RUNTIME_PATH",
       "required": true,
-      "value": "${APP_RUNTIME_DIR}/${AGENTS_DATA_RUNTIME}"
+      "value": "${APP_RUNTIME_DIR}/${AGENTS_MANAGER_RUNTIME}"
     },
     {
       "name": "AGENTS_DATA_COMMUNICATION_APP",
@@ -457,8 +457,8 @@
     {
       "name": "COMMUNICATION_AGENT_RUNTIME_SOCKET",
       "required": true,
-      "value": "${AGENTS_DATA_RUNTIME_PATH}",
-      "description": "Compatibility alias for AGENTS_DATA_RUNTIME_PATH."
+      "value": "${AGENTS_MANAGER_RUNTIME_PATH}",
+      "description": "Compatibility alias for AGENTS_MANAGER_RUNTIME_PATH."
     },
     {
       "name": "COMMUNICATION_AGENT_RUNTIME_PID",

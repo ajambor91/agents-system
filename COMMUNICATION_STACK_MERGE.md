@@ -6,10 +6,10 @@ Rozdzielić obecne `communication_stack` pomiędzy:
 
 - `src/agents_data/` — lokalną aplikację Pythona dla nadawcy i odbiorcy;
 - `src/agents_data_backend/` — trwały backend danych i streamów;
-- `src/agents_data_runtime/` — osobny broker dostarczający zdarzenia do receiverów.
+- `src/agents_manager_runtime/` — osobny broker dostarczający zdarzenia do receiverów.
 
 Po migracji żadna zwykła aplikacja nie łączy się ze starym runtime. Adapter
-zgodności może należeć tylko do `src/agents_data_runtime/` i działa wyłącznie
+zgodności może należeć tylko do `src/agents_manager_runtime/` i działa wyłącznie
 do cutover.
 
 ## Stan źródłowy
@@ -32,7 +32,7 @@ Repozytorium zawiera obecnie:
 | `src/comm/__main__.py`, `commands/message.py` | `src/agents_data/app/` | przenieść do JSON-driven CLI |
 | `src/comm/services/app_comm.py` | klient backendu Agent Data | zachować timeouty i błędy |
 | `agents_scripts/shared/message*.py` | `src/agents_data/app/receiver/` | scalić w jeden klient/listener |
-| `src/runtime/__main__.py` | `src/agents_data_runtime/service.py` | przenieść broker i ACK |
+| `src/runtime/__main__.py` | `src/agents_manager_runtime/service.py` | przenieść broker i ACK |
 | `stack/app-comm` | `src/agents_data_backend/` | przepisać zachowanie do Pythona |
 | `stack/app-data` | `src/agents_data_backend/` | przepisać Mongo/cache do Pythona |
 | `stack/app-sync` | `src/agents_data/app/sync/` + API backendu | rozdzielić lokalne pliki od backendu |

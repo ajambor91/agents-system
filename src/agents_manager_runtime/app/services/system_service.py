@@ -5,8 +5,9 @@ import pwd
 
 from pathlib import Path
 from lib.configuration import Configuration
-
-
+import logging
+LOGGER = logging.getLogger(__name__)
+from ..exceptions import CommandExecutionError
 class SystemService:
     _configuration: Configuration
 
@@ -30,12 +31,8 @@ class SystemService:
         try:
             grp.getgrnam(agent_group)
         except KeyError:
-            subprocess.run(
-                ["groupadd", agent_group],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
+            cmd =  ["groupadd", agent_group]
+            self._run_command(cmd)
 
         cmd = [
             "useradd",
@@ -80,8 +77,9 @@ class SystemService:
         return self._run_command(command)
 
     def _run_command(self, command: list[str]) -> bool:
+        result = None
         try:
-            subprocess.run(
+            result = subprocess.run(
                     command,
                     check=True,
                     capture_output=True,
@@ -89,12 +87,7 @@ class SystemService:
                 )
             return True
         except subprocess.CalledProcessError as e:
-            message = (
-                (e.stderr or "").strip()
-                    or (e.stdout or "").strip()
-                    or f"Command failed, error code: {e.returncode}"
-                )
-            raise RuntimeError(message) from e
+            raise CommandExecutionError(e) from e
 
 
 

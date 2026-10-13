@@ -33,7 +33,7 @@ class ServiceTemplateTests(unittest.TestCase):
                 content = content.replace('{{' + name + '}}', value)
             self.assertNotIn('{{', content)
             self.assertIn('User=root\nGroup=root\n', content)
-            self.assertIn('ExecStart=' + sys.executable + ' -u -m agents_data_runtime', content)
+            self.assertIn('ExecStart=' + sys.executable + ' -u -m agents_manager_runtime', content)
             unit = base / 'agents-system-manager.service'
             unit.write_text(content)
             result = subprocess.run(['systemd-analyze', 'verify', str(unit)], capture_output=True, text=True)

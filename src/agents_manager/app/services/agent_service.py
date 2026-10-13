@@ -20,7 +20,7 @@ class AgentsService:
     
     def install_agent(self, path: str, name: str = None, user: str = None, model: str = None, dry_run: bool = False, force: bool = False) -> dict[str, Any]:
         LOGGER.info("Sending install_agent request with path: %s, user: %s, model: %s", path, user, model)
-        res = self._socket.send(method_name='run_agent', kwargs={'path': path, 'name': name, 'user': user, 'model': model, 'dry_run': dry_run, 'force': force})
+        res = self._socket.send(method_name='install_agent', kwargs={'path': path, 'agent_name': name, 'user': user, 'model': model, 'dry_run': dry_run, 'force': force})
         LOGGER.info("install_agent request with path: %s, user: %s, model: %s was sent", path, user, model)
 
         return {
@@ -30,7 +30,7 @@ class AgentsService:
 
     def delete_agent(self, name: str, dry_run: bool = False, force: bool = False) -> dict[str, Any]:
         LOGGER.info("Sending delete_agent request with name: %s", name)
-        res = self._socket.send(method_name='run_agent', kwargs={'name': name, 'dry_run': dry_run, 'force': force})
+        res = self._socket.send(method_name='remove_agent', kwargs={'agent_name': name, 'dry_run': dry_run, 'force': force})
         LOGGER.info("delete_agent request with name: %s was sent", name)
 
         return {

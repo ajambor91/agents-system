@@ -4,7 +4,7 @@
   "kind": "module-manifest",
   "module_name": "agents_data",
   "menu_name": null,
-  "description": "Lokalny klient danych i wiadomości agenta, obsługiwany przez agents_data_runtime.",
+  "description": "Lokalny klient danych i wiadomości agenta, obsługiwany przez agents_manager_runtime.",
   "commands": [],
   "usage": ""
 }

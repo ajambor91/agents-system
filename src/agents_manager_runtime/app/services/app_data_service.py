@@ -6,7 +6,7 @@ from lib.json_loader import JsonLoader
 from typing import Any
 from pathlib import Path
 from ..models import MarkdownFile
-
+from ..exceptions import AgentDataNotExists
 class AppDataService:
     _configuration: Configuration
 
@@ -43,15 +43,27 @@ class AppDataService:
 
         existing_content[agent_name] = str(agent_path)
         return JsonLoader.save_file(existing_content, path)
+
+    def clean_agent_data(self, agent_name: str) -> bool:
+        try:
+            self.remove_agent_data(agent_name)
+        except AgentDataNotExists:
+            pass
+        except Exception as e:
+            raise e
+        finally:
+            return True
     
     def remove_agent_data(self, agent_name: str) -> bool:
         path = Path(type(self._configuration).INSTALLED_AGENTS_LIST_PATH)
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print(path)
         existing_content: dict[str, str] = {}
         if not path.is_file():
-            raise Exception("Agent does not exist")
+            raise AgentDataNotExists("Agent does not exist")
         existing_content = JsonLoader.getJsonFileContent(path)
         if not existing_content.get(agent_name):
-            raise Exception("Agent exists")
+            raise AgentDataNotExists("Agent does not exist")
         del existing_content[agent_name] 
         JsonLoader.save_file(existing_content, path)
 
@@ -86,9 +98,11 @@ class AppDataService:
         shutil.copytree(temp_path, target_path, dirs_exist_ok=True)
         return True
 
+
+
     def remove_data(self, path: Path) -> bool:
  
-        if path.is_dir():
+        if path and path.is_dir():
             shutil.rmtree(path)
         return True
 

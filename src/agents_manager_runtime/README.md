@@ -1,4 +1,4 @@
-# agents_data_runtime
+# agents_manager_runtime
 
 Osobny runtime transportu danych agentów. Utrzymuje połączenia odbiorców,
 subskrybuje strumienie wiadomości i dostarcza zdarzenia do lokalnych aplikacji

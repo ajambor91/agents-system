@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -9,7 +10,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 FIXED_ENTRYPOINTS = {
     "agents_system": "src/agents_system/__main__.py",
     "runtime": "src/_runtime/__main__.py",
-    "agents_data_runtime": "src/agents_data_runtime/__main__.py",
+    "agents_manager_runtime": "src/agents_manager_runtime/__main__.py",
     "agents_system_cli": "src/agents_system_cli/__main__.py",
     "agents_manager": "src/agents_manager/__main__.py",
     "agents_data": "src/agents_data/__main__.py",
@@ -18,6 +19,20 @@ FIXED_ENTRYPOINTS = {
 
 
 class ArchitectureContractTests(unittest.TestCase):
+    def test_manager_runtime_package_and_module_manifest_agree(self) -> None:
+        root = REPOSITORY_ROOT / "src" / "agents_manager_runtime"
+        package = tomllib.loads((root / "pyproject.toml").read_text())
+        manifest = json.loads(
+            (root / "resources" / "agents_manager_runtime.module.json").read_text()
+        )
+        self.assertEqual(package["project"]["name"], "agents_manager_runtime")
+        self.assertEqual(manifest["module_name"], "agents_manager_runtime")
+        self.assertEqual(
+            package["tool"]["setuptools"]["package-dir"],
+            {"agents_manager_runtime": "."},
+        )
+        self.assertFalse((REPOSITORY_ROOT / "src" / "agents_data_runtime").exists())
+
     def test_fixed_application_entrypoints_exist(self) -> None:
         for application, relative_path in FIXED_ENTRYPOINTS.items():
             with self.subTest(application=application):
@@ -32,7 +47,7 @@ class ArchitectureContractTests(unittest.TestCase):
         self.assertEqual(FIXED_ENTRYPOINTS, declared)
 
     def test_hyphenated_source_trees_do_not_exist(self) -> None:
-        for name in ("agents-system", "agents-manager", "agents-data", "agents-data-runtime", "agents-data-backend", "app" + "_api"):
+        for name in ("agents-system", "agents-manager", "agents-data", "agents-manager-runtime", "agents-data-backend", "app" + "_api"):
             self.assertFalse((REPOSITORY_ROOT / "src" / name).exists())
 
     def test_agents_system_cli_uses_application_and_service_layers(self) -> None:
@@ -64,7 +79,7 @@ class ArchitectureContractTests(unittest.TestCase):
             (REPOSITORY_ROOT / "src" / "agents_data" / "app" / "application.py").is_file()
         )
         self.assertTrue(
-            (REPOSITORY_ROOT / "src" / "agents_data_runtime" / "service.py").is_file()
+            (REPOSITORY_ROOT / "src" / "agents_manager_runtime" / "service.py").is_file()
         )
 
     def test_agent_resources_and_provider_plugin_were_migrated(self) -> None:

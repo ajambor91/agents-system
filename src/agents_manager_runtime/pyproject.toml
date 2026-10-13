@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agents_data_runtime"
+name = "agents_manager_runtime"
 version = "0.1.0"
 description = "Agent data runtime and agent installation application"
 readme = "README.md"
@@ -14,14 +14,14 @@ dependencies = [
 ]
 
 [tool.setuptools]
-package-dir = { agents_data_runtime = "." }
+package-dir = { agents_manager_runtime = "." }
 packages = [
-    "agents_data_runtime",
-    "agents_data_runtime.app",
-    "agents_data_runtime.app.agent",
-    "agents_data_runtime.app.services",
+    "agents_manager_runtime",
+    "agents_manager_runtime.app",
+    "agents_manager_runtime.app.agent",
+    "agents_manager_runtime.app.services",
 ]
 include-package-data = false
 
 [tool.setuptools.package-data]
-agents_data_runtime = ["resources/*.json", "kroki.md"]
+agents_manager_runtime = ["resources/*.json", "kroki.md"]

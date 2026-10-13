@@ -236,7 +236,7 @@
       ],
       "user": "root",
       "group": "root",
-      "entrypoint": "${APP_DIR}/src/agents_data_runtime/__main__.py"
+      "entrypoint": "${APP_DIR}/src/agents_manager_runtime/__main__.py"
     }
   ],
   "steps": [

@@ -99,16 +99,16 @@
       "example": "/etc/agents-system/agents-system.module.json"
     },
     {
-      "name": "AGENTS_DATA_RUNTIME",
-      "value": "agents-system_agents_data_runtime.sock",
+      "name": "AGENTS_MANAGER_RUNTIME",
+      "value": "agents-system_agents_manager_runtime.sock",
       "description": "Unix-socket filename for the dedicated Agents Data runtime.",
-      "example": "agents-system_agents_data_runtime.sock"
+      "example": "agents-system_agents_manager_runtime.sock"
     },
     {
-      "name": "AGENTS_DATA_RUNTIME_PATH",
-      "value": "/run/agents-system/agents-system_agents_data_runtime.sock",
-      "description": "Managed Agents System variable AGENTS_DATA_RUNTIME_PATH.",
-      "example": "/run/agents-system/agents-system_agents_data_runtime.sock"
+      "name": "AGENTS_MANAGER_RUNTIME_PATH",
+      "value": "/run/agents-system/agents-system_agents_manager_runtime.sock",
+      "description": "Managed Agents System variable AGENTS_MANAGER_RUNTIME_PATH.",
+      "example": "/run/agents-system/agents-system_agents_manager_runtime.sock"
     },
     {
       "name": "AGENTS_DATA_COMMUNICATION_APP",
@@ -286,9 +286,9 @@
     },
     {
       "name": "COMMUNICATION_AGENT_RUNTIME_SOCKET",
-      "value": "/run/agents-system/agents-system_agents_data_runtime.sock",
-      "description": "Compatibility alias for AGENTS_DATA_RUNTIME_PATH.",
-      "example": "/run/agents-system/agents-system_agents_data_runtime.sock"
+      "value": "/run/agents-system/agents-system_agents_manager_runtime.sock",
+      "description": "Compatibility alias for AGENTS_MANAGER_RUNTIME_PATH.",
+      "example": "/run/agents-system/agents-system_agents_manager_runtime.sock"
     },
     {
       "name": "COMMUNICATION_AGENT_RUNTIME_PID",

@@ -4,7 +4,7 @@ Description=Agents Manager runtime
 Documentation=file://{{APP_DIR}}/src/README.md
 Wants=network-online.target
 After=network-online.target
-ConditionPathExists={{APP_DIR}}/src/agents_data_runtime/__main__.py
+ConditionPathExists={{APP_DIR}}/src/agents_manager_runtime/__main__.py
 
 [Service]
 Type=simple
@@ -28,7 +28,7 @@ Environment="MODULES_MANIFEST_PATH={{MODULES_MANIFEST_PATH}}"
 Environment="AGENTS_MANAGER_LOG_LEVEL=INFO"
 Environment="PYTHONUNBUFFERED=1"
 Environment="PYTHONDONTWRITEBYTECODE=1"
-ExecStart={{PYTHON_BIN}} -u -m agents_data_runtime
+ExecStart={{PYTHON_BIN}} -u -m agents_manager_runtime
 Restart=on-failure
 RestartSec=2s
 TimeoutStartSec=30s
@@ -41,9 +41,9 @@ NoNewPrivileges=false
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=strict
-ProtectHome=read-only
+ProtectHome=false
 ReadOnlyPaths={{APP_DIR}} {{APP_CONFIG_DIR}}
-ReadWritePaths={{APP_DATA_DIR}} {{APP_RUNTIME_DIR}}
+ReadWritePaths={{APP_DATA_DIR}} {{APP_RUNTIME_DIR}} /etc /home
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

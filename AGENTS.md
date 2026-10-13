@@ -142,7 +142,7 @@ Pozostałe stałe katalogi aplikacji to:
 - `src/agents_system_cli/` — manifest-driven konsola i API interfejsu `asystem`,
 - `src/agents_manager/` — wyłącznie desktopowa aplikacja Pythona,
 - `src/agents_data/` — lokalny klient danych i wiadomości agenta,
-- `src/agents_data_runtime/` — osobny runtime komunikacji i dostarczania wiadomości,
+- `src/agents_manager_runtime/` — osobny runtime komunikacji i dostarczania wiadomości,
 - `src/agents_data_backend/` — backend trwałych danych, cache i streamów.
 
 `agents_system_cli` jest zaimplementowanym adapterem interfejsu i nigdy nie wykonuje
