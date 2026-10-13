@@ -57,19 +57,6 @@
           "required": false
         },
         {
-          "name": "gateway_user",
-          "short": "-g",
-          "long": "--gateway-user",
-          "aliases": [
-            "--gateway"
-          ],
-          "description": "Użytkownik uruchamiający gateway OpenClaw.",
-          "usage": "-g USER",
-          "takes_value": true,
-          "type": "linux-user",
-          "required": false
-        },
-        {
           "name": "force",
           "short": null,
           "long": "--force",
@@ -164,9 +151,9 @@
       ]
     },
     {
-      "name": "exec",
+      "name": "run",
       "description": "Uruchamia polecenie przez AgentExecutor w środowisku wskazanego agenta.",
-      "usage": "asystem agents_manager exec -n NAME -c COMMAND [-r REQUESTER]",
+      "usage": "asystem agents_manager exec -n NAME -m MESSAGE [-r REQUESTER]",
       "implementation_status": "implemented",
       "flags": [
         {
@@ -181,12 +168,12 @@
           "required": true
         },
         {
-          "name": "command",
-          "short": "-c",
-          "long": "--command",
+          "name": "message",
+          "short": "-m",
+          "long": "--message",
           "aliases": [],
           "description": "Polecenie przekazywane AgentExecutorowi.",
-          "usage": "-c COMMAND",
+          "usage": "-m MESSAGE",
           "takes_value": true,
           "type": "string",
           "required": true

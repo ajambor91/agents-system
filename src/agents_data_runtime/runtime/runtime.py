@@ -10,21 +10,25 @@ import threading
 import os
 import signal
 import stat
+import grp
 import threading
 from pathlib import Path
+from .socket import Socket
 LOGGER = logging.getLogger(__name__)
 
 class Runtime:
     _configuration: Configuration
     _application: Application
+    _socket_client: Socket
     _socket_path: str
     _socket_mode: int
     def __init__(self, configuration: Configuration, app: Application):
         self._application = app
         self._configuration = configuration 
+        self._socket_client = Socket(config=configuration)
         settings = type(configuration)
         socket_path: str = settings.SYSTEM_AGENT_MANAGER_RUNTIME_SOCKET
-        socket_mode: int = 0o600        
+        socket_mode: int = 0o660       
         max_message_base = int(
             settings.MAX_MESSAGE_BYTES_BASE
         )
@@ -74,6 +78,7 @@ class Runtime:
         Block in the current process until SIGTERM,
         SIGINT or stop().
         """
+        self._socket_client.connect()
 
         LOGGER.info("Starting shared runtime: socket=%s maximum_message_bytes=%s", self._socket_path, self.MAX_MESSAGE_BYTES)
         with self._lock:
@@ -103,6 +108,8 @@ class Runtime:
                 self,
                 self.MAX_MESSAGE_BYTES,
             )
+            gid = grp.getgrnam(type(self._configuration).USER_GROUP).gr_gid
+            os.chown(self._socket_path, -1, gid)
 
             os.chmod(
                 self._socket_path,
@@ -157,7 +164,7 @@ class Runtime:
                 "Runtime listening at %s",
                 self._socket_path,
             )
-
+            self._socket_client.send()
             assert self._server is not None
 
             self._server.serve_forever(

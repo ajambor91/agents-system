@@ -5,17 +5,14 @@ from typing import TYPE_CHECKING, Any
 from .modules_service import ModulesService
 from ..exceptions.input_error import InputError, ApiError
 from shared.models.modules_list_data import ModulesListData
-from .agent_service  import AgentsService
 LOGGER = logging.getLogger(__name__)
 
 
 class Asystem:
 
     _modules_service: ModulesService
-    _agents_service: AgentsService
-    def __init__(self, modules_service: ModulesService, agents_service: AgentsService):
+    def __init__(self, modules_service: ModulesService):
         self._modules_service = modules_service
-        self._agents_service = agents_service
 
     def exec(self, method_name: str, flags: dict[str,Any] = {},  module_name: str | None = None):
         LOGGER.debug('Starting asystem.exec method_name=%s module_name=%s agent=%s dry_run=%s', method_name, module_name, (flags or {}).get('name'), (flags or {}).get('dry_run', False))
@@ -35,7 +32,4 @@ class Asystem:
 
     def logging(self, level: str) -> dict[str, str]:
         os.environ['AGENTS_MANAGER_LOG_LEVEL'] = level
-        return {'Current level': level}
-
-    def run_agent(self, agent_name: str, message: str) -> dict[str, Any]:
-        return self._agents_service.run_agent(agent_name, message)        
+        return {'Current level': level}     

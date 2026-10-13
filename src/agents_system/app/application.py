@@ -32,12 +32,11 @@ class Application:
         """Return installed module records or public resident instances."""
         LOGGER.info('Starting application.execute method_name=%s module_name=%s agent=%s dry_run=%s', method_name, module_name, (flags or {}).get('name'), (flags or {}).get('dry_run', False))
         return self._app_service.execute(method_name, flags, module_name)
-        return self._app_service.list(installed=installed, running=running)
 
     def help(self, method_name: str, flags: dict[str, Any] = {}, module_name: str | None = None) -> dict[str, Any]:
         """Return installed module records or public resident instances."""
-        # if module_name is None or module_name in {"agents_system", "system"}:
-        #      return self._help_service.help(method_name)
+        if module_name is None or module_name in {"agents_system", "system"}:
+             return self._help_service.help(method_name)
         return self._app_service.help(module_name, method_name)
     def initialize(self, runtime_api: RuntimeApiWrapper):
             LOGGER.debug('Starting application.initialize')

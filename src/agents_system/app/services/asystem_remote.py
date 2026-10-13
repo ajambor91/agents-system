@@ -7,7 +7,6 @@ if TYPE_CHECKING:
     from _runtime.app import RuntimeApiWrapper
 
 from .modules_service import ModulesService
-from .agent_service import AgentsService
 from ..state import AppStateRemote, State
 from ..exceptions.input_error import InputError
 from shared.models.modules_list_data import ModulesListData
@@ -17,8 +16,8 @@ LOGGER = logging.getLogger(__name__)
 class AsystemRemote(Asystem):
 
     _runtime_api_wrapper: RuntimeApiWrapper | None = None
-    def __init__(self, modules_service: ModulesService, runtime_api_wrapper: RuntimeApiWrapper, agents_service:AgentsService ):
-        super().__init__(modules_service, agents_service=agents_service)
+    def __init__(self, modules_service: ModulesService, runtime_api_wrapper: RuntimeApiWrapper ):
+        super().__init__(modules_service)
         self._runtime_api_wrapper = runtime_api_wrapper
   
 

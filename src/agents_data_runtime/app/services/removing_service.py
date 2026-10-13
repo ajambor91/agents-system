@@ -77,11 +77,8 @@ class RemovingService:
 
     def cleanup(self, agent: AgentDTO) -> AgentDTO:
         cleaning = self._check_is_cleaning_needed(agent)
-        print("CCCC")
-        print(cleaning)
         try:
             if not cleaning:
-                print("NO CLEAR")
                 return self._return_without_cleaning(agent)
             return self._cleaning(agent)
             
@@ -108,7 +105,7 @@ class RemovingService:
         status_index = statuses.index(agent.break_status)
         steps_to_clean: list[AgentStatus] = statuses[status_index:]
         for status in steps_to_clean:
-            if status in [
+            if status not in [
                 AgentStatus.INSTALLING_CREATED_TEMP_DIR,
                 AgentStatus.INSTALLING_CREATED_TARGET_DIR,
                 AgentStatus.INSTALLING_COPIED_TEMP,
@@ -133,21 +130,21 @@ class RemovingService:
                 case AgentStatus.INSTALLING_INITIALIZED:
                     self._app_data_service.remove_agent_data(agent.name)
                     status = AgentStatus.CLEANING_CLEANED_ENTRY
-            return AgentDTO(
-                        status=AgentStatus.CLEANING_CLEANED,
-                        break_status=agent.break_status,
-                        clean_status=AgentStatus.CLEANING_CLEANED,
-                        name=agent.name,
-                        home=agent.home,
-                        group=agent.group,
-                        shell=agent.shell,
-                        source_dir_path=agent.source_dir_path,
-                        temp_path=agent.temp_path,
-                        target_path=agent.target_path,
-                        exceptions={
-                            'installation': agent.exceptions['installation']
-                        }
-                    )
+        return AgentDTO(
+            status=AgentStatus.CLEANING_CLEANED,
+            break_status=agent.break_status,
+            clean_status=AgentStatus.CLEANING_CLEANED,
+            name=agent.name,
+            home=agent.home,
+            group=agent.group,
+            shell=agent.shell,
+            source_dir_path=agent.source_dir_path,
+            temp_path=agent.temp_path,
+            target_path=agent.target_path,
+            exceptions={
+                'installation': agent.exceptions['installation']
+            }
+        )
     def _return_without_cleaning(self, agent) -> AgentDTO:
          return AgentDTO(
                 status=AgentStatus.CLEANING_CLEANED,

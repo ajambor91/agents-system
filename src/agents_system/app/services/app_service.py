@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from _runtime.app import RuntimeApiWrapper
 from lib.configuration import Configuration
 from .modules_service import ModulesService
-from .agent_service import AgentsService
 from ..exceptions.input_error import InputError
 LOGGER = logging.getLogger(__name__)
 
@@ -22,16 +21,13 @@ class AppService:
     def __init__(self, configuration: Configuration, runtime_api: RuntimeApiWrapper = None):
         module_service = ModulesService(configuration)
         
-        agents_service = AgentsService(configuration)
         if runtime_api is not None:
             self._runtime_api = runtime_api
             self._asysten = AsystemRemote(
                 modules_service=module_service,
-                runtime_api_wrapper=runtime_api, 
-                agents_service=agents_service
-            )
+                runtime_api_wrapper=runtime_api            )
         else:
-            self._asysten = Asystem(modules_service=module_service, agents_service=agents_service)
+            self._asysten = Asystem(modules_service=module_service)
 
     def execute(self, method_name: str, flags: dict[str,Any] = {},  module_name: str | None = None):
             LOGGER.info('Starting app_service.execute method_name=%s module_name=%s agent=%s dry_run=%s', method_name, module_name, (flags or {}).get('name'), (flags or {}).get('dry_run', False))

@@ -45,7 +45,7 @@ class Application:
             running_service=running_service
             )
 
-    def install_agent(self, path: str, force: bool = False):
+    def install_agent(self, path: str, user: str = None, model: str = None, dry_run: bool = False, force: bool = False):
         return self._agents_service.install_agent(path, force)
 
     def remove_agent(self, agent_name: str):
