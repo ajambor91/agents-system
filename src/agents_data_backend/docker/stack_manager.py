@@ -1,56 +1,49 @@
 from __future__ import annotations
-
-from lib.compose_loader import (
-    ComposeData,
-    VolumeDefinition as VolumeDefinitionYAML,
-    Service as ServiceYAML,
-    Network as NetworkYAML,
-    Volume as VolumeYAML
-)
-
 import docker
 
-from docker.errors import NotFound
-from docker.models.containers import Container
-from docker.models.volumes import Volume
-from docker.models.networks import Network
-from docker.models.images import Image
-
-from .compose_state import ComposeState
-from .candidates_state import CandidatesState
+from .docker_units_service import DockerUnitsService
 from .candidates_service import CandidatesService
 from .compose_service import ComposeService
 from pathlib import Path
+from .interfaces import (
+     StackManagerApi, Initializer
+)
 
-
-class StackManager:
+class StackManager(StackManagerApi, Initializer):
     _DOCKER_FILES_DIR: str = 'docker_files'
     _COMPOSE_FILE_NAME: str = 'docker-compose.yml'
 
     _docker_client: docker.DockerClient
-    _compose_service: ComposeService
-    _candidates_service: CandidatesService
-
+    _compose_service: ComposeService | None = None
+    _candidates_service: CandidatesService | None = None
+    _docker_units_service: DockerUnitsService | None = None
+    
     def __init__(self):
         self._docker_client = docker.from_env()
-        self._compose_service = ComposeService("%s/%s", self._DOCKER_FILES_DIR, self._COMPOSE_FILE_NAME)
-        self._candidates_service = CandidatesService(
-            compose_state=self._compose_service.compose_state,
-            docker_client=self._docker_client
-        )
+
+    def initialize(self, **kwargs):
+        compose_service = kwargs.get('compose_service')
+        candidates_service = kwargs.get('candidates_service')
+        docker_unit_service = kwargs.get('docker_unit_service')
+        if not isinstance(candidates_service, CandidatesService) or not isinstance(compose_service, ComposeService) or not isinstance(docker_unit_service, DockerUnitsService):
+            raise Exception("Invalid CandidatesService, ComposeService and DockerUnitsService when initializing StackManager")
+
+        self._docker_unit_service = docker_unit_service
+        self._candidates_service = candidates_service
+        self._compose_service = compose_service
        
+    @property
+    def docker_compose_file(self) -> str:
+        return f"{self._DOCKER_FILES_DIR}/{self._COMPOSE_FILE_NAME}"
+
+
+    @property
+    def docker_client(self) -> docker.DockerClient:
+        return self._docker_client
+
+
+    def run(self):
+        self._candidates_service.create_existing_state()
+        state = self._candidates_service.get_existing_state()
     
-
-    def create_volumes(self) -> None:
-        volumes_defs = self._compose_state.compose_data.volumes
-
-        for vol in volumes_defs:
-            self._docker_client.volumes.create(name=vol.name)
-
-    def create_networks(self) -> None:
-        pass
-
-    def create_services(self) -> None:
-        pass
-
-  
+   

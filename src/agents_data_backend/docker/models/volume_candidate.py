@@ -9,3 +9,9 @@ class VolumeCandidate:
     def __init__(self, *, volume_candidate: Volume, volume: VolumeDefinition):
         self._docker_volume = volume_candidate
         self._volume = volume
+
+    def get_docker_volume(self) -> Volume:
+        return self._docker_volume
+
+    def get_volume_definition(self) -> VolumeDefinition:
+        return self._volume

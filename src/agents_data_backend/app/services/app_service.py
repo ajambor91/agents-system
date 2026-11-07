@@ -1,7 +1,5 @@
 from typing import Any
-from .agent_service import AgentsService
 from lib.configuration import Configuration
-from ..socket import Socket
 import logging
 LOGGER = logging.getLogger(__name__)
 

@@ -1,69 +1,86 @@
-
 from __future__ import annotations
 
 from lib.compose_loader import (
-    ComposeData,
     VolumeDefinition as VolumeDefinitionYAML,
     Service as ServiceYAML,
     Network as NetworkYAML,
-    Volume as VolumeYAML
 )
 
-import docker
-
-from docker.errors import NotFound
-from docker.models.containers import Container
-from docker.models.volumes import Volume
-from docker.models.networks import Network
-from docker.models.images import Image
-
-from .compose_state import ComposeState
 from .candidates_state import CandidatesState
 
+from .models.container_candidate import ContainerCandidate
+from .models.volume_candidate import VolumeCandidate
+from .models.network_candidate import NetworkCandidate
+from .models.image_candidate import ImageCandidate
 
-class CandidatesService:
+from .interfaces import (
+    CandidatesStateService,
+    CandidatesInternal,
+    DockerUnitsApi,
+    ComposeApi,
+)
+
+
+class CandidatesService(CandidatesStateService, CandidatesInternal):
+
+    _docker_units: DockerUnitsApi
+    _compose_service: ComposeApi
     _candidates_state: CandidatesState
-    _compose_state: ComposeState
-    _docker_client: docker.DockerClient
-    def __init__(self, 
-                 compose_state: ComposeState,
-                 docker_client: docker.DockerClient
-                 ):
+
+    def __init__(self):
         self._candidates_state = CandidatesState.createState()
-        self._compose_state = compose_state
-        self._docker_client = docker_client
-        self.__initialize()
 
     @property
     def candidates_state(self) -> CandidatesState:
-        return self._compose_state
+        return self._candidates_state
 
-    def __initialize(self) -> None:
-        self._get_existing_containers()
-        self._get_existing_volumes()
-        self._get_existing_networks()
-        self._get_existing_images()
+    def initialize(self, **kwargs) -> None:
+        docker_units = kwargs.get("docker_units")
+        compose_service = kwargs.get("compose_service")
+
+        if not isinstance(docker_units, DockerUnitsApi):
+            raise TypeError("Invalid DockerUnitsApi")
+
+        if not isinstance(compose_service, ComposeApi):
+            raise TypeError("Invalid ComposeApi")
+
+        self._docker_units = docker_units
+        self._compose_service = compose_service
+
+    # ============================
+    # STATE
+    # ============================
+
+    def create_existing_state(self) -> None:
+        self.create_existing_containers()
+        self.create_existing_volumes()
+        self.create_existing_networks()
+        self.create_existing_images()
+
+    def get_existing_state(self) -> CandidatesState:
+        return self._candidates_state
 
     # ============================
     # CONTAINERS
     # ============================
 
-    def _get_existing_containers(self) -> None:
-        for service in self._compose_state.compose_data.services.items():
-            self._get_existing_container(service)
+    def create_existing_containers(self) -> None:
+        services = self._compose_service.compose_state.services
 
-    def _get_existing_container(
+        for service in services.items():
+            self.create_existing_container(service)
+
+    def create_existing_container(
         self,
         service: tuple[str, ServiceYAML]
-    ) -> Container | None:
+    ) -> None:
 
-        try:
-            candidate = self._docker_client.containers.get(
-                service[1].container_name
-            )
+        candidate = self._docker_units.get_container(
+            service[1].container_name
+        )
 
-        except NotFound:
-            return None
+        if candidate is None:
+            return
 
         self._candidates_state.add_container(
             key=service[0],
@@ -71,28 +88,36 @@ class CandidatesService:
             candidate=candidate
         )
 
-        return candidate
+    def get_existing_containers(
+        self
+    ) -> dict[str, ContainerCandidate]:
+        return self._candidates_state.containers
+
+    def get_existing_container(
+        self,
+        name: str
+    ) -> ContainerCandidate | None:
+        return self._candidates_state.get_container(name)
 
     # ============================
     # VOLUMES
     # ============================
 
-    def _get_existing_volumes(self) -> None:
-        for volume in self._compose_state.compose_data.volumes:
-            self._get_existing_volume(volume)
+    def create_existing_volumes(self) -> None:
+        volumes = self._compose_service.compose_state.volumes
 
-    def _get_existing_volume(
+        for volume in volumes:
+            self.create_existing_volume(volume)
+
+    def create_existing_volume(
         self,
         volume: VolumeDefinitionYAML
-    ) -> Volume | None:
+    ) -> None:
 
-        try:
-            candidate = self._docker_client.volumes.get(
-                volume.name
-            )
+        candidate = self._docker_units.get_volume(volume.name)
 
-        except NotFound:
-            return None
+        if candidate is None:
+            return
 
         self._candidates_state.add_volume(
             key=volume.name,
@@ -100,28 +125,36 @@ class CandidatesService:
             candidate=candidate
         )
 
-        return candidate
+    def get_existing_volumes(
+        self
+    ) -> dict[str, VolumeCandidate]:
+        return self._candidates_state.volumes
+
+    def get_existing_volume(
+        self,
+        name: str
+    ) -> VolumeCandidate | None:
+        return self._candidates_state.get_volume(name)
 
     # ============================
     # NETWORKS
     # ============================
 
-    def _get_existing_networks(self) -> None:
-        for network in self._compose_state.compose_data.networks:
-            self._get_existing_network(network)
+    def create_existing_networks(self) -> None:
+        networks = self._compose_service.compose_state.networks
 
-    def _get_existing_network(
+        for network in networks:
+            self.create_existing_network(network)
+
+    def create_existing_network(
         self,
         network: NetworkYAML
-    ) -> Network | None:
+    ) -> None:
 
-        try:
-            candidate = self._docker_client.networks.get(
-                network.name
-            )
+        candidate = self._docker_units.get_network(network.name)
 
-        except NotFound:
-            return None
+        if candidate is None:
+            return
 
         self._candidates_state.add_network(
             key=network.name,
@@ -129,33 +162,41 @@ class CandidatesService:
             candidate=candidate
         )
 
-        return candidate
+    def get_existing_networks(
+        self
+    ) -> dict[str, NetworkCandidate]:
+        return self._candidates_state.networks
+
+    def get_existing_network(
+        self,
+        name: str
+    ) -> NetworkCandidate | None:
+        return self._candidates_state.get_network(name)
 
     # ============================
     # IMAGES
     # ============================
 
-    def _get_existing_images(self) -> None:
-        for service in self._compose_state.compose_data.services.items():
-            self._get_existing_image(service)
+    def create_existing_images(self) -> None:
+        services = self._compose_service.compose_state.services
 
-    def _get_existing_image(
+        for service in services.items():
+            self.create_existing_image(service)
+
+    def create_existing_image(
         self,
         service: tuple[str, ServiceYAML]
-    ) -> Image | None:
+    ) -> None:
 
         image_name = service[1].image
 
         if not image_name:
-            return None
+            return
 
-        try:
-            candidate = self._docker_client.images.get(
-                image_name
-            )
+        candidate = self._docker_units.get_image(image_name)
 
-        except NotFound:
-            return None
+        if candidate is None:
+            return
 
         self._candidates_state.add_image(
             key=service[0],
@@ -163,4 +204,13 @@ class CandidatesService:
             candidate=candidate
         )
 
-        return candidate
+    def get_existing_images(
+        self
+    ) -> dict[str, ImageCandidate]:
+        return self._candidates_state.images
+
+    def get_existing_image(
+        self,
+        name: str
+    ) -> ImageCandidate | None:
+        return self._candidates_state.get_image(name)
